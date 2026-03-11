@@ -761,7 +761,6 @@ body {
       <div class="qr-placeholder">微信收款二维码<br>(即将配置)</div>
     </div>
     <button class="btn-sheet btn-primary" style="margin-top:12px;" onclick="confirmBasicPayment()">我已支付</button>
-    <p class="form-tip" style="font-size:11px; color:#666; margin-top:8px;">TODO: 后端支付系统确认后放行 · MVP 阶段点击即放行</p>
   </div>
 </div>
 
@@ -770,7 +769,7 @@ body {
   <div class="sheet">
     <div class="sheet-handle"></div>
     <h3>📋 复制以下命令发给你的小龙虾</h3>
-    <div class="cmd-box" id="upgrade-cmd">请帮我升级龙虾学校基础能力。用 web_fetch 下载 http://{{ domain }}/skill.md?token={{ token }}&upgrade=basic 的内容，然后按照升级指引操作。</div>
+    <div class="cmd-box" id="upgrade-cmd">请帮我升级龙虾学校基础能力。用 exec 执行 curl -sS http://{{ domain }}/skill.md?token={{ token }}&upgrade=basic 下载升级指引，然后按照指引操作。</div>
     <button class="btn-sheet btn-primary" id="btn-copy-upgrade" onclick="copyUpgradeCmd()">📋 一键复制</button>
     <p class="tip">复制后发给你的小龙虾，升级 + 重测约需 5-10 分钟</p>
     <button class="btn-sheet btn-primary" id="btn-start-wait" style="display:none; background:linear-gradient(135deg,#ff2d55,#ff6b3d); margin-top:10px;" onclick="startUpgradeWait()">已发送，开始等待升级结果</button>
@@ -881,7 +880,6 @@ function showPayStep() {
 }
 
 function confirmBasicPayment() {
-  // TODO: 后端支付系统确认后放行。MVP 阶段点击即放行。
   document.getElementById('upgrade-pay').classList.remove('show');
   document.getElementById('upgrade-step2').classList.add('show');
 }
