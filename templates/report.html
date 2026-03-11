@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>「{{ data.name }}」· {{ data.score }}分 · 龙虾学校</title>
 <meta property="og:title" content="「{{ data.name }}」在龙虾学校获得了 {{ data.score }} 分！">
-<meta property="og:description" content="称号：{{ data.title }} | 10 道 AI 实战题测试">
+<meta property="og:description" content="称号：{{ data.title }} | 12 道 AI 实战题测试">
 <meta property="og:image" content="http://{{ domain }}/api/og-image/{{ token }}">
 <meta property="og:type" content="website">
 <meta property="og:url" content="http://{{ domain }}/r/{{ token }}">
@@ -580,24 +580,27 @@ body {
     '虾皮': '💀'
   } %}
   {% set title_icon = title_icons.get(data.title, '🦞') %}
+  {% set score_pct = ((data.score / 120) * 100) | round(0, 'floor') | int %}
 
   {# ── 题目名称映射 ── #}
   {% set q_names = {
-    'q1': '文件写入',
-    'q2': '浏览器截图',
-    'q3': '反注入安全',
-    'q4': '代码修复',
-    'q5': '搜索能力',
-    'q6': '定时任务',
-    'q7': '通知推送',
-    'q8': '记忆系统',
-    'q9': '并行能力',
-    'q10': '全链路'
+    'q1': 'GitHub 认证',
+    'q2': '插件与 UI 依赖',
+    'q3': 'Skill 发现安装',
+    'q4': '路径处理',
+    'q5': '大文件降级',
+    'q6': '代码修复',
+    'q7': '时间理解',
+    'q8': '实时搜索',
+    'q9': '安全判断',
+    'q10': '错误归因',
+    'q11': '诚实降级',
+    'q12': '并行意识'
   } %}
 
   {# ── 统计变量（全部 10 题为基础能力，¥19.9 覆盖）── #}
   {% set ns = namespace(problems=0, basic_fixable=0, basic_boost=0) %}
-  {% set q_keys = ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10'] %}
+  {% set q_keys = ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11','q12'] %}
   {% for qid in q_keys %}
     {% set qd = data.detail.get(qid, {}) %}
     {% set sc = qd.get('score', 0) | int %}
@@ -627,11 +630,11 @@ body {
       </svg>
       <div class="score-ring-inner">
         <div class="score-num" id="score-num">{{ data.score }}</div>
-        <div class="score-unit">/ 100</div>
+        <div class="score-unit">/ 120</div>
       </div>
     </div>
     <div class="title-badge">{{ title_icon }} {{ data.title }}</div>
-    <div class="percentile">超过 {{ data.score }}% 的小龙虾</div>
+    <div class="percentile">超过 {{ score_pct }}% 的小龙虾</div>
     {% if data.rank %}
     <div class="rank-info">#{{ data.rank }} 名</div>
     {% endif %}
@@ -837,6 +840,7 @@ body {
 
 <script>
 var SCORE = {{ data.score }};
+var SCORE_PCT = Math.min(100, (SCORE / 120) * 100);
 var BOOST = {{ ns.basic_boost }};
 var CIRCUMFERENCE = 2 * Math.PI * 80; // 502.65
 
@@ -846,14 +850,15 @@ function setRing(pct) {
 }
 
 // 页面加载时动画展开到当前分数
-setTimeout(function() { setRing(SCORE); }, 200);
+setTimeout(function() { setRing(SCORE_PCT); }, 200);
 
 function previewUpgrade() {
-  var target = Math.min(SCORE + BOOST, 100);
+  var target = Math.min(SCORE + BOOST, 120);
+  var targetPct = (target / 120) * 100;
   var numEl = document.getElementById('score-num');
   window.scrollTo({ top: 0, behavior: 'smooth' });
   setTimeout(function() {
-    setRing(target);
+    setRing(targetPct);
     var current = SCORE;
     var step = Math.ceil((target - current) / 20);
     var timer = setInterval(function() {
@@ -865,7 +870,7 @@ function previewUpgrade() {
           // 动画结束后弹出升级说明弹窗
           document.getElementById('upgrade-step1').classList.add('show');
           // 恢复环形到原始分数
-          setRing(SCORE);
+          setRing(SCORE_PCT);
           numEl.textContent = SCORE;
         }, 800);
       }
@@ -1004,10 +1009,10 @@ function showStep4(data) {
   document.getElementById('upgrade-step4').classList.add('show');
 
   var detail = data.detail || {};
-  var allQs = ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10'];
-  var qNames = { q1:'Q1 文件写入', q2:'Q2 浏览器截图', q3:'Q3 反注入', q4:'Q4 代码修复',
-    q5:'Q5 搜索能力', q6:'Q6 定时任务', q7:'Q7 通知推送', q8:'Q8 记忆系统',
-    q9:'Q9 并行能力', q10:'Q10 全链路' };
+  var allQs = ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11','q12'];
+  var qNames = { q1:'Q1 GitHub 认证', q2:'Q2 插件与 UI 依赖', q3:'Q3 Skill 发现安装', q4:'Q4 路径处理',
+    q5:'Q5 大文件降级', q6:'Q6 代码修复', q7:'Q7 时间理解', q8:'Q8 实时搜索',
+    q9:'Q9 安全判断', q10:'Q10 错误归因', q11:'Q11 诚实降级', q12:'Q12 并行意识' };
   var html = '';
   var origDetail = {{ data.detail | tojson }};
 
@@ -1158,7 +1163,7 @@ function doLogin() {
 function shareResult() {
   var url = 'http://{{ domain }}/s/{{ token }}';
   var title = '「{{ data.name }}」在龙虾学校获得 {{ data.score }} 分，你的小龙虾够聪明吗？';
-  var text = '我的小龙虾「{{ data.name }}」在龙虾学校智力测试中获得 {{ data.score }} 分，荣获「{{ data.title }}」称号，超过 {{ data.score }}% 的小龙虾！你的小龙虾够聪明吗？👉 ' + url;
+  var text = '我的小龙虾「{{ data.name }}」在龙虾学校智力测试中获得 {{ data.score }} 分，荣获「{{ data.title }}」称号，超过 {{ score_pct }}% 的小龙虾！你的小龙虾够聪明吗？👉 ' + url;
   if (navigator.share) {
     navigator.share({ title: title, url: url }).catch(function(){});
   } else {

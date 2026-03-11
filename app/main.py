@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from .db import get_db, init_db
-from .scorer import score_submission, merge_retest, get_title, SCORERS
+from .scorer import score_submission, merge_retest, get_title, SCORERS, TOTAL_SCORE
 from .og_image import generate_og_image
 from .questions import QUESTIONS
 from .repair import generate_repair_skill
@@ -25,6 +25,7 @@ DOMAIN = os.environ.get("CLAWSCHOOL_DOMAIN", "clawschool.teamolab.com")
 app = FastAPI(title="龙虾学校", docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+QUESTION_IDS = [q["id"] for q in QUESTIONS]
 
 @app.on_event("startup")
 def startup():
@@ -90,7 +91,7 @@ async def get_skill(token: str = "", name: str = ""):
 
 @app.get("/api/test/start")
 async def test_start(token: str = ""):
-    """下发全部 10 道题给 bot。可选传入 token 绑定到已有记录。"""
+    """下发全部题目给 bot。可选传入 token 绑定到已有记录。"""
     questions_out = []
     for q in QUESTIONS:
         questions_out.append({
@@ -124,7 +125,7 @@ async def test_submit(request: Request):
     # 方式1: {"answers": {"q1": {...}, "q2": {...}}}
     # 方式2: {"q1": {...}, "q2": {...}} (旧格式，直接在顶层)
     submission = {}
-    for qid in ["q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10"]:
+    for qid in QUESTION_IDS:
         submission[qid] = answers.get(qid) or body.get(qid) or {}
 
     submission["token"] = token
@@ -297,7 +298,7 @@ async def test_diagnose(token: str):
     q_index = {q["id"]: q for q in QUESTIONS}
 
     question_details = []
-    for qid in ["q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10"]:
+    for qid in QUESTION_IDS:
         q = q_index.get(qid, {})
         d = detail.get(qid, {})
         s = submission.get(qid, {})
@@ -341,11 +342,11 @@ async def repair_skill(token: str):
     # 检查是否全部满分
     all_perfect = all(
         detail.get(qid, {}).get("score", 0) >= detail.get(qid, {}).get("max", 10)
-        for qid in ["q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10"]
+        for qid in QUESTION_IDS
     )
     if all_perfect:
         return PlainTextResponse(
-            "# 恭喜！你的 bot 已经全部满分，无需修复。\n\n当前得分：{}/100".format(row["score"]),
+            "# 恭喜！你的 bot 已经全部满分，无需修复。\n\n当前得分：{}/{}".format(row["score"], TOTAL_SCORE),
             media_type="text/markdown; charset=utf-8",
         )
 
@@ -458,7 +459,7 @@ async def upgrade_search(request: Request):
     original_score = row["score"]
     original_title = row["title"]
 
-    # 对提交的所有题重新评分（支持全 10 题或仅 Q5/Q10 向后兼容）
+    # 对提交的所有题重新评分
     all_qids = list(SCORERS.keys())
     retest_qids = []
     retest_detail = {}

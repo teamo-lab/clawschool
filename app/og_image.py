@@ -57,7 +57,7 @@ def generate_og_image(token: str, name: str, score: int, title: str, rank=None) 
 
     # 分数标注
     font_label = _get_font(36)
-    draw.text((60 + len(score_text) * 100, 340), "/ 100", fill="#888888", font=font_label)
+    draw.text((60 + len(score_text) * 100, 340), "/ 120", fill="#888888", font=font_label)
 
     # 称号
     font_title = _get_font(56)
