@@ -357,6 +357,7 @@ async def og_image(token: str):
 
 @app.post("/api/upgrade/search")
 async def upgrade_search(request: Request):
+    """向后兼容旧版 SKILL.md 的搜索升级端点。新版基础升级直接复用 /api/test/submit 同 token 覆盖。"""
     body = await request.json()
     token = body.get("token", "").strip()
     if not token:
@@ -374,15 +375,17 @@ async def upgrade_search(request: Request):
     original_score = row["score"]
     original_title = row["title"]
 
-    # 对重测的 Q5/Q10 评分
-    retest_qids = ["q5", "q10"]
+    # 对提交的所有题重新评分（支持全 10 题或仅 Q5/Q10 向后兼容）
+    all_qids = list(SCORERS.keys())
+    retest_qids = []
     retest_detail = {}
-    for qid in retest_qids:
+    for qid in all_qids:
         q_data = body.get(qid, {})
-        if isinstance(q_data, dict):
+        if isinstance(q_data, dict) and q_data:
             scorer = SCORERS[qid]
             pts, reason = scorer(q_data)
             retest_detail[qid] = {"score": pts, "max": 10, "reason": reason}
+            retest_qids.append(qid)
 
     merged = merge_retest(original_detail, retest_detail, retest_qids)
     now = _now_iso()
@@ -466,9 +469,13 @@ async def payment_create(request: Request):
     body = await request.json()
     phone = (body.get("phone") or "").strip()
     token = (body.get("token") or "").strip()
+    plan_type = (body.get("plan_type") or "basic").strip()
 
-    if not phone or not token:
-        raise HTTPException(400, "缺少手机号或 token")
+    if not token:
+        raise HTTPException(400, "缺少 token")
+
+    # plan_type: basic=1990(¥19.9), premium=9900(¥99)
+    amount = 1990 if plan_type == "basic" else 9900
 
     order_id = "PAY" + _gen_token(12)
     now = _now_iso()
@@ -476,19 +483,19 @@ async def payment_create(request: Request):
     db = get_db()
     try:
         db.execute(
-            "INSERT INTO payments (order_id, phone, token, amount, status, created_at) VALUES (?, ?, ?, 9900, 'pending', ?)",
-            (order_id, phone, token, now)
+            "INSERT INTO payments (order_id, phone, token, amount, status, created_at) VALUES (?, ?, ?, ?, 'pending', ?)",
+            (order_id, phone, token, amount, now)
         )
         db.commit()
     finally:
         db.close()
 
-    return {"success": True, "order_id": order_id, "amount": 99}
+    return {"success": True, "order_id": order_id, "amount": amount, "plan_type": plan_type}
 
 
 @app.post("/api/payment/confirm")
 async def payment_confirm(request: Request):
-    """用户点击"我已支付"后调用，标记订单为 submitted"""
+    """用户点击"我已支付"后调用。TODO: 接入真实支付系统验证。MVP 阶段前端点击即放行。"""
     body = await request.json()
     order_id = (body.get("order_id") or "").strip()
     token = (body.get("token") or "").strip()

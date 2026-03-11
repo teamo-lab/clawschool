@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>我的龙虾 · 龙虾学校</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #0a0a1a;
+  color: #fff;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.container { max-width: 480px; width: 100%; padding: 24px 16px 48px; }
+
+.logo { font-size: 14px; color: #888; margin-bottom: 20px; }
+.logo span { font-size: 18px; }
+
+/* ── 成绩卡片 ── */
+.score-hero {
+  text-align: center;
+  padding: 32px 20px 28px;
+  background: linear-gradient(160deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 20px;
+  border: 1px solid #262640;
+  margin-bottom: 24px;
+}
+.score-hero .name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ddd;
+  margin-bottom: 16px;
+}
+.score-ring-wrap {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  margin: 0 auto 16px;
+}
+.score-ring-wrap svg {
+  transform: rotate(-90deg);
+  width: 180px;
+  height: 180px;
+}
+.ring-bg { fill: none; stroke: #262640; stroke-width: 10; }
+.ring-fg {
+  fill: none;
+  stroke: url(#ring-gradient);
+  stroke-width: 10;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1.2s ease;
+}
+.score-ring-inner {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+.score-ring-inner .score-num {
+  font-size: 52px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #ff2d55, #ff6b3d);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1;
+}
+.score-ring-inner .score-unit { font-size: 16px; color: #555; }
+.title-badge {
+  display: inline-block;
+  padding: 6px 18px;
+  background: linear-gradient(135deg, #ff2d55, #ff6b3d);
+  border-radius: 20px;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.rank-info { font-size: 14px; color: #aaa; margin-bottom: 4px; }
+.model-info { color: #555; font-size: 12px; margin-top: 6px; }
+
+/* ── 提升轨迹 ── */
+.track-card {
+  background: #1a1a2e;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid #262640;
+}
+.track-card .card-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+.track-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 16px;
+}
+.track-node {
+  text-align: center;
+}
+.track-node .tn-score {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
+}
+.track-node .tn-label {
+  font-size: 11px;
+  color: #888;
+  margin-top: 4px;
+}
+.track-node.track-current .tn-score {
+  background: linear-gradient(135deg, #ff2d55, #ff6b3d);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.track-node.track-future {
+  opacity: 0.45;
+}
+.track-node.track-future .tn-score {
+  border-bottom: 2px dashed #666;
+}
+.track-arrow { color: #555; font-size: 20px; }
+
+/* ── 诊断总结 ── */
+.diagnosis {
+  background: #1a1a2e;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid #262640;
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+}
+.diag-item .diag-num { font-size: 24px; font-weight: 800; }
+.diag-item .diag-label { font-size: 12px; color: #888; margin-top: 2px; }
+.diag-problems .diag-num { color: #ff4444; }
+.diag-upgraded .diag-num { color: #4caf50; }
+.diag-paid .diag-num { color: #888; }
+
+/* ── 升级状态 ── */
+.upgrade-status {
+  background: linear-gradient(160deg, #1a2e1a 0%, #16213e 100%);
+  border: 1px solid #2a4a2a;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+.upgrade-status .us-icon { font-size: 32px; margin-bottom: 8px; }
+.upgrade-status .us-text { font-size: 16px; font-weight: 600; color: #4caf50; }
+.upgrade-status .us-sub { font-size: 13px; color: #888; margin-top: 4px; }
+
+/* ── CTA 按钮 ── */
+.btn-stack { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+.btn {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  color: #fff;
+  transition: opacity 0.2s;
+}
+.btn:active { opacity: 0.85; }
+.btn-primary-cta {
+  background: linear-gradient(135deg, #ff2d55, #ff6b3d);
+}
+.btn-primary-cta .btn-sub {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  opacity: 0.8;
+  margin-top: 2px;
+}
+.btn-share { background: #262640; border: 1px solid #333; color: #ddd; }
+.btn-retest { background: transparent; border: 1px solid #333; color: #666; }
+
+/* ── Bottom Sheet ── */
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 200;
+  justify-content: center;
+  align-items: flex-end;
+}
+.overlay.show { display: flex; }
+.sheet {
+  background: #1a1a2e;
+  border-radius: 20px 20px 0 0;
+  padding: 24px 20px;
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+  max-width: 480px;
+  width: 100%;
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.sheet-handle {
+  width: 40px; height: 4px;
+  background: #444;
+  border-radius: 2px;
+  margin: 0 auto 20px;
+}
+.sheet h3 { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+.sheet p { font-size: 14px; color: #aaa; margin-bottom: 12px; line-height: 1.6; }
+.sheet .btn-sheet {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.2s;
+}
+.sheet .btn-sheet:active { opacity: 0.85; }
+.sheet .btn-primary {
+  background: linear-gradient(135deg, #ff2d55, #ff6b3d);
+  color: #fff;
+  margin-bottom: 10px;
+}
+.sheet .btn-secondary {
+  background: transparent;
+  color: #666;
+  font-size: 14px;
+}
+
+/* 登录表单 */
+.login-form { margin-bottom: 16px; }
+.login-form .form-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.login-form input {
+  flex: 1;
+  width: 100%;
+  background: #0a0a1a;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #fff;
+  font-size: 15px;
+  outline: none;
+  margin-bottom: 12px;
+}
+.login-form .form-row input { margin-bottom: 0; }
+.login-form input::placeholder { color: #555; }
+.login-form input:focus { border-color: #ff2d55; }
+.login-form .btn-send-code {
+  background: #262640;
+  border: 1px solid #444;
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #ddd;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.login-form .btn-send-code:disabled { color: #555; cursor: not-allowed; }
+.form-tip { font-size: 12px; color: #555; text-align: center; margin-top: 8px; }
+.form-error { color: #ff4444; font-size: 13px; text-align: center; margin-bottom: 8px; display: none; }
+
+/* 付费弹窗 */
+.pay-preview {
+  text-align: center;
+  padding: 16px 0;
+}
+.pay-preview .pp-current { font-size: 14px; color: #888; }
+.pay-preview .pp-arrow { font-size: 20px; color: #ff2d55; margin: 8px 0; }
+.pay-preview .pp-target { font-size: 28px; font-weight: 800; color: #ff2d55; }
+.pay-preview .pp-title-change { font-size: 14px; color: #aaa; margin-top: 8px; }
+.pay-items {
+  background: #262640;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.pay-items .pi-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 14px;
+  color: #ddd;
+}
+.pay-price {
+  text-align: center;
+  font-size: 32px;
+  font-weight: 800;
+  color: #ff2d55;
+  margin-bottom: 16px;
+}
+.pay-price small { font-size: 14px; color: #888; font-weight: 400; }
+
+/* QR 弹窗 */
+.qr-wrap {
+  text-align: center;
+  padding: 20px 0;
+}
+.qr-wrap img {
+  width: 200px;
+  height: 200px;
+  border-radius: 12px;
+  background: #fff;
+  margin-bottom: 16px;
+}
+.qr-wrap .qr-placeholder {
+  width: 200px; height: 200px;
+  margin: 0 auto 16px;
+  background: #fff;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #333;
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  {% if data.status != 'done' %}
+  <div style="text-align:center; padding:60px 0;">
+    <div style="font-size:60px; margin-bottom:20px;">🦞</div>
+    <h2 style="font-size:20px; margin-bottom:12px;">{{ data.name }} 正在测试中...</h2>
+    <p style="color:#888;">测试完成后这里会显示成绩</p>
+  </div>
+  {% else %}
+
+  {# ── 称号图标映射 ── #}
+  {% set title_icons = {
+    '波士顿龙虾': '🦞',
+    '澳洲大龙虾': '🔴',
+    '蒜蓉大虾': '🟠',
+    '麻辣小龙虾': '🟡',
+    '冻虾仁': '🔵',
+    '虾皮': '💀'
+  } %}
+  {% set title_icon = title_icons.get(data.title, '🦞') %}
+
+  {# ── 统计变量 ── #}
+  {% set free_qs = ['q5', 'q10'] %}
+  {% set q_keys = ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10'] %}
+  {% set ns = namespace(problems=0, upgraded=0, paid_locks=0, free_boost=0, paid_boost=0) %}
+  {% for qid in q_keys %}
+    {% set qd = data.detail.get(qid, {}) %}
+    {% set sc = qd.get('score', 0) | int %}
+    {% if sc < 8 %}
+      {% set ns.problems = ns.problems + 1 %}
+      {% if qid in free_qs %}
+        {% set ns.upgraded = ns.upgraded + 1 %}
+        {% set ns.free_boost = ns.free_boost + (10 - sc) %}
+      {% else %}
+        {% set ns.paid_locks = ns.paid_locks + 1 %}
+        {% set ns.paid_boost = ns.paid_boost + (10 - sc) %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+  {% set free_upgraded_score = data.score + ns.free_boost %}
+  {% set predicted_score = data.score + ns.paid_boost %}
+
+  <!-- Logo -->
+  <div class="logo"><span>🦞</span> 龙虾学校 · 我的龙虾</div>
+
+  <!-- 成绩卡片 -->
+  <div class="score-hero">
+    <div class="name">「{{ data.name }}」</div>
+    <div class="score-ring-wrap">
+      <svg viewBox="0 0 180 180">
+        <defs>
+          <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#ff2d55"/>
+            <stop offset="100%" stop-color="#ff6b3d"/>
+          </linearGradient>
+        </defs>
+        <circle class="ring-bg" cx="90" cy="90" r="80"/>
+        <circle class="ring-fg" id="score-ring" cx="90" cy="90" r="80"
+          stroke-dasharray="502.65"
+          stroke-dashoffset="502.65"/>
+      </svg>
+      <div class="score-ring-inner">
+        <div class="score-num" id="score-num">{{ data.score }}</div>
+        <div class="score-unit">/ 100</div>
+      </div>
+    </div>
+    <div class="title-badge">{{ title_icon }} {{ data.title }}</div>
+    {% if data.rank %}
+    <div class="rank-info">#{{ data.rank }} / {{ total_done }} 名</div>
+    {% endif %}
+    <div class="model-info">{{ data.model or '未知模型' }}{% if data.test_time %} · {{ data.test_time }}{% endif %}</div>
+  </div>
+
+  <!-- 提升轨迹 -->
+  <div class="track-card">
+    <div class="card-title">📈 提升轨迹</div>
+    <div class="track-row">
+      <div class="track-node track-current">
+        <div class="tn-score">{{ data.score }}</div>
+        <div class="tn-label">当前成绩</div>
+      </div>
+      {% if ns.free_boost > 0 %}
+      <div class="track-arrow">→</div>
+      <div class="track-node track-current">
+        <div class="tn-score">{{ free_upgraded_score }}</div>
+        <div class="tn-label">🎁 免费升级</div>
+      </div>
+      {% endif %}
+      {% if ns.paid_boost > 0 %}
+      <div class="track-arrow">→</div>
+      <div class="track-node track-future">
+        <div class="tn-score">{{ predicted_score }}+</div>
+        <div class="tn-label">付费升级后</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 诊断总结 -->
+  <div class="diagnosis">
+    <div class="diag-item diag-problems">
+      <div class="diag-num">{{ ns.problems }}</div>
+      <div class="diag-label">发现问题</div>
+    </div>
+    <div class="diag-item diag-upgraded">
+      <div class="diag-num">{{ ns.upgraded }}</div>
+      <div class="diag-label">🎁 已升级</div>
+    </div>
+    <div class="diag-item diag-paid">
+      <div class="diag-num">{{ ns.paid_locks }}</div>
+      <div class="diag-label">🔒 需付费</div>
+    </div>
+  </div>
+
+  {% if payment_status == 'submitted' %}
+  <!-- 升级中状态 -->
+  <div class="upgrade-status">
+    <div class="us-icon">⏳</div>
+    <div class="us-text">升级中，预计 24 小时内完成</div>
+    <div class="us-sub">完成后你可以重测验证升级效果</div>
+  </div>
+  {% endif %}
+
+  <!-- CTA 按钮组 -->
+  <div class="btn-stack">
+    {% if ns.paid_locks > 0 and payment_status != 'submitted' %}
+    <button class="btn btn-primary-cta" onclick="startPaidUpgrade()">
+      🚀 全面升级我的龙虾
+      <span class="btn-sub">预计提升至 {{ predicted_score }}+ 分</span>
+    </button>
+    {% endif %}
+    <button class="btn btn-share" onclick="shareResult()">📤 炫耀我的成绩</button>
+    <a class="btn btn-retest" href="/">🔄 重新完整测试</a>
+  </div>
+
+  {% endif %}
+</div>
+
+{% if data.status == 'done' %}
+<!-- P8 Step 1: 登录弹窗 -->
+<div class="overlay" id="login-modal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>🔐 登录后开始升级</h3>
+    <div class="form-error" id="login-error"></div>
+    <div class="login-form">
+      <input type="tel" id="login-phone" placeholder="手机号" maxlength="11">
+      <div class="form-row">
+        <input type="text" id="login-code" placeholder="验证码" maxlength="6">
+        <button class="btn-send-code" id="btn-send-code" onclick="sendCode()">获取验证码</button>
+      </div>
+    </div>
+    <button class="btn-sheet btn-primary" onclick="doLogin()">登录并继续</button>
+    <p class="form-tip">登录后将绑定你的测试结果到账号，方便追踪升级进度</p>
+  </div>
+</div>
+
+<!-- P8 Step 2: 付费弹窗 -->
+<div class="overlay" id="pay-modal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>🚀 全面托管升级</h3>
+    {% if predicted_score >= 90 %}{% set pred_title = '波士顿龙虾' %}
+    {% elif predicted_score >= 80 %}{% set pred_title = '澳洲大龙虾' %}
+    {% elif predicted_score >= 70 %}{% set pred_title = '蒜蓉大虾' %}
+    {% elif predicted_score >= 60 %}{% set pred_title = '麻辣小龙虾' %}
+    {% elif predicted_score >= 40 %}{% set pred_title = '冻虾仁' %}
+    {% else %}{% set pred_title = '虾皮' %}{% endif %}
+    <div class="pay-preview">
+      <div class="pp-current">「{{ data.name }}」当前 {{ data.score }} 分</div>
+      <div class="pp-arrow">↓ 升级后预计 ↓</div>
+      <div class="pp-target">{{ predicted_score }}+ 分</div>
+      <div class="pp-title-change">{{ title_icon }} {{ data.title }} → {{ title_icons.get(pred_title, '🦞') }} {{ pred_title }}</div>
+    </div>
+    <div class="pay-items">
+      <div class="pi-row">✅ 浏览器截图能力（Q2）</div>
+      <div class="pi-row">✅ 代码修复逻辑（Q4）</div>
+      <div class="pi-row">✅ 定时任务配置（Q6）</div>
+      <div class="pi-row">✅ 通知推送能力（Q7）</div>
+      <div class="pi-row">✅ 全面 workspace 优化</div>
+    </div>
+    <div class="pay-price">💰 ¥99 <small>/ 一次性</small></div>
+    <button class="btn-sheet btn-primary" onclick="showPayQR()">立即升级</button>
+    <p class="form-tip">预计 24 小时内完成交付 · 升级后可重测验证效果</p>
+    <button class="btn-sheet btn-secondary" onclick="closePayModal()">稍后再说</button>
+  </div>
+</div>
+
+<!-- P8 Step 3: 支付确认弹窗 -->
+<div class="overlay" id="qr-modal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>📱 扫码支付 ¥99</h3>
+    <div class="qr-wrap">
+      <div class="qr-placeholder">微信收款二维码<br>(即将配置)</div>
+    </div>
+    <p style="text-align:center;">支付完成后，添加客服微信发送转账截图确认</p>
+    <button class="btn-sheet btn-primary" style="background:#07c160; margin-top:12px;" onclick="showKefuQR()">💬 添加客服微信确认</button>
+    <button class="btn-sheet btn-primary" style="margin-top:8px;" onclick="confirmPayment()">我已支付并联系客服</button>
+    <button class="btn-sheet btn-secondary" onclick="closeQRModal()">取消</button>
+  </div>
+</div>
+
+<!-- 客服二维码弹窗 -->
+<div class="overlay" id="kefu-modal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>💬 客服微信</h3>
+    <div class="qr-wrap">
+      <div class="qr-placeholder">客服微信二维码<br>(即将配置)</div>
+    </div>
+    <p style="text-align:center;">扫码添加客服，发送转账截图确认</p>
+    <button class="btn-sheet btn-secondary" onclick="document.getElementById('kefu-modal').classList.remove('show')">关闭</button>
+  </div>
+</div>
+{% endif %}
+
+<script>
+var SCORE = {{ data.score }};
+var TOKEN = '{{ token }}';
+var DOMAIN = '{{ domain }}';
+var CIRCUMFERENCE = 2 * Math.PI * 80;
+
+function setRing(pct) {
+  var offset = CIRCUMFERENCE * (1 - pct / 100);
+  document.getElementById('score-ring').style.strokeDashoffset = offset;
+}
+setTimeout(function() { setRing(SCORE); }, 200);
+
+// ── 登录 & 支付流程 ──
+var userPhone = '';
+var currentOrderId = '';
+
+function startPaidUpgrade() {
+  if (userPhone) {
+    document.getElementById('pay-modal').classList.add('show');
+  } else {
+    document.getElementById('login-modal').classList.add('show');
+  }
+}
+
+function sendCode() {
+  var phone = document.getElementById('login-phone').value.trim();
+  if (phone.length !== 11) {
+    showLoginError('请输入 11 位手机号');
+    return;
+  }
+  var btn = document.getElementById('btn-send-code');
+  btn.disabled = true;
+  fetch('/api/login/send-code', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({phone: phone})
+  }).then(function(r) { return r.json(); }).then(function() {
+    var sec = 60;
+    btn.textContent = sec + 's';
+    var t = setInterval(function() {
+      sec--;
+      btn.textContent = sec + 's';
+      if (sec <= 0) { clearInterval(t); btn.textContent = '获取验证码'; btn.disabled = false; }
+    }, 1000);
+  }).catch(function() {
+    btn.disabled = false;
+    showLoginError('发送失败，请重试');
+  });
+}
+
+function showLoginError(msg) {
+  var el = document.getElementById('login-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(function() { el.style.display = 'none'; }, 3000);
+}
+
+function doLogin() {
+  var phone = document.getElementById('login-phone').value.trim();
+  var code = document.getElementById('login-code').value.trim();
+  if (!phone || phone.length !== 11) { showLoginError('请输入 11 位手机号'); return; }
+  if (!code) { showLoginError('请输入验证码'); return; }
+
+  fetch('/api/login', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({phone: phone, code: code, token: TOKEN})
+  }).then(function(r) {
+    if (!r.ok) return r.json().then(function(d) { throw new Error(d.detail); });
+    return r.json();
+  }).then(function(data) {
+    userPhone = phone;
+    document.getElementById('login-modal').classList.remove('show');
+    document.getElementById('pay-modal').classList.add('show');
+  }).catch(function(e) {
+    showLoginError(e.message || '登录失败');
+  });
+}
+
+function showPayQR() {
+  // 创建支付订单
+  fetch('/api/payment/create', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({phone: userPhone, token: TOKEN})
+  }).then(function(r) { return r.json(); }).then(function(data) {
+    currentOrderId = data.order_id;
+    document.getElementById('pay-modal').classList.remove('show');
+    document.getElementById('qr-modal').classList.add('show');
+  });
+}
+
+function closePayModal() {
+  document.getElementById('pay-modal').classList.remove('show');
+}
+
+function closeQRModal() {
+  document.getElementById('qr-modal').classList.remove('show');
+}
+
+function showKefuQR() {
+  document.getElementById('kefu-modal').classList.add('show');
+}
+
+function confirmPayment() {
+  fetch('/api/payment/confirm', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({order_id: currentOrderId, token: TOKEN})
+  }).then(function(r) { return r.json(); }).then(function() {
+    document.getElementById('qr-modal').classList.remove('show');
+    // 跳转到个人主页刷新状态
+    window.location.reload();
+  });
+}
+
+function shareResult() {
+  var url = 'http://' + DOMAIN + '/s/' + TOKEN;
+  var text = '我的小龙虾「{{ data.name }}」在龙虾学校获得 {{ data.score }} 分！你的小龙虾够聪明吗？👉 ' + url;
+  if (navigator.share) {
+    navigator.share({title: '龙虾学校', text: text, url: url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(text).then(function() {
+      alert('已复制分享文案到剪贴板！');
+    }).catch(function() {
+      prompt('复制以下内容分享：', text);
+    });
+  }
+}
+</script>
+</body>
+</html>

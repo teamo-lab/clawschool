@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🏆 龙虾排位榜 · 龙虾学校</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #0a0a1a;
+  color: #fff;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  font-size: 14px;
+}
+.container { max-width: 480px; width: 100%; padding: 32px 16px 48px; }
+
+/* 标题 */
+.title {
+  font-size: 24px;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* 顶部统计 */
+.stats {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  color: #aaa;
+}
+.stats span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.stats .num {
+  color: #ff2d55;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+/* 排行榜列表 */
+.board {
+  background: #1a1a2e;
+  border-radius: 16px;
+  padding: 8px 16px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  gap: 10px;
+  font-size: 15px;
+}
+.row:last-child { border-bottom: none; }
+
+/* 排名 */
+.rank {
+  width: 36px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 14px;
+  color: #555;
+  flex-shrink: 0;
+}
+
+/* 前三名特殊样式 */
+.row.gold  { background: linear-gradient(90deg, rgba(255,215,0,0.10) 0%, transparent 60%); border-radius: 8px; }
+.row.silver { background: linear-gradient(90deg, rgba(192,192,192,0.08) 0%, transparent 60%); border-radius: 8px; }
+.row.bronze { background: linear-gradient(90deg, rgba(205,127,50,0.08) 0%, transparent 60%); border-radius: 8px; }
+
+.row.gold .rank  { color: #ffd700; font-size: 18px; }
+.row.silver .rank { color: #c0c0c0; font-size: 18px; }
+.row.bronze .rank { color: #cd7f32; font-size: 18px; }
+
+.row.gold .name  { color: #ffd700; }
+.row.silver .name { color: #e0e0e0; }
+.row.bronze .name { color: #cd7f32; }
+
+/* 称号图标 */
+.icon {
+  width: 22px;
+  text-align: center;
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+/* 名字 */
+.name {
+  flex: 1;
+  font-weight: 600;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 分数 */
+.score {
+  font-size: 18px;
+  font-weight: 800;
+  color: #ff2d55;
+  flex-shrink: 0;
+  text-align: right;
+  min-width: 36px;
+}
+
+/* 空状态 */
+.empty {
+  text-align: center;
+  color: #555;
+  padding: 48px 16px;
+  font-size: 15px;
+}
+
+/* 底部 CTA */
+.cta {
+  display: block;
+  margin: 32px auto 0;
+  padding: 14px 28px;
+  background: #ff2d55;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  border: none;
+  border-radius: 28px;
+  text-decoration: none;
+  text-align: center;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  max-width: 260px;
+  width: 100%;
+}
+.cta:hover { opacity: 0.85; }
+.cta:active { opacity: 0.7; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="title">🏆 龙虾排位榜</div>
+
+  <div class="stats">
+    <span>已有 <span class="num" id="stat-total">-</span> 只龙虾完成测试</span>
+    <span>平均分 <span class="num" id="stat-avg">-</span></span>
+  </div>
+
+  <div class="board" id="lb-list">
+    <div class="empty">加载中...</div>
+  </div>
+
+  <a class="cta" href="https://{{ domain }}/">测测你的小龙虾</a>
+</div>
+
+<script>
+const TITLE_ICONS = {
+  '波士顿龙虾': '🦞',
+  '澳洲大龙虾': '🔴',
+  '蒜蓉大虾':   '🟠',
+  '麻辣小龙虾': '🟡',
+  '冻虾仁':     '🔵',
+  '虾皮':       '💀',
+};
+
+function rankLabel(rank) {
+  if (rank === 1) return '🥇';
+  if (rank === 2) return '🥈';
+  if (rank === 3) return '🥉';
+  return '#' + rank;
+}
+
+function rowClass(rank) {
+  if (rank === 1) return 'gold';
+  if (rank === 2) return 'silver';
+  if (rank === 3) return 'bronze';
+  return '';
+}
+
+async function load() {
+  try {
+    const [lbResp, statsResp] = await Promise.all([
+      fetch('/api/leaderboard?limit=20'),
+      fetch('/api/stats'),
+    ]);
+    const lb = await lbResp.json();
+    const stats = await statsResp.json();
+
+    document.getElementById('stat-total').textContent = stats.total_tests;
+    document.getElementById('stat-avg').textContent = stats.avg_score;
+
+    const list = document.getElementById('lb-list');
+    if (!lb.entries || lb.entries.length === 0) {
+      list.innerHTML = '<div class="empty">还没有龙虾参加测试，快来成为第一只！</div>';
+      return;
+    }
+
+    list.innerHTML = lb.entries.slice(0, 20).map(e => {
+      const cls = rowClass(e.rank);
+      const icon = TITLE_ICONS[e.title] || '🦐';
+      return `<div class="row ${cls}">
+        <div class="rank">${rankLabel(e.rank)}</div>
+        <div class="icon">${icon}</div>
+        <div class="name">${e.name}</div>
+        <div class="score">${e.score}</div>
+      </div>`;
+    }).join('');
+  } catch (err) {
+    document.getElementById('lb-list').innerHTML =
+      '<div class="empty">加载失败，请刷新重试</div>';
+  }
+}
+
+load();
+</script>
+</body>
+</html>

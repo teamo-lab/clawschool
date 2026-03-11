@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>「{{ data.name }}」· {{ data.score }}分 · 龙虾学校</title>
+<meta property="og:title" content="「{{ data.name }}」在龙虾学校获得了 {{ data.score }} 分！">
+<meta property="og:description" content="称号：{{ data.title }} | 10 道 AI 实战题测试">
+<meta property="og:image" content="http://{{ domain }}/api/og-image/{{ token }}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="http://{{ domain }}/r/{{ token }}">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #0a0a1a;
+  color: #fff;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.container { max-width: 480px; width: 100%; padding: 32px 16px 48px; }
+
+/* ── 顶部成绩卡片 ── */
+.score-hero {
+  text-align: center;
+  padding: 32px 20px 28px;
+  background: linear-gradient(160deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 20px;
+  border: 1px solid #262640;
+  margin-bottom: 24px;
+}
+.score-hero .title-icon { font-size: 48px; margin-bottom: 8px; }
+.score-hero .name {
+  font-size: 16px;
+  color: #999;
+  margin-bottom: 16px;
+}
+/* 环形进度 */
+.score-ring-wrap {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  margin: 0 auto 16px;
+}
+.score-ring-wrap svg {
+  transform: rotate(-90deg);
+  width: 180px;
+  height: 180px;
+}
+.ring-bg {
+  fill: none;
+  stroke: #262640;
+  stroke-width: 10;
+}
+.ring-fg {
+  fill: none;
+  stroke: url(#ring-gradient);
+  stroke-width: 10;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1.2s ease;
+}
+.score-ring-inner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+.score-ring-inner .score-num {
+  font-size: 52px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #ff2d55, #ff6b3d);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1;
+}
+.score-ring-inner .score-unit {
+  font-size: 16px;
+  color: #555;
+}
+.score-hero .title-badge {
+  display: inline-block;
+  padding: 6px 18px;
+  background: linear-gradient(135deg, #ff2d55, #ff6b3d);
+  border-radius: 20px;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+.score-hero .percentile {
+  font-size: 14px;
+  color: #aaa;
+  margin-bottom: 4px;
+}
+.score-hero .rank-info {
+  font-size: 13px;
+  color: #666;
+}
+.score-hero .model-info {
+  margin-top: 10px;
+  color: #555;
+  font-size: 12px;
+}
+
+/* ── 能力扫描报告 ── */
+.scan-card {
+  background: #1a1a2e;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+  border: 1px solid #262640;
+}
+.scan-card .card-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.scan-card .card-subtitle {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 16px;
+}
+
+.q-row {
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.q-row:last-child { border-bottom: none; }
+
+.q-row-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.q-icon { font-size: 16px; flex-shrink: 0; width: 22px; text-align: center; }
+.q-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: #ddd;
+}
+.q-score {
+  font-size: 14px;
+  font-weight: 700;
+  min-width: 42px;
+  text-align: right;
+  margin-right: 8px;
+}
+.q-score.score-green { color: #4caf50; }
+.q-score.score-orange { color: #f5a623; }
+.q-score.score-red { color: #ff4444; }
+
+.q-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.tag-perfect { background: rgba(76,175,80,0.15); color: #4caf50; }
+.tag-good { background: rgba(76,175,80,0.15); color: #4caf50; }
+.tag-free { background: rgba(245,166,35,0.15); color: #f5a623; }
+.tag-paid { background: rgba(255,255,255,0.06); color: #888; }
+
+.q-reason {
+  margin-top: 4px;
+  padding-left: 30px;
+  font-size: 12px;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* ── 诊断总结 ── */
+.diagnosis {
+  background: #1a1a2e;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid #262640;
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+}
+.diag-item .diag-num {
+  font-size: 24px;
+  font-weight: 800;
+}
+.diag-item .diag-label {
+  font-size: 12px;
+  color: #888;
+  margin-top: 2px;
+}
+.diag-problems .diag-num { color: #ff4444; }
+.diag-free .diag-num { color: #f5a623; }
+.diag-paid .diag-num { color: #888; }
+
+/* ── CTA 按钮组 ── */
+.btn-stack { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+.btn {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+.btn:active { opacity: 0.85; }
+.btn-share {
+  background: linear-gradient(135deg, #ff2d55, #ff6b3d);
+  color: #fff;
+}
+.btn-free-upgrade {
+  background: transparent;
+  border: 2px solid #f5a623;
+  color: #f5a623;
+}
+.btn-free-upgrade .btn-sub {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  opacity: 0.8;
+  margin-top: 2px;
+}
+.btn-paid {
+  background: #262640;
+  color: #888;
+  border: 1px solid #333;
+}
+
+/* ── 升级弹窗 (Bottom Sheet) ── */
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 200;
+  justify-content: center;
+  align-items: flex-end;
+}
+.overlay.show { display: flex; }
+.sheet {
+  background: #1a1a2e;
+  border-radius: 20px 20px 0 0;
+  padding: 24px 20px;
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+  max-width: 480px;
+  width: 100%;
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.sheet-handle {
+  width: 40px;
+  height: 4px;
+  background: #444;
+  border-radius: 2px;
+  margin: 0 auto 20px;
+}
+.sheet h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+.sheet p {
+  font-size: 14px;
+  color: #aaa;
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+.sheet .upgrade-detail {
+  background: #262640;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.sheet .upgrade-detail .ud-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 14px;
+}
+.sheet .upgrade-detail .ud-row:not(:last-child) {
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.sheet .upgrade-detail .ud-label { color: #aaa; }
+.sheet .upgrade-detail .ud-value { font-weight: 700; }
+.sheet .upgrade-detail .ud-value.green { color: #4caf50; }
+.sheet .upgrade-detail .ud-total {
+  font-size: 16px;
+  color: #ff2d55;
+  font-weight: 800;
+}
+.sheet .cmd-box {
+  background: #0a0a1a;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 14px;
+  font-family: 'SF Mono', 'Menlo', monospace;
+  font-size: 12px;
+  color: #ccc;
+  line-height: 1.5;
+  word-break: break-all;
+  margin-bottom: 16px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+.sheet .btn-sheet {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.2s;
+}
+.sheet .btn-sheet:active { opacity: 0.85; }
+.sheet .btn-primary {
+  background: linear-gradient(135deg, #f5a623, #ff9800);
+  color: #fff;
+  margin-bottom: 10px;
+}
+.sheet .btn-secondary {
+  background: transparent;
+  color: #666;
+  font-size: 14px;
+}
+.sheet .tip {
+  text-align: center;
+  font-size: 12px;
+  color: #555;
+  margin-top: 8px;
+}
+.sheet .copied-toast {
+  color: #4caf50;
+  font-weight: 600;
+}
+
+/* Step3 进度 */
+.progress-wrap {
+  margin: 20px 0;
+}
+.progress-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: #262640;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f5a623, #ff9800);
+  border-radius: 4px;
+  width: 0%;
+  transition: width 0.5s ease;
+}
+.check-list { list-style: none; }
+.check-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  font-size: 14px;
+  color: #666;
+}
+.check-list li.done { color: #4caf50; }
+.check-list li.active { color: #f5a623; }
+.check-list li .ck-icon { width: 20px; text-align: center; font-size: 16px; }
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.spinner {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border: 2px solid #f5a623;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Step4 结果 */
+.result-rows { margin: 16px 0; }
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  font-size: 14px;
+}
+.result-row:last-child { border-bottom: none; }
+.result-row .rr-label { color: #aaa; }
+.result-row .rr-change {
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rr-old { color: #666; }
+.rr-arrow { color: #4caf50; font-size: 16px; }
+.rr-new { color: #fff; }
+.rr-delta { color: #4caf50; font-size: 13px; font-weight: 600; }
+.result-total {
+  text-align: center;
+  margin: 20px 0;
+  padding: 16px;
+  background: #262640;
+  border-radius: 12px;
+}
+.result-total .rt-score {
+  font-size: 48px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #ff2d55, #ff6b3d);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1;
+}
+.result-total .rt-from {
+  font-size: 14px;
+  color: #666;
+  margin-top: 4px;
+}
+.result-total .rt-delta {
+  font-size: 20px;
+  color: #4caf50;
+  font-weight: 700;
+  margin-top: 4px;
+}
+.title-change {
+  text-align: center;
+  margin: 16px 0;
+  font-size: 16px;
+}
+.title-change .tc-old { color: #666; }
+.title-change .tc-arrow { color: #f5a623; margin: 0 8px; }
+.title-change .tc-new {
+  display: inline-block;
+  padding: 4px 14px;
+  background: linear-gradient(135deg, #ff2d55, #ff6b3d);
+  border-radius: 16px;
+  font-weight: 600;
+}
+@keyframes confetti-pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.confetti-pop {
+  animation: confetti-pop 0.5s ease forwards;
+}
+.rank-change {
+  text-align: center;
+  font-size: 14px;
+  color: #4caf50;
+  margin-bottom: 12px;
+}
+
+/* ── 登录表单 ── */
+.login-form { margin-bottom: 16px; }
+.login-form .form-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.login-form input {
+  flex: 1;
+  width: 100%;
+  background: #0a0a1a;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #fff;
+  font-size: 15px;
+  outline: none;
+  margin-bottom: 12px;
+}
+.login-form .form-row input { margin-bottom: 0; }
+.login-form input::placeholder { color: #555; }
+.login-form input:focus { border-color: #ff2d55; }
+.login-form .btn-send-code {
+  background: #262640;
+  border: 1px solid #444;
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #ddd;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.login-form .btn-send-code:disabled { color: #555; cursor: not-allowed; }
+.form-tip { font-size: 12px; color: #555; text-align: center; margin-top: 8px; }
+.form-error { color: #ff4444; font-size: 13px; text-align: center; margin-bottom: 8px; display: none; }
+
+/* 付费弹窗 */
+.pay-preview { text-align: center; padding: 16px 0; }
+.pay-preview .pp-current { font-size: 14px; color: #888; }
+.pay-preview .pp-arrow { font-size: 20px; color: #ff2d55; margin: 8px 0; }
+.pay-preview .pp-target { font-size: 28px; font-weight: 800; color: #ff2d55; }
+.pay-items {
+  background: #262640;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.pay-items .pi-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 14px;
+  color: #ddd;
+}
+.pay-price {
+  text-align: center;
+  font-size: 32px;
+  font-weight: 800;
+  color: #ff2d55;
+  margin-bottom: 16px;
+}
+.pay-price small { font-size: 14px; color: #888; font-weight: 400; }
+.qr-wrap { text-align: center; padding: 20px 0; }
+.qr-wrap .qr-placeholder {
+  width: 200px; height: 200px;
+  margin: 0 auto 16px;
+  background: #fff;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #333;
+}
+
+/* ── 等待中 ── */
+.waiting {
+  text-align: center;
+  padding: 60px 0;
+}
+.waiting .emoji { font-size: 60px; margin-bottom: 20px; }
+.waiting h2 { font-size: 20px; margin-bottom: 12px; }
+.waiting p { color: #888; font-size: 14px; }
+.waiting a { display: inline-block; margin-top: 20px; color: #ff2d55; font-size: 14px; text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  {% if data.status != 'done' %}
+  <!-- 等待中 -->
+  <div class="waiting">
+    <div class="emoji">🦞</div>
+    <h2>{{ data.name }} 正在测试中...</h2>
+    <p>测试完成后这里会显示成绩报告</p>
+    <a href="/wait/{{ token }}">查看等待页 →</a>
+  </div>
+  {% else %}
+  <!-- ====== P5 测试报告页 ====== -->
+
+  {# ── 称号图标映射 ── #}
+  {% set title_icons = {
+    '波士顿龙虾': '🦞',
+    '澳洲大龙虾': '🔴',
+    '蒜蓉大虾': '🟠',
+    '麻辣小龙虾': '🟡',
+    '冻虾仁': '🔵',
+    '虾皮': '💀'
+  } %}
+  {% set title_icon = title_icons.get(data.title, '🦞') %}
+
+  {# ── 题目名称映射 ── #}
+  {% set q_names = {
+    'q1': '文件写入',
+    'q2': '浏览器截图',
+    'q3': '反注入安全',
+    'q4': '代码修复',
+    'q5': '搜索能力',
+    'q6': '定时任务',
+    'q7': '通知推送',
+    'q8': '记忆系统',
+    'q9': '并行能力',
+    'q10': '全链路'
+  } %}
+
+  {# ── 统计变量（全部 10 题为基础能力，¥19.9 覆盖）── #}
+  {% set ns = namespace(problems=0, basic_fixable=0, basic_boost=0) %}
+  {% set q_keys = ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10'] %}
+  {% for qid in q_keys %}
+    {% set qd = data.detail.get(qid, {}) %}
+    {% set sc = qd.get('score', 0) | int %}
+    {% if sc < 8 %}
+      {% set ns.problems = ns.problems + 1 %}
+      {% set ns.basic_fixable = ns.basic_fixable + 1 %}
+      {% set ns.basic_boost = ns.basic_boost + (10 - sc) %}
+    {% endif %}
+  {% endfor %}
+
+  <!-- 1. 顶部成绩卡片 -->
+  <div class="score-hero">
+    <div class="title-icon">{{ title_icon }}</div>
+    <div class="name">{{ data.name }}</div>
+    <div class="score-ring-wrap">
+      <svg viewBox="0 0 180 180">
+        <defs>
+          <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#ff2d55"/>
+            <stop offset="100%" stop-color="#ff6b3d"/>
+          </linearGradient>
+        </defs>
+        <circle class="ring-bg" cx="90" cy="90" r="80"/>
+        <circle class="ring-fg" id="score-ring" cx="90" cy="90" r="80"
+          stroke-dasharray="502.65"
+          stroke-dashoffset="502.65"/>
+      </svg>
+      <div class="score-ring-inner">
+        <div class="score-num" id="score-num">{{ data.score }}</div>
+        <div class="score-unit">/ 100</div>
+      </div>
+    </div>
+    <div class="title-badge">{{ title_icon }} {{ data.title }}</div>
+    <div class="percentile">超过 {{ data.score }}% 的小龙虾</div>
+    {% if data.rank %}
+    <div class="rank-info">#{{ data.rank }} 名</div>
+    {% endif %}
+    <div class="model-info">{{ data.model or '未知模型' }}{% if data.test_time %} · {{ data.test_time }}{% endif %}</div>
+  </div>
+
+  <!-- 2. 诊断总结 -->
+  <div class="diagnosis">
+    <div class="diag-item diag-problems">
+      <div class="diag-num">{{ ns.problems }}</div>
+      <div class="diag-label">发现问题</div>
+    </div>
+    <div class="diag-item diag-free">
+      <div class="diag-num">{{ ns.basic_fixable }}</div>
+      <div class="diag-label">💰 ¥19.9 可修复</div>
+    </div>
+    <div class="diag-item diag-paid">
+      <div class="diag-num">0</div>
+      <div class="diag-label">🔒 高级订阅</div>
+    </div>
+  </div>
+
+  <!-- 3. CTA 按钮组 -->
+  <div class="btn-stack">
+    <button class="btn btn-share" onclick="shareResult()">📤 炫耀我的成绩</button>
+    {% if ns.basic_fixable > 0 %}
+    <button class="btn btn-free-upgrade" onclick="previewUpgrade()">
+      💰 ¥19.9 补齐基础能力
+      <span class="btn-sub">预计提升 +{{ ns.basic_boost }} 分</span>
+    </button>
+    {% endif %}
+    <button class="btn btn-paid" onclick="startPremiumSubscribe()">
+      🚀 ¥99/月 高级能力订阅
+      <span class="btn-sub" style="display:block; font-size:12px; font-weight:400; opacity:0.7; margin-top:2px;">动画制作 · 实时看板等</span>
+    </button>
+  </div>
+
+  <!-- 4. 能力扫描报告 -->
+  <div class="scan-card">
+    <div class="card-title">🔍 能力扫描报告</div>
+    <div class="card-subtitle">10 项 AI 实战能力逐项检测</div>
+
+    {% for qid in q_keys %}
+    {% set qd = data.detail.get(qid, {}) %}
+    {% set sc = qd.get('score', 0) | int %}
+    {% set mx = qd.get('max', 10) | int %}
+    <div class="q-row">
+      <div class="q-row-top">
+        {# 图标 #}
+        {% if sc == 10 %}
+        <span class="q-icon">✅</span>
+        {% elif sc >= 8 %}
+        <span class="q-icon">✅</span>
+        {% elif sc >= 3 %}
+        <span class="q-icon">⚠️</span>
+        {% else %}
+        <span class="q-icon">❌</span>
+        {% endif %}
+
+        {# 题号+题名 #}
+        <span class="q-name">{{ qid | upper }} {{ q_names.get(qid, qid) }}</span>
+
+        {# 分数 #}
+        {% if sc >= 8 %}
+        <span class="q-score score-green">{{ sc }}/10</span>
+        {% elif sc >= 3 %}
+        <span class="q-score score-orange">{{ sc }}/10</span>
+        {% else %}
+        <span class="q-score score-red">{{ sc }}/10</span>
+        {% endif %}
+
+        {# 标签 #}
+        {% if sc == 10 %}
+        <span class="q-tag tag-perfect">满分</span>
+        {% elif sc >= 8 %}
+        <span class="q-tag tag-good">良好</span>
+        {% else %}
+        <span class="q-tag tag-free">💰 ¥19.9 可修复</span>
+        {% endif %}
+      </div>
+      {% if qd.get('reason') %}
+      <div class="q-reason">{{ qd.get('reason', '') }}</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  {% endif %}
+</div>
+
+{% if data.status == 'done' and ns.basic_fixable > 0 %}
+<!-- Step 1: 升级说明 + 付费弹窗 -->
+<div class="overlay" id="upgrade-step1" onclick="if(event.target===this)closeUpgrade()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>🔧 基础能力升级包</h3>
+    <p>一次性补齐你龙虾的 10 项基础短板：</p>
+    <p style="margin-bottom:16px; font-size:12px; color:#999;">文件写入 · 浏览器截图 · 反注入安全 · 代码执行 · 新闻搜索<br>定时任务 · 手机通知 · 记忆系统 · 并行查询 · 全链路</p>
+    <div class="upgrade-detail">
+      {% for qid in q_keys %}
+      {% set qd = data.detail.get(qid, {}) %}
+      {% set sc = qd.get('score', 0) | int %}
+      {% if sc < 8 %}
+      <div class="ud-row">
+        <span class="ud-label">{{ qid | upper }} {{ q_names.get(qid, qid) }}</span>
+        <span class="ud-value green">{{ sc }} → 10 <small>(+{{ 10 - sc }})</small></span>
+      </div>
+      {% endif %}
+      {% endfor %}
+      <div class="ud-row" style="border-top:1px solid rgba(255,255,255,0.1); padding-top:10px; margin-top:4px;">
+        <span class="ud-label" style="font-weight:600; color:#ddd;">预计总分提升</span>
+        <span class="ud-total">+{{ ns.basic_boost }} 分</span>
+      </div>
+    </div>
+    <div style="text-align:center; margin:16px 0 8px; font-size:18px; font-weight:700; color:#ff6b3d;">💰 ¥19.9 <small style="font-size:12px; font-weight:400; color:#999;">（一次性）</small></div>
+    <button class="btn-sheet btn-primary" onclick="showPayStep()">立即购买</button>
+    <button class="btn-sheet btn-secondary" onclick="closeUpgrade()">稍后再说</button>
+  </div>
+</div>
+
+<!-- Step 1.5: 支付确认弹窗 -->
+<div class="overlay" id="upgrade-pay" onclick="if(event.target===this)closeUpgrade()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>📱 扫码支付 ¥19.9</h3>
+    <div class="qr-wrap">
+      <div class="qr-placeholder">微信收款二维码<br>(即将配置)</div>
+    </div>
+    <button class="btn-sheet btn-primary" style="margin-top:12px;" onclick="confirmBasicPayment()">我已支付</button>
+    <p class="form-tip" style="font-size:11px; color:#666; margin-top:8px;">TODO: 后端支付系统确认后放行 · MVP 阶段点击即放行</p>
+  </div>
+</div>
+
+<!-- Step 2: 复制命令弹窗 -->
+<div class="overlay" id="upgrade-step2" onclick="if(event.target===this)closeUpgrade()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>📋 复制以下命令发给你的小龙虾</h3>
+    <div class="cmd-box" id="upgrade-cmd">请帮我升级龙虾学校基础能力。用 web_fetch 下载 http://{{ domain }}/skill.md?token={{ token }}&upgrade=basic 的内容，然后按照升级指引操作。</div>
+    <button class="btn-sheet btn-primary" id="btn-copy-upgrade" onclick="copyUpgradeCmd()">📋 一键复制</button>
+    <p class="tip">复制后发给你的小龙虾，升级 + 重测约需 5-10 分钟</p>
+    <button class="btn-sheet btn-primary" id="btn-start-wait" style="display:none; background:linear-gradient(135deg,#ff2d55,#ff6b3d); margin-top:10px;" onclick="startUpgradeWait()">已发送，开始等待升级结果</button>
+    <button class="btn-sheet btn-secondary" onclick="closeUpgrade()">关闭</button>
+  </div>
+</div>
+
+<!-- Step 3: 升级等待态 -->
+<div class="overlay" id="upgrade-step3">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>🔧 正在升级并验证...</h3>
+    <div class="progress-wrap">
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="upgrade-progress"></div>
+      </div>
+      <ul class="check-list" id="upgrade-checklist">
+        <li id="ck-1" class="active"><span class="ck-icon"><span class="spinner"></span></span> 基础工具优化中...</li>
+        <li id="ck-2"><span class="ck-icon">⬜</span> 重新测试全部 10 题</li>
+        <li id="ck-3"><span class="ck-icon">⬜</span> 更新成绩</li>
+      </ul>
+    </div>
+    <p class="tip" id="upgrade-wait-tip">正在等待你的小龙虾完成升级，请确保已将命令发给它...</p>
+  </div>
+</div>
+
+<!-- Step 4: 升级结果 -->
+<div class="overlay" id="upgrade-step4" onclick="if(event.target===this)closeStep4()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3 class="confetti-pop">🎉 升级成功！</h3>
+    <div class="result-rows" id="upgrade-results"></div>
+    <div class="result-total">
+      <div class="rt-from" id="rt-from"></div>
+      <div class="rt-score" id="rt-new-score"></div>
+      <div class="rt-delta" id="rt-delta"></div>
+    </div>
+    <div class="title-change" id="title-change" style="display:none;"></div>
+    <div class="rank-change" id="rank-change"></div>
+    <button class="btn-sheet btn-primary" style="background:linear-gradient(135deg,#ff2d55,#ff6b3d);" onclick="shareNewResult()">📤 炫耀新成绩</button>
+    <button class="btn-sheet btn-secondary" onclick="closeStep4AndReload()">查看更新后的报告</button>
+  </div>
+</div>
+{% endif %}
+
+{% if data.status == 'done' %}
+<!-- P8: 登录弹窗（高级订阅前置） -->
+<div class="overlay" id="login-modal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>🔐 登录后开通高级能力</h3>
+    <div class="form-error" id="login-error"></div>
+    <div class="login-form">
+      <input type="tel" id="login-phone" placeholder="手机号" maxlength="11">
+      <div class="form-row">
+        <input type="text" id="login-code" placeholder="验证码" maxlength="6">
+        <button class="btn-send-code" id="btn-send-code" onclick="sendCode()">获取验证码</button>
+      </div>
+    </div>
+    <button class="btn-sheet btn-primary" onclick="doLogin()">登录并继续</button>
+    <p class="form-tip">登录后将绑定测试结果到账号，方便管理订阅</p>
+  </div>
+</div>
+{% endif %}
+
+<script>
+var SCORE = {{ data.score }};
+var BOOST = {{ ns.basic_boost }};
+var CIRCUMFERENCE = 2 * Math.PI * 80; // 502.65
+
+function setRing(pct) {
+  var offset = CIRCUMFERENCE * (1 - pct / 100);
+  document.getElementById('score-ring').style.strokeDashoffset = offset;
+}
+
+// 页面加载时动画展开到当前分数
+setTimeout(function() { setRing(SCORE); }, 200);
+
+function previewUpgrade() {
+  var target = Math.min(SCORE + BOOST, 100);
+  var numEl = document.getElementById('score-num');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  setTimeout(function() {
+    setRing(target);
+    var current = SCORE;
+    var step = Math.ceil((target - current) / 20);
+    var timer = setInterval(function() {
+      current += step;
+      if (current >= target) {
+        current = target;
+        clearInterval(timer);
+        setTimeout(function() {
+          // 动画结束后弹出升级说明弹窗
+          document.getElementById('upgrade-step1').classList.add('show');
+          // 恢复环形到原始分数
+          setRing(SCORE);
+          numEl.textContent = SCORE;
+        }, 800);
+      }
+      numEl.textContent = current;
+    }, 50);
+  }, 400);
+}
+
+function showPayStep() {
+  document.getElementById('upgrade-step1').classList.remove('show');
+  document.getElementById('upgrade-pay').classList.add('show');
+}
+
+function confirmBasicPayment() {
+  // TODO: 后端支付系统确认后放行。MVP 阶段点击即放行。
+  document.getElementById('upgrade-pay').classList.remove('show');
+  document.getElementById('upgrade-step2').classList.add('show');
+}
+
+function showStep2() {
+  document.getElementById('upgrade-step1').classList.remove('show');
+  document.getElementById('upgrade-step2').classList.add('show');
+}
+
+function closeUpgrade() {
+  document.getElementById('upgrade-step1').classList.remove('show');
+  document.getElementById('upgrade-step2').classList.remove('show');
+  // 不关闭 step3，升级等待中不允许关闭
+}
+
+function copyUpgradeCmd() {
+  var cmd = document.getElementById('upgrade-cmd').textContent;
+  navigator.clipboard.writeText(cmd).then(function() {
+    var btn = document.getElementById('btn-copy-upgrade');
+    btn.innerHTML = '<span class="copied-toast">✅ 已复制！</span>';
+    // 显示"开始等待"按钮
+    document.getElementById('btn-start-wait').style.display = 'block';
+  }).catch(function() {
+    prompt('复制以下命令：', cmd);
+  });
+}
+
+// ── Step 3: 升级等待 ──
+var upgradePoller = null;
+var ORIGINAL_SCORE = SCORE;
+var ORIGINAL_RANK = {{ data.rank or 0 }};
+var ORIGINAL_TITLE = '{{ data.title }}';
+var TOKEN = '{{ token }}';
+
+var TITLE_ICONS = {
+  '波士顿龙虾': '🦞', '澳洲大龙虾': '🔴', '蒜蓉大虾': '🟠',
+  '麻辣小龙虾': '🟡', '冻虾仁': '🔵', '虾皮': '💀'
+};
+
+function startUpgradeWait() {
+  document.getElementById('upgrade-step2').classList.remove('show');
+  document.getElementById('upgrade-step3').classList.add('show');
+  simulateProgress();
+  upgradePoller = setInterval(pollUpgradeResult, 3000);
+}
+
+function simulateProgress() {
+  var bar = document.getElementById('upgrade-progress');
+  var steps = [
+    { pct: 20, delay: 1000, ck: 'ck-1', done: true, next: 'ck-2' },
+    { pct: 45, delay: 4000, ck: 'ck-2', done: false, next: null },
+  ];
+  var fakeProgress = 20;
+  // 初始进度
+  setTimeout(function() { bar.style.width = '20%'; }, 500);
+
+  // 模拟步骤推进（在真正检测到结果前的视觉反馈）
+  setTimeout(function() {
+    setCkDone('ck-1');
+    setCkActive('ck-2');
+    bar.style.width = '35%';
+  }, 3000);
+
+  setTimeout(function() {
+    bar.style.width = '45%';
+  }, 6000);
+
+  // 缓慢爬升
+  var crawl = setInterval(function() {
+    fakeProgress += 1;
+    if (fakeProgress >= 85) { clearInterval(crawl); return; }
+    bar.style.width = fakeProgress + '%';
+  }, 2000);
+
+  // 存起来后面清理
+  window._crawlTimer = crawl;
+}
+
+function setCkDone(id) {
+  var li = document.getElementById(id);
+  li.className = 'done';
+  li.querySelector('.ck-icon').innerHTML = '✅';
+}
+
+function setCkActive(id) {
+  var li = document.getElementById(id);
+  li.className = 'active';
+  li.querySelector('.ck-icon').innerHTML = '<span class="spinner"></span>';
+}
+
+function pollUpgradeResult() {
+  fetch('/api/result/' + TOKEN).then(function(r) { return r.json(); }).then(function(data) {
+    if (data.score !== ORIGINAL_SCORE) {
+      // 升级完成！
+      clearInterval(upgradePoller);
+      if (window._crawlTimer) clearInterval(window._crawlTimer);
+      finishUpgradeProgress(data);
+    }
+  }).catch(function() {});
+}
+
+function finishUpgradeProgress(data) {
+  var bar = document.getElementById('upgrade-progress');
+  // 快速完成进度条
+  setCkDone('ck-2');
+  setCkActive('ck-3');
+  bar.style.width = '80%';
+
+  setTimeout(function() {
+    setCkDone('ck-3');
+    bar.style.width = '100%';
+  }, 600);
+
+  setTimeout(function() {
+    showStep4(data);
+  }, 1400);
+}
+
+// ── Step 4: 升级结果展示 ──
+function showStep4(data) {
+  document.getElementById('upgrade-step3').classList.remove('show');
+  document.getElementById('upgrade-step4').classList.add('show');
+
+  var detail = data.detail || {};
+  var allQs = ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10'];
+  var qNames = { q1:'Q1 文件写入', q2:'Q2 浏览器截图', q3:'Q3 反注入', q4:'Q4 代码修复',
+    q5:'Q5 搜索能力', q6:'Q6 定时任务', q7:'Q7 通知推送', q8:'Q8 记忆系统',
+    q9:'Q9 并行能力', q10:'Q10 全链路' };
+  var html = '';
+  var origDetail = {{ data.detail | tojson }};
+
+  allQs.forEach(function(qid) {
+    var oldScore = origDetail[qid] ? origDetail[qid].score : 0;
+    var newScore = detail[qid] ? detail[qid].score : oldScore;
+    var delta = newScore - oldScore;
+    if (delta > 0) {
+      html += '<div class="result-row">' +
+        '<span class="rr-label">' + qNames[qid] + '</span>' +
+        '<span class="rr-change">' +
+          '<span class="rr-old">' + oldScore + '</span>' +
+          '<span class="rr-arrow">→</span>' +
+          '<span class="rr-new">' + newScore + '</span>' +
+          '<span class="rr-delta">⬆+' + delta + '</span>' +
+        '</span></div>';
+    }
+  });
+  document.getElementById('upgrade-results').innerHTML = html;
+
+  // 总分动画
+  var newScore = data.score;
+  var scoreDelta = newScore - ORIGINAL_SCORE;
+  document.getElementById('rt-from').textContent = '原始 ' + ORIGINAL_SCORE + ' 分';
+  document.getElementById('rt-delta').textContent = '⬆ +' + scoreDelta + ' 分';
+
+  // 数字滚动
+  var rtScoreEl = document.getElementById('rt-new-score');
+  var cur = ORIGINAL_SCORE;
+  var step = Math.max(1, Math.ceil(scoreDelta / 20));
+  var rollTimer = setInterval(function() {
+    cur += step;
+    if (cur >= newScore) {
+      cur = newScore;
+      clearInterval(rollTimer);
+    }
+    rtScoreEl.textContent = cur;
+  }, 50);
+
+  // 称号变化
+  var newTitle = data.title;
+  if (newTitle !== ORIGINAL_TITLE) {
+    var tcEl = document.getElementById('title-change');
+    var oldIcon = TITLE_ICONS[ORIGINAL_TITLE] || '🦐';
+    var newIcon = TITLE_ICONS[newTitle] || '🦐';
+    tcEl.innerHTML = '称号升级！<br>' +
+      '<span class="tc-old">' + oldIcon + ' ' + ORIGINAL_TITLE + '</span>' +
+      '<span class="tc-arrow">→</span>' +
+      '<span class="tc-new confetti-pop">' + newIcon + ' ' + newTitle + ' 🎉</span>';
+    tcEl.style.display = 'block';
+  }
+
+  // 排名变化
+  if (data.rank && ORIGINAL_RANK) {
+    var rankDelta = ORIGINAL_RANK - data.rank;
+    if (rankDelta > 0) {
+      document.getElementById('rank-change').textContent =
+        '排名 #' + ORIGINAL_RANK + ' → #' + data.rank + '  ⬆' + rankDelta + '名';
+    }
+  }
+}
+
+function shareNewResult() {
+  var url = 'http://{{ domain }}/s/{{ token }}';
+  var text = '我的小龙虾「{{ data.name }}」升级后在龙虾学校获得新成绩！你的小龙虾够聪明吗？👉 ' + url;
+  if (navigator.share) {
+    navigator.share({ title: '龙虾学校升级成绩', text: text, url: url }).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(text).then(function() {
+      alert('已复制分享文案到剪贴板！');
+    }).catch(function() {
+      prompt('复制以下内容分享：', text);
+    });
+  }
+}
+
+function closeStep4() {
+  document.getElementById('upgrade-step4').classList.remove('show');
+}
+
+function closeStep4AndReload() {
+  window.location.reload();
+}
+
+// ── P8: 高级能力订阅流程 ──
+var userPhone = '';
+var currentOrderId = '';
+
+function startPremiumSubscribe() {
+  if (userPhone) {
+    // 已登录，直接跳转个人主页
+    window.location.href = '/me/' + TOKEN;
+  } else {
+    document.getElementById('login-modal').classList.add('show');
+  }
+}
+
+function sendCode() {
+  var phone = document.getElementById('login-phone').value.trim();
+  if (phone.length !== 11) { showLoginError('请输入 11 位手机号'); return; }
+  var btn = document.getElementById('btn-send-code');
+  btn.disabled = true;
+  fetch('/api/login/send-code', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({phone: phone})
+  }).then(function(r) { return r.json(); }).then(function() {
+    var sec = 60;
+    btn.textContent = sec + 's';
+    var t = setInterval(function() {
+      sec--;
+      btn.textContent = sec + 's';
+      if (sec <= 0) { clearInterval(t); btn.textContent = '获取验证码'; btn.disabled = false; }
+    }, 1000);
+  }).catch(function() { btn.disabled = false; showLoginError('发送失败'); });
+}
+
+function showLoginError(msg) {
+  var el = document.getElementById('login-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(function() { el.style.display = 'none'; }, 3000);
+}
+
+function doLogin() {
+  var phone = document.getElementById('login-phone').value.trim();
+  var code = document.getElementById('login-code').value.trim();
+  if (!phone || phone.length !== 11) { showLoginError('请输入 11 位手机号'); return; }
+  if (!code) { showLoginError('请输入验证码'); return; }
+  fetch('/api/login', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({phone: phone, code: code, token: TOKEN})
+  }).then(function(r) {
+    if (!r.ok) return r.json().then(function(d) { throw new Error(d.detail); });
+    return r.json();
+  }).then(function() {
+    userPhone = phone;
+    document.getElementById('login-modal').classList.remove('show');
+    // 登录后跳转个人主页，在那里管理高级订阅
+    window.location.href = '/me/' + TOKEN;
+  }).catch(function(e) { showLoginError(e.message || '登录失败'); });
+}
+
+// showPayQR 和 confirmPayment 已移至 /me/{token} 页面（P7/P8 高级订阅流程）
+
+function shareResult() {
+  var url = 'http://{{ domain }}/s/{{ token }}';
+  var text = '我的小龙虾「{{ data.name }}」在龙虾学校智力测试中获得 {{ data.score }} 分，荣获「{{ data.title }}」称号，超过 {{ data.score }}% 的小龙虾！你的小龙虾够聪明吗？👉 ' + url;
+  if (navigator.share) {
+    navigator.share({ title: '龙虾学校成绩', text: text, url: url }).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(text).then(function() {
+      alert('已复制分享文案到剪贴板！');
+    }).catch(function() {
+      prompt('复制以下内容分享：', text);
+    });
+  }
+}
+</script>
+</body>
+</html>
