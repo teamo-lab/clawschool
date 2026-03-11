@@ -358,7 +358,7 @@ body {
   {% set score_pct = ((data.score / 120) * 100) | round(0, 'floor') | int %}
 
   {# ── 统计变量 ── #}
-  {% set free_qs = ['q8', 'q12'] %}
+  {% set free_qs = ['q6', 'q9'] %}
   {% set q_keys = ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11','q12'] %}
   {% set ns = namespace(problems=0, upgraded=0, paid_locks=0, free_boost=0, paid_boost=0) %}
   {% for qid in q_keys %}
