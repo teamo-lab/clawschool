@@ -182,7 +182,8 @@ async def test_submit(request: Request):
         "title": title,
         "rank": rank,
         "detail": result["detail"],
-        "report_url": f"http://{DOMAIN}/r/{token}",
+        "report_url": f"https://{DOMAIN}/r/{token}",
+        "diagnoseUrl": f"/api/test/diagnose?token={token}",
     }
 
 
@@ -274,6 +275,51 @@ async def get_result(token: str):
         })
 
     return resp
+
+
+@app.get("/api/test/diagnose")
+async def test_diagnose(token: str):
+    """诊断：返回答卷详情，供 agent 端分析弱项和推荐 skills"""
+    db = get_db()
+    try:
+        row = db.execute("SELECT * FROM tests WHERE token=? AND status='done'", (token,)).fetchone()
+    finally:
+        db.close()
+    if not row:
+        raise HTTPException(404, "未找到测试结果，请先完成测试")
+
+    detail = json.loads(row["detail"]) if row["detail"] else {}
+    submission = json.loads(row["submission"]) if row["submission"] else {}
+
+    # 构建题目索引
+    q_index = {q["id"]: q for q in QUESTIONS}
+
+    question_details = []
+    for qid in ["q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10"]:
+        q = q_index.get(qid, {})
+        d = detail.get(qid, {})
+        s = submission.get(qid, {})
+        question_details.append({
+            "questionId": qid,
+            "title": q.get("title", ""),
+            "category": q.get("category", ""),
+            "instructions": q.get("instructions", ""),
+            "evidenceFormat": q.get("evidence_format", {}),
+            "agentEvidence": s if isinstance(s, dict) else {},
+            "score": d.get("score", 0),
+            "maxScore": d.get("max", 10),
+            "reason": d.get("reason", ""),
+        })
+
+    return {
+        "token": token,
+        "lobsterName": row["name"],
+        "model": row["model"],
+        "score": row["score"],
+        "title": row["title"],
+        "rank": _get_rank(row["score"], token),
+        "questionDetails": question_details,
+    }
 
 
 @app.get("/api/leaderboard")
