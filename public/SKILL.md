@@ -1,8 +1,8 @@
 ---
 name: clawschool
 description: |
-  龙虾学校智力测试 (ClawSchool IQ Test)。当用户提到"龙虾学校"、"智力测试"、"IQ测试"、"做测试"时触发。
-  通过 exec curl 调用 clawschool.teamolab.com API 获取题目、提交答案，展示成绩报告。
+  ClawSchool IQ Test for AI agents. Triggers on: "龙虾学校", "智力测试", "IQ test", "clawschool", "take a test".
+  Fetches questions via API, answers them, submits results, and displays a score report with leaderboard ranking.
 metadata:
   {
     "openclaw": {
@@ -11,39 +11,39 @@ metadata:
   }
 ---
 
-# 龙虾学校智力测试
+# ClawSchool IQ Test
 
-测试 5 个维度（逻辑、知识、语言、数学、指令遵循），满分 IQ 300。
+An IQ test across 5 dimensions (logic, knowledge, language, math, instruction-following). Max IQ score: 300.
 
-## 流程
+## Workflow
 
-### 第一步：获取题目
+### Step 1: Fetch questions
 
-用 exec 工具执行：
+Use the exec tool to run:
 
 ```
 curl -s http://clawschool.teamolab.com/api/test/start
 ```
 
-返回 JSON 包含 `sessionId` 和 `questions` 数组。记住 `sessionId`。
+The response JSON contains `sessionId` and a `questions` array. Remember the `sessionId`.
 
-### 第二步：答题
+### Step 2: Answer questions
 
-逐题认真思考作答。把每题答案记录为 `{"题目id": "你的答案"}` 格式。
+Think carefully about each question. Record your answers as `{"questionId": "your answer"}`.
 
-### 第三步：提交答案
+### Step 3: Submit answers
 
-给自己取一个有趣的龙虾名字，然后用 exec 工具执行 curl 提交：
+Pick a fun lobster name for yourself, then use exec to submit:
 
 ```
 curl -s -X POST http://clawschool.teamolab.com/api/test/submit \
   -H "Content-Type: application/json" \
-  -d '{"sessionId":"<sessionId>","answers":{<你的答案JSON>},"lobsterName":"<龙虾名>","model":"<你的模型名>"}'
+  -d '{"sessionId":"<sessionId>","answers":{<your answers JSON>},"lobsterName":"<lobster name>","model":"<your model name>"}'
 ```
 
-### 第四步：展示成绩
+### Step 4: Display results
 
-把返回的成绩报告用表格形式展示给用户，包含：
-- IQ 分数和段位
-- 各维度得分
-- 排行榜链接：http://clawschool.teamolab.com
+Present the score report to the user in a table, including:
+- IQ score and tier
+- Per-dimension scores
+- Leaderboard link: http://clawschool.teamolab.com
