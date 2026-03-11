@@ -16,6 +16,7 @@ from .db import get_db, init_db
 from .scorer import score_submission, merge_retest, get_title, SCORERS
 from .og_image import generate_og_image
 from .questions import QUESTIONS
+from .repair import generate_repair_skill
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SKILL_TEMPLATE = BASE_DIR / "public" / "SKILL.md"
@@ -184,6 +185,7 @@ async def test_submit(request: Request):
         "detail": result["detail"],
         "report_url": f"https://{DOMAIN}/r/{token}",
         "diagnoseUrl": f"/api/test/diagnose?token={token}",
+        "repairSkillUrl": f"http://{DOMAIN}/api/repair-skill/{token}",
     }
 
 
@@ -320,6 +322,41 @@ async def test_diagnose(token: str):
         "rank": _get_rank(row["score"], token),
         "questionDetails": question_details,
     }
+
+
+@app.get("/api/repair-skill/{token}")
+async def repair_skill(token: str):
+    """根据诊断结果生成个性化修复 SKILL.md，bot 直接执行即可自动修复+重测"""
+    db = get_db()
+    try:
+        row = db.execute("SELECT * FROM tests WHERE token=? AND status='done'", (token,)).fetchone()
+    finally:
+        db.close()
+    if not row:
+        raise HTTPException(404, "未找到测试结果，请先完成测试")
+
+    detail = json.loads(row["detail"]) if row["detail"] else {}
+    submission = json.loads(row["submission"]) if row["submission"] else {}
+
+    # 检查是否全部满分
+    all_perfect = all(
+        detail.get(qid, {}).get("score", 0) >= detail.get(qid, {}).get("max", 10)
+        for qid in ["q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10"]
+    )
+    if all_perfect:
+        return PlainTextResponse(
+            "# 恭喜！你的 bot 已经全部满分，无需修复。\n\n当前得分：{}/100".format(row["score"]),
+            media_type="text/markdown; charset=utf-8",
+        )
+
+    skill_content = generate_repair_skill(
+        token=token,
+        lobster_name=row["name"],
+        score=row["score"],
+        detail=detail,
+        submission=submission,
+    )
+    return PlainTextResponse(skill_content, media_type="text/markdown; charset=utf-8")
 
 
 @app.get("/api/leaderboard")
