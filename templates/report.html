@@ -1072,9 +1072,10 @@ function showStep4(data) {
 
 function shareNewResult() {
   var url = 'http://{{ domain }}/s/{{ token }}';
+  var title = '「{{ data.name }}」在龙虾学校升级后获得新成绩！你的小龙虾够聪明吗？';
   var text = '我的小龙虾「{{ data.name }}」升级后在龙虾学校获得新成绩！你的小龙虾够聪明吗？👉 ' + url;
   if (navigator.share) {
-    navigator.share({ title: '龙虾学校升级成绩', text: text, url: url }).catch(function(){});
+    navigator.share({ title: title, url: url }).catch(function(){});
   } else {
     navigator.clipboard.writeText(text).then(function() {
       alert('已复制分享文案到剪贴板！');
@@ -1156,9 +1157,10 @@ function doLogin() {
 
 function shareResult() {
   var url = 'http://{{ domain }}/s/{{ token }}';
+  var title = '「{{ data.name }}」在龙虾学校获得 {{ data.score }} 分，你的小龙虾够聪明吗？';
   var text = '我的小龙虾「{{ data.name }}」在龙虾学校智力测试中获得 {{ data.score }} 分，荣获「{{ data.title }}」称号，超过 {{ data.score }}% 的小龙虾！你的小龙虾够聪明吗？👉 ' + url;
   if (navigator.share) {
-    navigator.share({ title: '龙虾学校成绩', text: text, url: url }).catch(function(){});
+    navigator.share({ title: title, url: url }).catch(function(){});
   } else {
     navigator.clipboard.writeText(text).then(function() {
       alert('已复制分享文案到剪贴板！');
