@@ -649,9 +649,12 @@ async def payment_create(request: Request):
             client_ip = request.client.host if request.client else "127.0.0.1"
             payment_info = wechat_pay.create_h5_order(order_id, amount, description, client_ip)
         elif channel == "alipay_pc":
-            payment_info = alipay_pay.create_pc_order(order_id, amount, description)
+            # 构造带 token 和 paid 参数的 return_url
+            alipay_return_url = f"https://{DOMAIN}/me/{token}?paid=premium" if plan_type == "premium" else f"https://{DOMAIN}/wait/{token}?paid=basic"
+            payment_info = alipay_pay.create_pc_order(order_id, amount, description, alipay_return_url)
         elif channel == "alipay_h5":
-            payment_info = alipay_pay.create_h5_order(order_id, amount, description)
+            alipay_return_url = f"https://{DOMAIN}/me/{token}?paid=premium" if plan_type == "premium" else f"https://{DOMAIN}/wait/{token}?paid=basic"
+            payment_info = alipay_pay.create_h5_order(order_id, amount, description, alipay_return_url)
     except RuntimeError as e:
         raise HTTPException(500, str(e))
 

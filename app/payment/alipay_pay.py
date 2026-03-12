@@ -43,7 +43,7 @@ class AlipayClient:
     def available(self) -> bool:
         return self._client is not None
 
-    def create_pc_order(self, order_id: str, amount_fen: int, subject: str) -> dict:
+    def create_pc_order(self, order_id: str, amount_fen: int, subject: str, return_url: str = None) -> dict:
         """电脑网站支付 — 返回完整支付 URL（前端跳转）"""
         if not self._client:
             raise RuntimeError("支付宝未配置")
@@ -52,11 +52,11 @@ class AlipayClient:
             out_trade_no=order_id,
             total_amount=amount_yuan,
             subject=subject,
-            return_url=self.config.ALIPAY_RETURN_URL,
+            return_url=return_url or self.config.ALIPAY_RETURN_URL,
         )
         return {"pay_url": f"{self._gateway}?{order_string}"}
 
-    def create_h5_order(self, order_id: str, amount_fen: int, subject: str) -> dict:
+    def create_h5_order(self, order_id: str, amount_fen: int, subject: str, return_url: str = None) -> dict:
         """手机网站支付 — 返回完整支付 URL（H5 跳转）"""
         if not self._client:
             raise RuntimeError("支付宝未配置")
@@ -65,7 +65,7 @@ class AlipayClient:
             out_trade_no=order_id,
             total_amount=amount_yuan,
             subject=subject,
-            return_url=self.config.ALIPAY_RETURN_URL,
+            return_url=return_url or self.config.ALIPAY_RETURN_URL,
         )
         return {"pay_url": f"{self._gateway}?{order_string}"}
 
