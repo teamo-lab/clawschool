@@ -2507,18 +2507,28 @@
         });
         document.getElementById('upgrade-results').innerHTML = html;
 
-        var newScore = data.score;
-        var scoreDelta = newScore - ORIGINAL_SCORE;
+        var newIQ = data.iq || rawToIq(data.score || 0);
+        var iqDelta = newIQ - ORIGINAL_IQ;
         document.getElementById('rt-from').textContent = '原始智力值 ' + ORIGINAL_IQ;
         document.getElementById('rt-delta').textContent = '⬆ 智力值提升';
 
         var rtScoreEl = document.getElementById('rt-new-score');
-        var cur = ORIGINAL_SCORE;
-        var step = Math.max(1, Math.ceil(scoreDelta / 20));
+        var cur = ORIGINAL_IQ;
+        var step = Math.max(1, Math.ceil(Math.abs(iqDelta) / 20));
         var rollTimer = setInterval(function() {
-            cur += step;
-            if (cur >= newScore) {
-                cur = newScore;
+            if (cur < newIQ) {
+                cur += step;
+                if (cur >= newIQ) {
+                    cur = newIQ;
+                    clearInterval(rollTimer);
+                }
+            } else if (cur > newIQ) {
+                cur -= step;
+                if (cur <= newIQ) {
+                    cur = newIQ;
+                    clearInterval(rollTimer);
+                }
+            } else {
                 clearInterval(rollTimer);
             }
             rtScoreEl.textContent = cur;
