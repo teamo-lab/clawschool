@@ -717,6 +717,7 @@ async def me_page(request: Request, token: str):
     data = dict(row)
     data["detail"] = json.loads(data["detail"]) if data["detail"] else {}
     data["rank"] = _get_rank(data["score"], token) if data["status"] == "done" else None
+    data["iq"] = raw_to_iq(data["score"]) if data["status"] == "done" else 0
 
     # 查看是否有付费订单
     db = get_db()
@@ -736,6 +737,7 @@ async def me_page(request: Request, token: str):
     return templates.TemplateResponse("me.html", {
         "request": request, "domain": DOMAIN, "data": data, "token": token,
         "payment_status": payment_status, "total_done": total_done,
+        "advanced_qids": ADVANCED_QIDS, "basic_qids": BASIC_QIDS,
     })
 
 
