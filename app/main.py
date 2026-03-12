@@ -5,7 +5,7 @@ import os
 import string
 import random
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 from fastapi import FastAPI, Request, HTTPException
@@ -79,7 +79,7 @@ async def create_token(request: Request):
         db.close()
 
     from urllib.parse import quote
-    skill_url = f"http://{DOMAIN}/skill.md?token={token}&name={quote(name)}"
+    skill_url = f"https://{DOMAIN}/skill.md?token={token}&name={quote(name)}"
     return {"token": token, "name": name, "skill_url": skill_url, "created_at": now}
 
 
@@ -115,7 +115,7 @@ async def test_start(token: str = ""):
     return {
         "questionCount": len(questions_out),
         "questions": questions_out,
-        "submitUrl": f"http://{DOMAIN}/api/test/submit",
+        "submitUrl": f"https://{DOMAIN}/api/test/submit",
     }
 
 
@@ -198,70 +198,7 @@ async def test_submit(request: Request):
         "detail": result["detail"],
         "report_url": f"https://{DOMAIN}/r/{token}",
         "diagnoseUrl": f"/api/test/diagnose?token={token}",
-        "repairSkillUrl": f"http://{DOMAIN}/api/repair-skill/{token}",
-    }
-
-
-@app.post("/api/submit")
-async def submit_result(request: Request):
-    try:
-        submission = await request.json()
-    except Exception:
-        raise HTTPException(400, "无效的 JSON")
-
-    token = submission.get("token", "").strip()
-    if not token:
-        raise HTTPException(400, "缺少 token 字段")
-
-    now = _now_iso()
-    result = score_submission(submission)
-    score = result["score"]
-    title = result["title"]
-    detail_json = json.dumps(result["detail"], ensure_ascii=False)
-    submission_json = json.dumps(submission, ensure_ascii=False)
-
-    db = get_db()
-    try:
-        existing = db.execute("SELECT token FROM tests WHERE token=?", (token,)).fetchone()
-        if existing:
-            db.execute("""
-                UPDATE tests SET
-                    status='done', model=?, score=?, title=?, test_time=?,
-                    detail=?, submission=?, updated_at=?
-                WHERE token=?
-            """, (
-                submission.get("model"),
-                score, title,
-                submission.get("test_time"),
-                detail_json, submission_json, now,
-                token
-            ))
-        else:
-            # 自动创建记录（兼容 bot 先提交的情况）
-            name = submission.get("lobster_name", "匿名龙虾")
-            db.execute("""
-                INSERT INTO tests (token, name, status, model, score, title, test_time,
-                    detail, submission, created_at, updated_at)
-                VALUES (?, ?, 'done', ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                token, name, submission.get("model"),
-                score, title, submission.get("test_time"),
-                detail_json, submission_json, now, now
-            ))
-        db.commit()
-    finally:
-        db.close()
-
-    rank = _get_rank(score, token)
-    return {
-        "success": True,
-        "token": token,
-        "score": score,
-        "iq": raw_to_iq(score),
-        "title": title,
-        "rank": rank,
-        "detail": result["detail"],
-        "report_url": f"http://{DOMAIN}/r/{token}",
+        "repairSkillUrl": f"https://{DOMAIN}/api/repair-skill/{token}",
     }
 
 
@@ -464,6 +401,25 @@ async def recent(limit: int = 10):
     return {"entries": entries}
 
 
+@app.get("/api/active-count")
+async def active_count():
+    """返回当前正在测试中的龙虾数量（status=waiting）"""
+    db = get_db()
+    try:
+        row = db.execute(
+            "SELECT COUNT(*) as cnt FROM tests WHERE status='waiting'"
+        ).fetchone()
+        total = db.execute(
+            "SELECT COUNT(*) as cnt FROM tests WHERE status='done'"
+        ).fetchone()
+    finally:
+        db.close()
+    return {
+        "active": row["cnt"] if row else 0,
+        "total_done": total["cnt"] if total else 0,
+    }
+
+
 @app.get("/api/og-image/{token}")
 async def og_image(token: str):
     db = get_db()
@@ -479,9 +435,9 @@ async def og_image(token: str):
     return FileResponse(str(path), media_type="image/png")
 
 
-@app.post("/api/upgrade/search")
-async def upgrade_search(request: Request):
-    """向后兼容旧版 SKILL.md 的搜索升级端点。新版基础升级直接复用 /api/test/submit 同 token 覆盖。"""
+@app.post("/api/upgrade/basic")
+async def upgrade_basic(request: Request):
+    """¥19.9 基础能力升级重测。重测全 12 题，取 max(原始分, 重测分) 合并。"""
     body = await request.json()
     token = body.get("token", "").strip()
     if not token:
@@ -546,6 +502,10 @@ async def upgrade_search(request: Request):
 # ─── 登录 & 支付 API ───
 
 MVP_VERIFY_CODE = "888888"
+CODE_EXPIRY_SECONDS = 300  # 5 分钟
+
+def _gen_verify_code() -> str:
+    return "".join(random.choices(string.digits, k=6))
 
 @app.post("/api/login/send-code")
 async def send_code(request: Request):
@@ -553,8 +513,28 @@ async def send_code(request: Request):
     phone = (body.get("phone") or "").strip()
     if not phone or len(phone) != 11 or not phone.isdigit():
         raise HTTPException(400, "请输入 11 位手机号")
-    # MVP: 不发真实短信，返回成功即可
-    return {"success": True, "message": "验证码已发送"}
+
+    code = _gen_verify_code()
+    now = datetime.now(timezone.utc)
+    expires_at = now + timedelta(seconds=CODE_EXPIRY_SECONDS)
+    now_iso = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+    expires_iso = expires_at.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    db = get_db()
+    try:
+        # 清理该手机号旧验证码
+        db.execute("DELETE FROM verification_codes WHERE phone=?", (phone,))
+        db.execute(
+            "INSERT INTO verification_codes (phone, code, created_at, expires_at) VALUES (?, ?, ?, ?)",
+            (phone, code, now_iso, expires_iso)
+        )
+        db.commit()
+    finally:
+        db.close()
+
+    # TODO: 接入腾讯云短信 API 发送真实验证码
+    # MVP 阶段不发真实短信，万能验证码 888888 始终可用
+    return {"success": True, "expires_in": CODE_EXPIRY_SECONDS}
 
 
 @app.post("/api/login")
@@ -566,8 +546,25 @@ async def login(request: Request):
 
     if not phone or len(phone) != 11:
         raise HTTPException(400, "手机号格式不正确")
+
+    # 验证码校验：万能码 888888 或数据库中未过期的验证码
     if code != MVP_VERIFY_CODE:
-        raise HTTPException(400, "验证码不正确")
+        now_iso = _now_iso()
+        db = get_db()
+        try:
+            row = db.execute(
+                "SELECT code FROM verification_codes WHERE phone=? AND code=? AND expires_at>? AND used=0",
+                (phone, code, now_iso)
+            ).fetchone()
+            if not row:
+                raise HTTPException(400, "验证码不正确或已过期")
+            db.execute(
+                "UPDATE verification_codes SET used=1 WHERE phone=? AND code=?",
+                (phone, code)
+            )
+            db.commit()
+        finally:
+            db.close()
 
     now = _now_iso()
     db = get_db()
@@ -676,6 +673,7 @@ async def share_page(request: Request, token: str):
     data = dict(row)
     data["detail"] = json.loads(data["detail"]) if data["detail"] else {}
     data["rank"] = _get_rank(data["score"], token) if data["status"] == "done" else None
+    data["iq"] = raw_to_iq(data["score"]) if data["status"] == "done" else 0
 
     return templates.TemplateResponse("share.html", {
         "request": request, "domain": DOMAIN, "data": data, "token": token,

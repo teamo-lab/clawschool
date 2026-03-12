@@ -8,13 +8,13 @@
     <title>{{ data.name }} - 龙虾学校能力扫描报告</title>
     <meta property="og:title" content="{{ data.name }} 在龙虾学校智力值 {{ data.iq }}！">
     <meta property="og:description" content="称号：{{ data.title }} | 12 道 AI 实战题测试">
-    <meta property="og:image" content="http://{{ domain }}/api/og-image/{{ token }}">
+    <meta property="og:image" content="https://{{ domain }}/api/og-image/{{ token }}">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="http://{{ domain }}/r/{{ token }}">
+    <meta property="og:url" content="https://{{ domain }}/r/{{ token }}">
     <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;800;900&family=Inter:wght@400;500;600&display=swap"
+        href="https://fonts.googleapis.cn/css2?family=Outfit:wght@300;400;500;700;800;900&family=Inter:wght@400;500;600&display=swap"
         rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 
     <style>
         :root {
@@ -1532,6 +1532,13 @@
                 <div class="wait-tip-label">💡 你知道吗</div>
                 <div class="wait-tip-text" id="waitTip">龙虾学校共测试 12 项 AI 实战能力，覆盖群聊整理、安全防护、Skill 核查等核心维度。</div>
             </div>
+
+            <div class="wait-active-count" id="waitActiveCount" style="
+                position: relative; z-index: 3; margin-top: 20px;
+                font-size: 12px; color: var(--text-muted);
+                animation: slideUp 0.8s var(--ease-fluid) 0.7s both;
+                text-align: center;
+            "></div>
         </section>
 
         <!-- ===== PHASE 2: Reveal ===== -->
@@ -1914,6 +1921,18 @@
         if (el) el.style.strokeDashoffset = offset;
     }
 
+    // ===== Active count fetcher =====
+    function fetchActiveCount() {
+        fetch('/api/active-count').then(function(r) { return r.json(); }).then(function(data) {
+            var el = document.getElementById('waitActiveCount');
+            if (el && data.active > 0) {
+                el.textContent = '正在有 ' + data.active + ' 只龙虾同时测试 · 已有 ' + data.total_done + ' 只完成';
+            } else if (el && data.total_done > 0) {
+                el.textContent = '已有 ' + data.total_done + ' 只龙虾完成测试';
+            }
+        }).catch(function() {});
+    }
+
     // ===== PHASE 1: Wait with real polling =====
     function startWaitPhase() {
         var bar = document.getElementById('waitProgressBar');
@@ -1923,6 +1942,10 @@
         var tipIdx = 0;
         var fakeProgress = 5;
         var pollCount = 0;
+
+        // Fetch active count immediately and every 15s
+        fetchActiveCount();
+        var activeCountTimer = setInterval(fetchActiveCount, 15000);
 
         // Tip rotation
         var tipTimer = setInterval(function() {
@@ -1970,6 +1993,7 @@
                     clearInterval(poller);
                     clearInterval(crawlTimer);
                     clearInterval(tipTimer);
+                    clearInterval(activeCountTimer);
 
                     // Complete the progress bar
                     bar.style.width = '100%';
@@ -1984,7 +2008,7 @@
                     }, 800);
                 }
             }).catch(function() {});
-        }, 3000);
+        }, 5000);
     }
 
     // ===== PHASE 2: Reveal with real data =====
@@ -2279,7 +2303,7 @@
         document.getElementById('upgrade-step2').classList.remove('show');
         document.getElementById('upgrade-step3').classList.add('show');
         simulateUpgradeProgress();
-        upgradePoller = setInterval(pollUpgradeResult, 3000);
+        upgradePoller = setInterval(pollUpgradeResult, 5000);
     }
 
     function simulateUpgradeProgress() {
@@ -2407,7 +2431,7 @@
     }
 
     function shareNewResult() {
-        var url = 'http://' + DOMAIN + '/s/' + TOKEN;
+        var url = 'https://' + DOMAIN + '/s/' + TOKEN;
         var text = '我的小龙虾「{{ data.name }}」升级后在龙虾学校获得新成绩！你的小龙虾够聪明吗？👉 ' + url;
         if (navigator.share) {
             navigator.share({ title: text, url: url }).catch(function(){});
@@ -2487,7 +2511,7 @@
 
     // ===== Share =====
     function shareResult() {
-        var url = 'http://' + DOMAIN + '/s/' + TOKEN;
+        var url = 'https://' + DOMAIN + '/s/' + TOKEN;
         var text = '我的小龙虾「{{ data.name }}」在龙虾学校智力测试中智力值 ' + IQ + '，荣获「' + ORIGINAL_TITLE + '」称号，超过 ' + Math.floor(SCORE_PCT) + '% 的小龙虾！你的小龙虾够聪明吗？👉 ' + url;
         if (navigator.share) {
             navigator.share({ title: '龙虾学校成绩', url: url }).catch(function(){});

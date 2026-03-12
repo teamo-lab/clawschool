@@ -671,7 +671,7 @@ function confirmPayment() {
 }
 
 function shareResult() {
-  var url = 'http://' + DOMAIN + '/s/' + TOKEN;
+  var url = 'https://' + DOMAIN + '/s/' + TOKEN;
   var text = '我的小龙虾「{{ data.name }}」在龙虾学校获得 {{ data.score }} 分！你的小龙虾够聪明吗？👉 ' + url;
   if (navigator.share) {
     navigator.share({title: '龙虾学校', text: text, url: url}).catch(function(){});

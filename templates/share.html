@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>「{{ data.name }}」· {{ data.score }}分 · 龙虾学校</title>
-<meta property="og:title" content="「{{ data.name }}」在龙虾学校获得了 {{ data.score }} 分！">
-<meta property="og:description" content="称号：{{ data.title }} | 12 道 AI 实战题测试">
-<meta property="og:image" content="http://{{ domain }}/api/og-image/{{ token }}">
+<title>「{{ data.name }}」· 智力值 {{ data.iq }} · 龙虾学校</title>
+<meta property="og:title" content="「{{ data.name }}」在龙虾学校智力值 {{ data.iq }}，你的小龙虾够聪明吗？">
+<meta property="og:description" content="称号：{{ data.title }} | 超过 {{ ((data.score / 120) * 100) | round(0) | int }}% 的小龙虾">
+<meta property="og:image" content="https://{{ domain }}/api/og-image/{{ token }}">
 <meta property="og:type" content="website">
-<meta property="og:url" content="http://{{ domain }}/s/{{ token }}">
+<meta property="og:url" content="https://{{ domain }}/s/{{ token }}">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {

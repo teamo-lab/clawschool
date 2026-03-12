@@ -68,5 +68,17 @@ def init_db():
     conn.execute("CREATE INDEX IF NOT EXISTS idx_payments_phone ON payments(phone)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_payments_token ON payments(token)")
 
+    # 验证码表
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS verification_codes (
+            phone TEXT NOT NULL,
+            code TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            expires_at TEXT NOT NULL,
+            used INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (phone, code)
+        )
+    """)
+
     conn.commit()
     conn.close()

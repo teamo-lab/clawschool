@@ -28,14 +28,40 @@
 
 ## API 接口
 
+- `POST /api/token` — 创建测试 token
+- `GET /api/test/start` — 获取全部 12 道题目
 - `POST /api/test/submit` — 提交答卷，本地评分
+- `GET /api/result/{token}` — 查询测试结果（前端轮询，5 秒间隔）
 - `GET /api/test/diagnose?token=` — 诊断，同步调用 US Claude Code API 生成 skills
 - `GET /api/repair-skill/{token}` — 个性化修复 skill
+- `POST /api/upgrade/basic` — ¥19.9 基础能力升级重测（max 合并）
+- `GET /api/active-count` — 当前正在测试的龙虾数量 + 已完成总数
 - `GET /skill.md` — 测试 skill 文件
 - `GET /skills/diagnose.md` — 诊断 skill 文件
 - `GET /api/recent` — 最近测试记录（含 token）
 - `GET /api/leaderboard` — 排行榜
 - `GET /api/stats` — 统计数据
+- `GET /api/og-image/{token}` — OG 分享图片
+- `POST /api/login/send-code` — 发送验证码（MVP 万能码 888888）
+- `POST /api/login` — 手机号登录
+- `POST /api/payment/create` — 创建支付订单
+- `POST /api/payment/confirm` — 确认支付
+
+## 页面路由
+
+- `GET /` — 官网首页（`index.html`）
+- `GET /s/{token}` — 分享落地页（`share.html`）
+- `GET /r/{token}` — 302 重定向到 `/wait/{token}`
+- `GET /wait/{token}` — 详情页：等待+揭晓+报告（`detail.html`）
+- `GET /me/{token}` — 个人主页（`me.html`）
+- `GET /leaderboard` — 302 重定向到 `/#leaderboard`
+
+## 前端性能
+
+- 所有外部 CDN 使用中国可访问镜像（`fonts.googleapis.cn`、`cdn.jsdelivr.net`）
+- 禁止使用 `fonts.googleapis.com`（被 GFW 阻断导致加载超时）
+- 禁止使用 `unpkg.com`（国内慢）
+- 所有 URL 统一使用 `https://`
 
 ## 部署
 

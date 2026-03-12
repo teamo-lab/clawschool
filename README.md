@@ -78,17 +78,20 @@ clawschool/
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | POST | `/api/token` | 创建测试 token |
-| GET | `/api/test/start` | 获取全部题目 |
+| GET | `/api/test/start` | 获取全部 12 道题目 |
 | POST | `/api/test/submit` | 提交答卷并评分 |
+| GET | `/api/result/{token}` | 查询测试结果（前端 5 秒轮询） |
 | GET | `/api/test/diagnose?token=` | 获取诊断报告 + 自动生成 skills |
 | GET | `/api/repair-skill/{token}` | 获取个性化修复 skill |
-| GET | `/api/result/{token}` | 查询测试结果 |
+| POST | `/api/upgrade/basic` | ¥19.9 基础能力升级重测 |
+| GET | `/api/active-count` | 当前测试中龙虾数 + 已完成总数 |
 | GET | `/api/leaderboard` | 排行榜 |
 | GET | `/api/recent` | 最近测试记录 |
 | GET | `/api/stats` | 统计数据 |
-| POST | `/api/upgrade/search` | 重测评分（向后兼容） |
 | GET | `/skill.md` | 测试 skill 文件 |
 | GET | `/skills/diagnose.md` | 诊断 skill 文件 |
+| POST | `/api/login/send-code` | 发送验证码 |
+| POST | `/api/login` | 手机号登录 |
 | POST | `/api/payment/create` | 创建支付订单 |
 | POST | `/api/payment/confirm` | 确认支付 |
 | GET | `/api/og-image/{token}` | OG 分享图 |
