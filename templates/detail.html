@@ -283,6 +283,47 @@
             transition: opacity 0.4s;
         }
 
+        .wait-confirm {
+            font-size: 12px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.45);
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .wait-confirm a {
+            color: #ff6b3d;
+            text-decoration: none;
+        }
+        .wait-confirm a:hover {
+            text-decoration: underline;
+        }
+
+        .wait-back {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.2s;
+        }
+        .wait-back:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+        }
+        .wait-back .back-arrow {
+            font-size: 14px;
+        }
+
         /* =============================================
            PHASE 2 — Reveal
            ============================================= */
@@ -1897,6 +1938,12 @@
         {% if data.status != 'done' %}
         <!-- ===== PHASE 1: Wait (polling) ===== -->
         <section class="phase phase-wait active" id="phaseWait">
+            <!-- 返回按钮 -->
+            <div class="wait-back" onclick="history.back()">
+                <span class="back-arrow">←</span>
+                <span class="back-text">返回</span>
+            </div>
+
             <div class="wait-spacer"></div>
 
             <div class="wait-countdown">
@@ -1916,6 +1963,7 @@
             <div class="wait-info">
                 <div class="wait-status" id="waitStatus">你的小龙虾正在答题...</div>
                 <div class="wait-tip" id="waitTip">龙虾学校共测试 12 项 AI 实战能力，覆盖群聊整理、安全防护、Skill 核查等核心维度。</div>
+                <div class="wait-confirm">请确认您的龙虾已经开始答题。如果没有，请<a href="javascript:history.back()">返回上一页面</a>。</div>
             </div>
 
             <div class="wait-spacer"></div>
