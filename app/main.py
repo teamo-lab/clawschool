@@ -700,7 +700,7 @@ async def send_code(request: Request):
         db.close()
 
     # 发送真实短信（失败不阻塞，万能验证码 888888 始终可用）
-    sms_sent = _send_sms(phone, [code, str(CODE_EXPIRY_SECONDS // 60)])
+    sms_sent = _send_sms(phone, [code])
     return {"success": True, "expires_in": CODE_EXPIRY_SECONDS, "sms_sent": sms_sent}
 
 
