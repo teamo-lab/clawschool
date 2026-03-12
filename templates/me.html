@@ -902,6 +902,8 @@
     }
 
     // 支付宝支付
+    var currentOrderId = null; // 当前订单ID
+
     function doPremiumPay() {
         var channel = isMobile() ? 'alipay_h5' : 'alipay_pc';
         document.getElementById('payOverlay').classList.add('show');
@@ -917,6 +919,7 @@
             return r.json();
         })
         .then(function(data) {
+            currentOrderId = data.order_id; // 保存订单ID
             document.getElementById('payTitle').textContent = '正在跳转支付宝...';
             if (data.payment_info && data.payment_info.pay_url) {
                 window.location.href = data.payment_info.pay_url;
@@ -927,6 +930,39 @@
         .catch(function(e) {
             document.getElementById('payTitle').textContent = '❌ ' + (e.message || '创建订单失败');
             setTimeout(closePaySheet, 2000);
+        });
+    }
+
+    // 页面可见性变化时检查支付状态
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible' && currentOrderId) {
+            checkPaymentStatus();
+        }
+    });
+
+    // 检查支付状态
+    function checkPaymentStatus() {
+        if (!currentOrderId) return;
+
+        document.getElementById('payTitle').textContent = '正在查询支付结果...';
+
+        fetch('/api/payment/status/' + currentOrderId)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.status === 'paid') {
+                currentOrderId = null;
+                closePaySheet();
+                openPremiumCmd();
+            } else {
+                // 未支付，关闭弹窗
+                currentOrderId = null;
+                closePaySheet();
+            }
+        })
+        .catch(function() {
+            // 查询失败，关闭弹窗
+            currentOrderId = null;
+            closePaySheet();
         });
     }
 
