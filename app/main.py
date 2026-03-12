@@ -836,7 +836,7 @@ async def wait_page(request: Request, token: str):
 
     return templates.TemplateResponse("detail.html", {
         "request": request, "domain": DOMAIN, "data": data, "token": token,
-        "advanced_qids": ADVANCED_QIDS, "basic_qids": BASIC_QIDS,
+        "advanced_qids": ADVANCED_QIDS, "basic_qids": BASIC_QIDS, "raw_to_iq": raw_to_iq,
     })
 
 
