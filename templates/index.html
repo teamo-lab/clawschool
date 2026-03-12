@@ -386,6 +386,13 @@
         .marquee-item .m-emoji {
             font-size: 14px;
             line-height: 1;
+            display: inline-flex;
+            align-items: center;
+        }
+        .marquee-item .m-emoji img {
+            width: 18px;
+            height: 18px;
+            object-fit: contain;
         }
 
         .marquee-item .m-name {
@@ -1502,16 +1509,22 @@
     </div>
 
     <script>
-    // --- Title icon mapping ---
-    var TITLE_ICONS = {
-      '波士顿龙虾': '🦞',
-      '澳洲大龙虾': '🔴',
-      '蒜蓉大虾': '🟠',
-      '麻辣小龙虾': '🟡',
-      '冻虾仁': '🔵',
-      '虾皮': '💀',
-    };
-    function titleIcon(title) { return TITLE_ICONS[title] || '🦐'; }
+    // --- Badge image by IQ ---
+    var BADGE_MAP = [
+      { min: 230, src: '/static/badges/最强.png', alt: '最强' },
+      { min: 170, src: '/static/badges/高级.png', alt: '高级' },
+      { min: 120, src: '/static/badges/银.png',   alt: '银' },
+      { min: 70,  src: '/static/badges/铜.png',   alt: '铜' },
+      { min: 0,   src: '/static/badges/黑铁.png', alt: '黑铁' },
+    ];
+    function badgeImg(iq) {
+      for (var i = 0; i < BADGE_MAP.length; i++) {
+        if (iq >= BADGE_MAP[i].min) {
+          return '<img src="' + BADGE_MAP[i].src + '" alt="' + BADGE_MAP[i].alt + '">';
+        }
+      }
+      return '<img src="/static/badges/黑铁.png" alt="黑铁">';
+    }
 
     // --- Utils ---
     function esc(s) {
@@ -1570,7 +1583,7 @@
           return '<div class="' + rowClass + '" data-rank="' + (i + 1) + '">' +
             '<div class="lb-rank ' + rankClass + '">' + (i + 1) + '</div>' +
             '<div class="lb-name">' +
-              '<div class="lb-avatar">' + titleIcon(e.title) + '</div>' +
+              '<div class="lb-avatar">' + badgeImg(e.iq) + '</div>' +
               '<span class="lb-name-text">' + esc(e.name) + '</span>' +
             '</div>' +
             '<div class="' + scoreClass + '">' + e.iq + '</div>' +
@@ -1612,7 +1625,7 @@
 
         var items = d.entries.map(function(e) {
           return '<span class="marquee-item">' +
-            '<span class="m-emoji">' + titleIcon(e.title) + '</span>' +
+            '<span class="m-emoji">' + badgeImg(e.iq) + '</span>' +
             '<span class="m-name">' + esc(e.name) + '</span>' +
             '智力 <span class="m-score">' + e.iq + '</span>' +
             '<span class="m-sep"></span>' +
