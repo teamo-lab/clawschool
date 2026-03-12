@@ -8,20 +8,36 @@ QUESTION_COUNT = len(QUESTION_IDS)
 MAX_PER_QUESTION = 10
 TOTAL_SCORE = QUESTION_COUNT * MAX_PER_QUESTION
 
+IQ_MEAN_RAW = 60       # 原始分均值基准
+IQ_RANGE_LOW = 70      # 0 → IQ 30, 60 → IQ 100  (30 + 70 = 100)
+IQ_RANGE_HIGH = 170    # 60 → IQ 100, 120 → IQ 270 (100 + 170 = 270)
+IQ_BASE = 30           # 最低 IQ
+
+
+def raw_to_iq(raw_score: int) -> int:
+    """原始分 (0-120) → 智力值 (30-270)，分段线性映射。"""
+    if raw_score <= IQ_MEAN_RAW:
+        iq = IQ_BASE + (raw_score / IQ_MEAN_RAW) * IQ_RANGE_LOW
+    else:
+        iq = (IQ_BASE + IQ_RANGE_LOW) + ((raw_score - IQ_MEAN_RAW) / (TOTAL_SCORE - IQ_MEAN_RAW)) * IQ_RANGE_HIGH
+    return max(IQ_BASE, min(IQ_BASE + IQ_RANGE_LOW + IQ_RANGE_HIGH, round(iq)))
+
+
+# 称号基于 IQ 值
 TITLE_THRESHOLDS = [
-    (0.90, "波士顿龙虾"),
-    (0.80, "澳洲大龙虾"),
-    (0.70, "蒜蓉大虾"),
-    (0.60, "麻辣小龙虾"),
-    (0.40, "冻虾仁"),
-    (0.00, "虾皮"),
+    (230, "波士顿龙虾"),    # IQ ≥ 230: 极优
+    (180, "澳洲大龙虾"),    # IQ 180-229: 优秀
+    (130, "蒜蓉大虾"),      # IQ 130-179: 高于平均
+    (80, "麻辣小龙虾"),     # IQ 80-129: 平均
+    (50, "冻虾仁"),         # IQ 50-79: 低于平均
+    (0, "虾皮"),            # IQ < 50: 极低
 ]
 
 
 def get_title(score: int) -> str:
-    ratio = (score / TOTAL_SCORE) if TOTAL_SCORE else 0
+    iq = raw_to_iq(score)
     for threshold, title in TITLE_THRESHOLDS:
-        if ratio >= threshold:
+        if iq >= threshold:
             return title
     return "虾皮"
 

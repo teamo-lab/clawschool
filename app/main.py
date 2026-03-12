@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from .db import get_db, init_db
-from .scorer import score_submission, merge_retest, get_title, SCORERS, TOTAL_SCORE
+from .scorer import score_submission, merge_retest, get_title, raw_to_iq, SCORERS, TOTAL_SCORE
 from .og_image import generate_og_image
 from .questions import QUESTIONS
 from .repair import generate_repair_skill, ADVANCED_QIDS, BASIC_QIDS
@@ -192,6 +192,7 @@ async def test_submit(request: Request):
         "token": token,
         "lobsterName": lobster_name,
         "score": score,
+        "iq": raw_to_iq(score),
         "title": title,
         "rank": rank,
         "detail": result["detail"],
@@ -256,6 +257,7 @@ async def submit_result(request: Request):
         "success": True,
         "token": token,
         "score": score,
+        "iq": raw_to_iq(score),
         "title": title,
         "rank": rank,
         "detail": result["detail"],
@@ -280,6 +282,7 @@ async def get_result(token: str):
         resp.update({
             "model": data["model"],
             "score": data["score"],
+            "iq": raw_to_iq(data["score"]),
             "title": data["title"],
             "test_time": data["test_time"],
             "detail": json.loads(data["detail"]) if data["detail"] else {},
@@ -330,6 +333,7 @@ async def test_diagnose(token: str):
         "lobsterName": row["name"],
         "model": row["model"],
         "score": row["score"],
+        "iq": raw_to_iq(row["score"]),
         "title": row["title"],
         "rank": _get_rank(row["score"], token),
         "questionDetails": question_details,
@@ -413,6 +417,7 @@ async def leaderboard(limit: int = 50, offset: int = 0):
             "name": row["name"],
             "model": row["model"],
             "score": row["score"],
+            "iq": raw_to_iq(row["score"]),
             "title": row["title"],
             "test_time": row["test_time"],
         })
@@ -431,9 +436,11 @@ async def stats():
         db.close()
 
     distribution = {r["title"]: r["cnt"] for r in rows}
+    avg_iq = raw_to_iq(round(avg)) if avg else 0
     return {
         "total_tests": total,
         "avg_score": round(avg, 1) if avg else 0,
+        "avg_iq": avg_iq,
         "title_distribution": distribution,
     }
 
@@ -449,7 +456,12 @@ async def recent(limit: int = 10):
         """, (limit,)).fetchall()
     finally:
         db.close()
-    return {"entries": [dict(r) for r in rows]}
+    entries = []
+    for r in rows:
+        e = dict(r)
+        e["iq"] = raw_to_iq(e["score"])
+        entries.append(e)
+    return {"entries": entries}
 
 
 @app.get("/api/og-image/{token}")
@@ -524,6 +536,8 @@ async def upgrade_search(request: Request):
         "retest_scores": {qid: retest_detail.get(qid, {}).get("score", 0) for qid in retest_qids},
         "new_total": merged["score"],
         "old_total": original_score,
+        "new_iq": raw_to_iq(merged["score"]),
+        "old_iq": raw_to_iq(original_score),
         "new_title": merged["title"],
         "old_title": original_title,
     }
@@ -683,6 +697,8 @@ async def wait_page(request: Request, token: str):
     data["detail"] = json.loads(data["detail"]) if data["detail"] else {}
     data["rank"] = _get_rank(data["score"], token) if data["status"] == "done" else None
 
+    data["iq"] = raw_to_iq(data["score"]) if data["status"] == "done" else 0
+
     return templates.TemplateResponse("detail.html", {
         "request": request, "domain": DOMAIN, "data": data, "token": token,
         "advanced_qids": ADVANCED_QIDS, "basic_qids": BASIC_QIDS,
@@ -725,6 +741,8 @@ async def me_page(request: Request, token: str):
     })
 
 
-@app.get("/leaderboard", response_class=HTMLResponse)
-async def leaderboard_page(request: Request):
-    return templates.TemplateResponse("leaderboard.html", {"request": request, "domain": DOMAIN})
+@app.get("/leaderboard")
+async def leaderboard_page():
+    """排行榜已内嵌到首页，旧链接重定向"""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/#leaderboard", status_code=302)

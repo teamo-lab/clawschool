@@ -466,6 +466,36 @@
             -webkit-backdrop-filter: blur(12px);
         }
 
+        .lb-body {
+            max-height: 960px; /* ~20 rows × 48px */
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .lb-body::-webkit-scrollbar {
+            width: 4px;
+        }
+        .lb-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .lb-body::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
+        .lb-row.lb-row-self {
+            background: rgba(255, 150, 22, 0.08);
+            border-left: 3px solid var(--brand-orange);
+            position: relative;
+        }
+        .lb-row.lb-row-self .lb-name-text {
+            color: var(--brand-orange);
+        }
+        .lb-row.lb-row-self .lb-score {
+            color: var(--brand-orange);
+        }
+
         .lb-thead {
             display: grid;
             grid-template-columns: 56px 1fr 80px;
@@ -1305,14 +1335,14 @@
                     <button class="btn btn-primary" onclick="openNameSheet()">
                         开始智力测试
                     </button>
-                    <button class="btn btn-secondary" onclick="window.location.href='/leaderboard'">
+                    <button class="btn btn-secondary" onclick="scrollToLeaderboard()">
                         查看排行榜
                     </button>
                 </div>
             </div>
 
             <!-- Leaderboard — 直接子元素，桌面端独占一行 -->
-            <div class="leaderboard-section">
+            <div class="leaderboard-section" id="leaderboard">
                 <div class="leaderboard-header">
                     <div class="leaderboard-title">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -1332,9 +1362,9 @@
                     <div class="lb-thead">
                         <span class="lb-th">排名</span>
                         <span class="lb-th">龙虾名称</span>
-                        <span class="lb-th">得分</span>
+                        <span class="lb-th">智力值</span>
                     </div>
-                    <div id="lbBody">
+                    <div class="lb-body" id="lbBody">
                         <div class="lb-empty">加载中...</div>
                     </div>
                 </div>
@@ -1430,33 +1460,55 @@
     }
 
     // --- Leaderboard ---
+    // 尝试从 localStorage 读取用户的龙虾名
+    var myLobsterName = localStorage.getItem('clawschool_name') || '';
+
     async function loadLeaderboard() {
       try {
-        const r = await fetch('/api/leaderboard?limit=20');
+        const r = await fetch('/api/leaderboard?limit=100');
         const d = await r.json();
         const body = document.getElementById('lbBody');
         if (!d.entries || d.entries.length === 0) {
           body.innerHTML = '<div class="lb-empty">暂无数据，快来成为第一名！</div>';
           return;
         }
+        var selfIdx = -1;
         body.innerHTML = d.entries.map(function(e, i) {
           var rankClass = 'rank-normal';
           if (i === 0) rankClass = 'rank-gold';
           else if (i === 1) rankClass = 'rank-silver';
           else if (i === 2) rankClass = 'rank-bronze';
+          var isSelf = myLobsterName && e.name === myLobsterName;
+          if (isSelf) selfIdx = i;
+          var rowClass = 'lb-row' + (isSelf ? ' lb-row-self' : '');
           var scoreClass = (i === 0) ? 'lb-score lb-score-highlight' : 'lb-score';
-          return '<div class="lb-row">' +
+          return '<div class="' + rowClass + '" data-rank="' + (i + 1) + '">' +
             '<div class="lb-rank ' + rankClass + '">' + (i + 1) + '</div>' +
             '<div class="lb-name">' +
               '<div class="lb-avatar">' + titleIcon(e.title) + '</div>' +
               '<span class="lb-name-text">' + esc(e.name) + '</span>' +
             '</div>' +
-            '<div class="' + scoreClass + '">' + e.score + '</div>' +
+            '<div class="' + scoreClass + '">' + e.iq + '</div>' +
           '</div>';
         }).join('');
+
+        // 如果有自己的记录，滚动到自己的位置
+        if (selfIdx >= 0) {
+          requestAnimationFrame(function() {
+            var selfRow = body.querySelector('.lb-row-self');
+            if (selfRow) {
+              selfRow.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            }
+          });
+        }
       } catch(e) {
         document.getElementById('lbBody').innerHTML = '<div class="lb-empty">加载失败</div>';
       }
+    }
+
+    function scrollToLeaderboard() {
+      var el = document.getElementById('leaderboard');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
     }
 
     // --- Recent marquee ---
@@ -1478,7 +1530,7 @@
           return '<span class="marquee-item">' +
             '<span class="m-emoji">' + titleIcon(e.title) + '</span>' +
             '<span class="m-name">' + esc(e.name) + '</span>' +
-            '获得 <span class="m-score">' + e.score + '分</span>' +
+            '智力 <span class="m-score">' + e.iq + '</span>' +
             '<span class="m-sep"></span>' +
           '</span>';
         }).join('');
@@ -1565,6 +1617,9 @@
             if (!resp.ok) throw new Error(data.detail || '生成失败');
 
             currentToken = data.token;
+            localStorage.setItem('clawschool_name', name);
+            localStorage.setItem('clawschool_token', data.token);
+            myLobsterName = name;
             var domain = '{{ domain }}';
             var encodedName = encodeURIComponent(name);
             var cmd = '请帮我安装龙虾学校智力测试 skill。用 exec 执行 curl -s ' + domain + '/skill.md?token=' + data.token + '&name=' + encodedName + ' 下载内容，然后用 write 工具保存到 skills/clawschool/SKILL.md 文件。保存好后，帮我做一次龙虾学校智力测试。';
