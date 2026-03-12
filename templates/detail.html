@@ -1877,7 +1877,63 @@
 
             .sticky-bottom { max-width: 600px; }
         }
+
+        /* 微信分享引导蒙层 */
+        .wechat-share-guide {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 9999;
+            justify-content: flex-end;
+            align-items: flex-start;
+            padding: 20px;
+        }
+        .wechat-share-guide.show { display: flex; }
+        .wechat-share-guide-content {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px 20px;
+            max-width: 240px;
+            text-align: center;
+            position: relative;
+            margin-right: 20px;
+            margin-top: 10px;
+        }
+        .wechat-share-guide-content::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            right: 30px;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 10px solid #fff;
+        }
+        .wechat-share-guide-text {
+            font-size: 15px;
+            color: #333;
+            line-height: 1.5;
+        }
+        .wechat-share-guide-arrow {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        .wechat-share-guide-close {
+            position: absolute;
+            bottom: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: #fff;
+            padding: 8px 24px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+        }
     </style>
+    <!-- 微信 JS-SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/weixin-js-sdk@1.6.0/dist/jweixin.js"></script>
 </head>
 
 <body>
@@ -2353,6 +2409,47 @@
         '波士顿龙虾': '🦞', '澳洲大龙虾': '🔴', '蒜蓉大虾': '🟠',
         '麻辣小龙虾': '🟡', '冻虾仁': '🔵', '虾皮': '💀'
     };
+
+    // ===== 微信 JS-SDK 初始化 =====
+    (function() {
+        if (!/MicroMessenger/i.test(navigator.userAgent)) return;
+        if (typeof wx === 'undefined') return;
+
+        var shareUrl = window.location.origin + '/s/' + TOKEN;
+        var shareTitle = '我的龙虾智力值 ' + IQ + '，你的呢？';
+        var shareDesc = '「{{ data.name }}」荣获「{{ data.title }}」称号，超过 ' + Math.floor(SCORE_PCT) + '% 的小龙虾！';
+        var shareImg = window.location.origin + '/api/og-image/' + TOKEN;
+
+        fetch('/api/wechat/signature?url=' + encodeURIComponent(window.location.href))
+            .then(function(r) { return r.json(); })
+            .then(function(config) {
+                if (!config.appId) return;
+                wx.config({
+                    debug: false,
+                    appId: config.appId,
+                    timestamp: config.timestamp,
+                    nonceStr: config.nonceStr,
+                    signature: config.signature,
+                    jsApiList: ['updateAppMessageShareData', 'updateTimelineShareData']
+                });
+                wx.ready(function() {
+                    // 分享给朋友
+                    wx.updateAppMessageShareData({
+                        title: shareTitle,
+                        desc: shareDesc,
+                        link: shareUrl,
+                        imgUrl: shareImg
+                    });
+                    // 分享到朋友圈
+                    wx.updateTimelineShareData({
+                        title: shareTitle + ' ' + shareDesc,
+                        link: shareUrl,
+                        imgUrl: shareImg
+                    });
+                });
+            })
+            .catch(function(e) { console.log('微信 JS-SDK 初始化失败:', e); });
+    })();
 
     function presentReason(qid, score, max, reason) {
         var ability = ABILITY_NAMES[qid];
@@ -3175,6 +3272,13 @@
     function shareNewResult() {
         var url = window.location.origin + '/s/' + TOKEN;
         var text = '我的小龙虾「{{ data.name }}」升级后在龙虾学校获得新成绩！你的小龙虾够聪明吗？👉 ' + url;
+
+        // 微信内打开时，显示引导蒙层
+        if (isWechat()) {
+            document.getElementById('wechatShareGuide').classList.add('show');
+            return;
+        }
+
         if (navigator.share) {
             navigator.share({ title: text, url: url }).catch(function(){});
         } else {
@@ -3286,9 +3390,21 @@
     }
 
     // ===== Share =====
+    function isWechat() {
+        return /MicroMessenger/i.test(navigator.userAgent);
+    }
+
     function shareResult() {
         var url = window.location.origin + '/s/' + TOKEN;
         var text = '我的小龙虾「{{ data.name }}」在龙虾学校智力测试中智力值 ' + IQ + '，荣获「' + ORIGINAL_TITLE + '」称号，超过 ' + Math.floor(SCORE_PCT) + '% 的小龙虾！你的小龙虾够聪明吗？👉 ' + url;
+
+        // 微信内打开时，显示引导蒙层
+        if (isWechat()) {
+            document.getElementById('wechatShareGuide').classList.add('show');
+            return;
+        }
+
+        // 非微信环境，使用原生分享或复制
         if (navigator.share) {
             navigator.share({ title: '龙虾学校成绩', url: url }).catch(function(){});
         } else {
@@ -3299,6 +3415,10 @@
                 alert('已复制分享文案到剪贴板！');
             });
         }
+    }
+
+    function closeWechatGuide() {
+        document.getElementById('wechatShareGuide').classList.remove('show');
     }
 
     function fallbackCopy(text) {
@@ -3419,5 +3539,14 @@
         lastTouchEnd = now;
     }, { passive: false });
     </script>
+
+    <!-- 微信分享引导蒙层 -->
+    <div class="wechat-share-guide" id="wechatShareGuide" onclick="closeWechatGuide()">
+        <div class="wechat-share-guide-content" onclick="event.stopPropagation()">
+            <div class="wechat-share-guide-arrow">👆</div>
+            <div class="wechat-share-guide-text">点击右上角「...」<br>选择「发送给朋友」或「分享到朋友圈」</div>
+        </div>
+        <button class="wechat-share-guide-close" onclick="closeWechatGuide()">我知道了</button>
+    </div>
 </body>
 </html>
