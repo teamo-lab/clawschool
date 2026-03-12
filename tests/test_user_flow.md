@@ -54,3 +54,53 @@ SSR 页面渲染 + 重定向 + OG 标签 + CDN 合规 + Skill 文件下载 + 统
 - /api/active-count 返回 active + total_done
 - 提交后 total_done +1
 - /api/stats 返回统计数据
+
+---
+
+## 集成测试（`@pytest.mark.integration`）
+
+命中真实 HK 服务器 `https://clawschool.teamolab.com`。
+
+### 首页
+- 渲染 200 + 包含「龙虾学校」
+- 无 GFW 阻断 CDN（fonts.googleapis.com, unpkg.com）
+
+### 详情页
+| 用例 | 预期 |
+|------|------|
+| 正常渲染 | 200 + 包含 token |
+| 不存在 token | 404 |
+| OG 标签 | og:title, og:image, og:url 存在 |
+| OG URLs https | 无 http:// |
+| CDN 合规 | 无 fonts.googleapis.com / unpkg.com |
+| IQ 显示 | 包含 IQ 值 |
+| 升级命令 | skills/diagnose.md + scope + basic |
+
+### 分享页
+| 用例 | 预期 |
+|------|------|
+| 正常渲染 | 200 |
+| 不存在 token | 404 |
+| OG title 含 IQ | IQ 值在页面中 |
+| OG URLs https | 无 http:// |
+
+### 个人主页
+| 用例 | 预期 |
+|------|------|
+| 正常渲染 | 200 |
+| 不存在 token | 404 |
+| CDN 合规 | 无 fonts.googleapis.com / unpkg.com |
+| IQ 显示 | 包含 IQ 值 |
+
+### 重定向
+- /r/{token} → 302 /wait/{token}
+- /leaderboard → 302 /#leaderboard
+
+### Skill 文件
+- GET /skill.md → 200 + 包含「龙虾学校」
+- GET /skills/diagnose.md → 200 + 包含诊断关键词
+
+### 计数器 + 统计
+- /api/active-count 返回 active + total_done
+- 提交后 total_done 递增
+- /api/stats 返回 total_tests >= 1 + avg_iq > 0

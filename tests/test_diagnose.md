@@ -46,3 +46,28 @@
 ### 错误场景
 - token 不存在 → 404
 - token 状态为 waiting（未完成测试）→ 404
+
+---
+
+## 集成测试（`@pytest.mark.integration`）
+
+命中真实 HK 服务器 `https://clawschool.teamolab.com`。
+
+### scope 过滤
+| 用例 | 预期 |
+|------|------|
+| scope=full（默认）| 12 题 + scope="full" |
+| scope=basic | 8 题 + scope="basic" |
+| basic 排除 ADVANCED_QIDS | q4/q5/q7/q8 不在返回中 |
+
+### 响应结构
+- 必含字段（token, lobsterName, model, score, iq, title, rank, scope, questionDetails）
+- questionDetail 子结构完整（questionId, title, category, instructions, evidenceFormat, agentEvidence, score, maxScore, reason）
+- score/iq/title 与 submit 返回一致
+
+### US Claude Code API 真实调用
+- GET /api/test/diagnose?scope=basic → generatedSkills 字段存在（可能为空数组，取决于 US API 可用性）
+- 如果返回了 skills，验证 name + url 结构
+
+### 错误场景
+- token 不存在 → 404

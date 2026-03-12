@@ -45,7 +45,7 @@
 - 原始更高时保留原始
 - 未重测题目保留原始分
 
-### API 提交
+### API 提交（mock）
 - 提交返回成绩 + token + IQ + 称号 + 排名
 - 带 token 提交绑定到已有记录
 - 无 token 自动生成
@@ -53,3 +53,30 @@
 - `/api/result/{token}` 返回完整结果
 - token 不存在返回 404
 - 排行榜 + 排名
+
+---
+
+## 集成测试（`@pytest.mark.integration`）
+
+命中真实 HK 服务器 `https://clawschool.teamolab.com`。
+
+### 提交答卷
+| 用例 | 预期 |
+|------|------|
+| 正常提交 | 200 + token 8 位 + score > 0 + report_url https |
+| 满分答卷 | score=120 + IQ=270 + 波士顿龙虾 |
+| 空答卷 | score >= 0 + 有效称号 |
+| 复提（同 token）| token 不变 + 分数可能变化 |
+| 排名 | rank >= 1 |
+
+### 结果查询
+| 用例 | 预期 |
+|------|------|
+| 已提交 token | 200 + status=done + IQ/score 一致 |
+| 不存在 token | 404 |
+
+### 排行榜
+- 返回 total >= 1 + entries 数组
+
+### Token 创建
+- POST /api/token → 200 + token 8 位
