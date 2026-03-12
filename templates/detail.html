@@ -81,11 +81,13 @@
         .phase-wait {
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             min-height: 100vh;
+            min-height: 100dvh;
             padding: 60px 24px 40px;
             position: relative;
             text-align: center;
+            gap: 0;
         }
 
         .phase-wait::before {
@@ -102,33 +104,27 @@
             z-index: 0;
         }
 
-        .wait-brand {
-            position: relative;
-            z-index: 3;
-            font-family: var(--font-ui);
-            font-size: 16px;
-            font-weight: 500;
-            color: var(--text-body);
-            letter-spacing: 3px;
-            margin-bottom: 32px;
-            animation: fadeIn 1s var(--ease-fluid) both;
+        .wait-spacer {
+            flex: 1 1 0;
+            min-height: 0;
         }
 
-        .wait-lobster {
+        /* Countdown timer */
+        .wait-countdown {
             position: relative;
             z-index: 2;
-            width: 200px;
-            height: 200px;
-            margin-bottom: 32px;
+            width: 180px;
+            flex-shrink: 0;
+            margin-bottom: 24px;
             animation: fadeIn 1.2s var(--ease-fluid) 0.1s both;
         }
 
-        .wait-lobster-glow {
+        .countdown-glow {
             position: absolute;
-            inset: -40px;
+            inset: -30px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(204, 15, 20, 0.2) 0%, rgba(255, 150, 22, 0.08) 50%, transparent 70%);
-            filter: blur(24px);
+            background: radial-gradient(circle, rgba(204, 15, 20, 0.12) 0%, rgba(255, 150, 22, 0.05) 50%, transparent 70%);
+            filter: blur(20px);
             animation: breathe 3s ease-in-out infinite;
         }
 
@@ -137,108 +133,157 @@
             50% { transform: scale(1.1); opacity: 1; }
         }
 
-        .wait-lobster-wrap {
-            position: absolute;
-            inset: -40px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            mask-image: radial-gradient(circle at center, black 35%, transparent 60%);
-            -webkit-mask-image: radial-gradient(circle at center, black 35%, transparent 60%);
+        .countdown-ring {
+            position: relative;
+            width: 100%;
+            padding-bottom: 100%;
         }
 
-        .wait-lobster-wrap img {
+        .countdown-ring svg {
+            position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            filter: contrast(1.08) brightness(1.06);
-            mix-blend-mode: screen;
-            animation: lobsterFloat 4s ease-in-out infinite;
+            transform: rotate(-90deg);
         }
 
-        @keyframes lobsterFloat {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
+        .countdown-track {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.04);
+            stroke-width: 3;
         }
 
-        .wait-title {
-            position: relative;
-            z-index: 3;
+        .countdown-fill {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.15);
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-dasharray: 452.39;
+            stroke-dashoffset: 0;
+            transition: stroke-dashoffset 1s linear, stroke 0.6s ease;
+        }
+
+        .countdown-mascot {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .countdown-mascot img {
+            width: 60%;
+            height: 60%;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 20px rgba(204, 15, 20, 0.3));
+        }
+
+        /* Loop entrance animations */
+        @keyframes loopZoomSpin {
+            0%   { opacity: 0; transform: scale(0) rotate(-180deg); }
+            60%  { opacity: 1; transform: scale(1.1) rotate(10deg); }
+            100% { opacity: 1; transform: scale(1) rotate(0deg); }
+        }
+        @keyframes loopDropBounce {
+            0%   { opacity: 0; transform: translateY(-60px) scale(0.6); }
+            50%  { opacity: 1; transform: translateY(8px) scale(1.05); }
+            75%  { transform: translateY(-4px) scale(0.98); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes loopFlipIn {
+            0%   { opacity: 0; transform: perspective(400px) rotateY(90deg) scale(0.8); }
+            60%  { opacity: 1; transform: perspective(400px) rotateY(-10deg) scale(1.05); }
+            100% { opacity: 1; transform: perspective(400px) rotateY(0deg) scale(1); }
+        }
+        @keyframes loopPopUp {
+            0%   { opacity: 0; transform: translateY(40px) scale(0.5); }
+            60%  { opacity: 1; transform: translateY(-6px) scale(1.08); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes loopSwingIn {
+            0%   { opacity: 0; transform: rotate(-25deg) scale(0.6); }
+            50%  { opacity: 1; transform: rotate(8deg) scale(1.05); }
+            75%  { transform: rotate(-3deg) scale(0.98); }
+            100% { opacity: 1; transform: rotate(0deg) scale(1); }
+        }
+        @keyframes loopSlideScale {
+            0%   { opacity: 0; transform: translateX(-40px) scale(0.6) rotate(10deg); }
+            60%  { opacity: 1; transform: translateX(4px) scale(1.05) rotate(-2deg); }
+            100% { opacity: 1; transform: translateX(0) scale(1) rotate(0deg); }
+        }
+
+        /* Post-entrance jelly bounce */
+        @keyframes loopJelly {
+            0%   { transform: translateY(0) scaleX(1) scaleY(1); }
+            15%  { transform: translateY(-10px) scaleX(0.92) scaleY(1.1); }
+            30%  { transform: translateY(0) scaleX(1.1) scaleY(0.88); }
+            42%  { transform: translateY(-5px) scaleX(0.96) scaleY(1.06); }
+            55%  { transform: translateY(0) scaleX(1.04) scaleY(0.94); }
+            65%  { transform: translateY(-2px) scaleX(0.98) scaleY(1.03); }
+            78%  { transform: translateY(0) scaleX(1.01) scaleY(0.99); }
+            100% { transform: translateY(0) scaleX(1) scaleY(1); }
+        }
+
+        /* Exit animation */
+        @keyframes loopExit {
+            0%   { opacity: 1; transform: scale(1) rotate(0deg); }
+            100% { opacity: 0; transform: scale(0.5) rotate(15deg); }
+        }
+
+        .countdown-time {
+            margin-top: 16px;
+            padding-bottom: 8px;
             font-family: var(--font-display);
             font-size: 24px;
-            font-weight: 800;
-            color: var(--text-h1);
-            margin-bottom: 12px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 2px;
+            font-variant-numeric: tabular-nums;
+            text-align: center;
+        }
+
+        /* Countdown warning state (< 2 min) */
+        .countdown-warning .countdown-fill {
+            stroke: var(--brand-orange);
+        }
+        .countdown-warning .countdown-time {
+            color: var(--brand-orange);
+        }
+        .countdown-warning .countdown-mascot img {
+            filter: drop-shadow(0 4px 20px rgba(255, 150, 22, 0.4));
+            animation: mascotShake 0.4s ease-in-out infinite;
+        }
+        @keyframes mascotShake {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-3deg); }
+            75% { transform: rotate(3deg); }
+        }
+        .countdown-warning .countdown-glow {
+            background: radial-gradient(circle, rgba(255, 150, 22, 0.15) 0%, transparent 60%);
+        }
+
+        .wait-info {
+            position: relative;
+            z-index: 3;
+            text-align: center;
+            max-width: 280px;
+            flex-shrink: 0;
             animation: slideUp 0.8s var(--ease-fluid) 0.3s both;
         }
 
-        .wait-subtitle {
-            position: relative;
-            z-index: 3;
-            font-size: 14px;
-            color: var(--text-body);
-            margin-bottom: 32px;
-            animation: slideUp 0.8s var(--ease-fluid) 0.4s both;
-        }
-
-        .wait-progress {
-            position: relative;
-            z-index: 3;
-            width: 100%;
-            max-width: 280px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.06);
-            border-radius: 100px;
-            overflow: hidden;
-            margin-bottom: 16px;
-            animation: slideUp 0.8s var(--ease-fluid) 0.5s both;
-        }
-
-        .wait-progress-bar {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, var(--brand-red), var(--brand-orange));
-            border-radius: 100px;
-            transition: width 0.6s var(--ease-fluid);
-            box-shadow: 0 0 12px rgba(255, 150, 22, 0.4);
-        }
-
         .wait-status {
-            position: relative;
-            z-index: 3;
-            font-size: 13px;
-            color: var(--text-muted);
-            animation: slideUp 0.8s var(--ease-fluid) 0.55s both;
+            font-size: 14px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 10px;
+            transition: opacity 0.3s;
         }
 
-        .wait-tips {
-            position: relative;
-            z-index: 3;
-            margin-top: 48px;
-            width: 100%;
-            padding: 16px 20px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 20px;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            animation: slideUp 0.8s var(--ease-fluid) 0.6s both;
-            min-height: 72px;
-        }
-
-        .wait-tip-text {
-            font-size: 13px;
-            line-height: 1.6;
-            color: var(--text-body);
+        .wait-tip {
+            font-size: 12px;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.35);
             transition: opacity 0.4s;
-        }
-
-        .wait-tip-label {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--brand-orange);
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
         }
 
         /* =============================================
@@ -492,17 +537,6 @@
         @keyframes spin { to { transform: rotate(360deg); } }
 
         /* ===== Coin Badge System ===== */
-        .score-coin-wrap {
-            position: relative;
-            z-index: 2;
-            width: 320px;
-            height: 320px;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: fadeIn 1.2s var(--ease-fluid) 0.1s both;
-        }
         .coin-grid {
             position: absolute;
             width: 320%;
@@ -702,13 +736,16 @@
             letter-spacing: 3px;
         }
 
-        /* Score Unit */
+        /* Score Unit — Coin Badge */
         .score-coin-wrap {
             position: relative;
             z-index: 2;
-            width: 220px;
-            height: 220px;
-            margin-bottom: 24px;
+            width: 320px;
+            height: 320px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             animation: fadeIn 1.2s var(--ease-fluid) 0.1s both;
         }
 
@@ -1490,9 +1527,9 @@
             .phase-reveal { padding: 48px 16px 32px; }
             .phase-result { padding: 48px 16px 0; }
 
-            .wait-lobster { width: 160px; height: 160px; }
-            .wait-title { font-size: 20px; }
-            .wait-subtitle { font-size: 13px; }
+            .wait-countdown { width: 140px; margin-bottom: 28px; }
+            .wait-status { font-size: 13px; }
+            .wait-tip { font-size: 12px; }
 
             .score-coin-wrap { width: 180px; height: 180px; }
             .score-num { font-size: 52px; }
@@ -1531,7 +1568,7 @@
             .phase-reveal { padding: 72px 32px 48px; }
             .phase-result { padding: 72px 32px 0; }
 
-            .wait-lobster { width: 220px; height: 220px; }
+            .wait-countdown { width: 200px; }
             .score-coin-wrap { width: 240px; height: 240px; }
             .score-num { font-size: 72px; }
             .hero-title { font-size: 28px; }
@@ -1565,12 +1602,8 @@
                     transparent 65%);
             }
 
-            .wait-brand { font-size: 13px; letter-spacing: 5px; margin-bottom: 28px; }
-            .wait-lobster { width: 180px; height: 180px; margin-bottom: 28px; }
-            .wait-title { font-size: 26px; }
-            .wait-subtitle { font-size: 14px; }
-            .wait-progress { max-width: 320px; }
-            .wait-tips { max-width: 480px; }
+            .wait-countdown { width: 180px; margin-bottom: 28px; }
+            .wait-info { max-width: 400px; }
 
             .reveal-brand { font-size: 13px; letter-spacing: 5px; }
             .reveal-hero { margin-bottom: 20px; }
@@ -1670,9 +1703,8 @@
             .phase-reveal::before,
             .phase-result::before { width: 720px; height: 720px; }
 
-            .wait-lobster { width: 200px; height: 200px; }
-            .wait-title { font-size: 30px; }
-            .wait-tips { max-width: 520px; }
+            .wait-countdown { width: 200px; }
+            .wait-info { max-width: 480px; }
 
             .reveal-list { max-width: 560px; }
 
@@ -1714,8 +1746,7 @@
             .phase-reveal::before,
             .phase-result::before { width: 840px; height: 840px; }
 
-            .wait-lobster { width: 220px; height: 220px; }
-            .wait-title { font-size: 32px; }
+            .wait-countdown { width: 200px; }
 
             .reveal-list { max-width: 600px; }
 
@@ -1798,34 +1829,28 @@
         {% if data.status != 'done' %}
         <!-- ===== PHASE 1: Wait (polling) ===== -->
         <section class="phase phase-wait active" id="phaseWait">
-            <div class="wait-brand">龙虾学校</div>
+            <div class="wait-spacer"></div>
 
-            <div class="wait-lobster">
-                <div class="wait-lobster-glow"></div>
-                <div class="wait-lobster-wrap">
-                    <img src="/static/3d_cyber_lobster.png" alt="Lobster">
+            <div class="wait-countdown">
+                <div class="countdown-glow"></div>
+                <div class="countdown-ring">
+                    <svg viewBox="0 0 160 160">
+                        <circle class="countdown-track" cx="80" cy="80" r="72" />
+                        <circle class="countdown-fill" id="countdownFill" cx="80" cy="80" r="72" />
+                    </svg>
+                    <div class="countdown-mascot" id="countdownMascot">
+                        <img id="loopImg" src="/static/badges/loop/logo.png" alt="龙虾" style="border-radius:14px;">
+                    </div>
                 </div>
+                <div class="countdown-time" id="countdownText">10:00</div>
             </div>
 
-            <div class="wait-title">{{ data.name }} 正在答题...</div>
-            <div class="wait-subtitle" id="waitSubtitle">正在连接你的小龙虾</div>
-
-            <div class="wait-progress">
-                <div class="wait-progress-bar" id="waitProgressBar"></div>
-            </div>
-            <div class="wait-status" id="waitStatus">准备中...</div>
-
-            <div class="wait-tips">
-                <div class="wait-tip-label">💡 你知道吗</div>
-                <div class="wait-tip-text" id="waitTip">龙虾学校共测试 12 项 AI 实战能力，覆盖群聊整理、安全防护、Skill 核查等核心维度。</div>
+            <div class="wait-info">
+                <div class="wait-status" id="waitStatus">正在连接你的小龙虾...</div>
+                <div class="wait-tip" id="waitTip">龙虾学校共测试 12 项 AI 实战能力，覆盖群聊整理、安全防护、Skill 核查等核心维度。</div>
             </div>
 
-            <div class="wait-active-count" id="waitActiveCount" style="
-                position: relative; z-index: 3; margin-top: 20px;
-                font-size: 12px; color: var(--text-muted);
-                animation: slideUp 0.8s var(--ease-fluid) 0.7s both;
-                text-align: center;
-            "></div>
+            <div class="wait-spacer"></div>
         </section>
 
         <!-- ===== PHASE 2: Reveal ===== -->
@@ -2239,17 +2264,70 @@
 
     // ===== PHASE 1: Wait with real polling =====
     function startWaitPhase() {
-        var bar = document.getElementById('waitProgressBar');
         var status = document.getElementById('waitStatus');
-        var subtitle = document.getElementById('waitSubtitle');
         var tipEl = document.getElementById('waitTip');
+        var countdownText = document.getElementById('countdownText');
+        var countdownFill = document.getElementById('countdownFill');
+        var countdownWrap = document.querySelector('.wait-countdown');
+        var loopImg = document.getElementById('loopImg');
         var tipIdx = 0;
-        var fakeProgress = 5;
-        var pollCount = 0;
 
-        // Fetch active count immediately and every 15s
-        fetchActiveCount();
-        var activeCountTimer = setInterval(fetchActiveCount, 15000);
+        // Loop image carousel
+        var loopItems = [
+            { src: '/static/badges/loop/logo.png',        anim: 'loopZoomSpin',   radius: '14px' },
+            { src: '/static/badges/loop/Rectangle-1.png', anim: 'loopSwingIn',    radius: '0' },
+            { src: '/static/badges/loop/Rectangle-2.png', anim: 'loopDropBounce', radius: '0' },
+            { src: '/static/badges/loop/Rectangle-3.png', anim: 'loopPopUp',      radius: '0' },
+            { src: '/static/badges/loop/Rectangle-4.png', anim: 'loopSlideScale', radius: '0' },
+            { src: '/static/badges/loop/Rectangle-5.png', anim: 'loopFlipIn',     radius: '0' },
+        ];
+        var loopIdx = 0;
+        // Preload images
+        loopItems.forEach(function(item) { var i = new Image(); i.src = item.src; });
+
+        // Start jelly bounce after initial entrance
+        loopImg.style.animation = 'loopJelly 2s ease-in-out infinite';
+
+        var loopTimer = setInterval(function() {
+            // Exit animation
+            loopImg.style.animation = 'loopExit 0.3s ease forwards';
+            setTimeout(function() {
+                loopIdx = (loopIdx + 1) % loopItems.length;
+                var item = loopItems[loopIdx];
+                loopImg.src = item.src;
+                loopImg.style.borderRadius = item.radius;
+                // Entrance animation
+                loopImg.style.animation = item.anim + ' 0.5s var(--ease-spring) forwards';
+                // Switch to jelly bounce after entrance
+                setTimeout(function() {
+                    loopImg.style.animation = 'loopJelly 2s ease-in-out infinite';
+                }, 500);
+            }, 300);
+        }, 2500);
+
+        // Countdown: 10 minutes = 600 seconds
+        var TOTAL_SECONDS = 600;
+        var CIRCUMFERENCE = 2 * Math.PI * 72; // r=72
+        var remaining = TOTAL_SECONDS;
+
+        function updateCountdown() {
+            var min = Math.floor(remaining / 60);
+            var sec = remaining % 60;
+            countdownText.textContent = min + ':' + (sec < 10 ? '0' : '') + sec;
+            var progress = remaining / TOTAL_SECONDS;
+            countdownFill.style.strokeDashoffset = (CIRCUMFERENCE * (1 - progress)).toFixed(2);
+            if (remaining <= 120 && !countdownWrap.classList.contains('countdown-warning')) {
+                countdownWrap.classList.add('countdown-warning');
+            }
+        }
+
+        updateCountdown();
+        var countdownTimer = setInterval(function() {
+            remaining--;
+            if (remaining < 0) remaining = 0;
+            updateCountdown();
+            if (remaining <= 0) clearInterval(countdownTimer);
+        }, 1000);
 
         // Tip rotation
         var tipTimer = setInterval(function() {
@@ -2261,55 +2339,24 @@
             }, 300);
         }, 4000);
 
-        // Slow progress crawl (never reaches 100% until done)
-        bar.style.width = '5%';
-        status.textContent = '正在连接你的小龙虾...';
-        subtitle.textContent = '测试已启动，正在等待结果';
-
-        var crawlTimer = setInterval(function() {
-            fakeProgress += 0.5;
-            if (fakeProgress > 88) fakeProgress = 88;
-            bar.style.width = fakeProgress + '%';
-
-            // Update status text based on progress
-            if (fakeProgress < 20) {
-                status.textContent = '正在连接你的小龙虾...';
-            } else if (fakeProgress < 40) {
-                status.textContent = '你的龙虾正在思考...';
-                subtitle.textContent = '正在逐题作答中';
-            } else if (fakeProgress < 60) {
-                status.textContent = '已进入中间阶段...';
-                subtitle.textContent = '核心能力测试中';
-            } else if (fakeProgress < 80) {
-                status.textContent = '快要完成了...';
-                subtitle.textContent = '最后几道题';
-            } else {
-                status.textContent = '即将揭晓智力值...';
-                subtitle.textContent = '正在汇总评估';
-            }
-        }, 2000);
-
         // Real polling
         var poller = setInterval(function() {
-            pollCount++;
             fetch('/api/result/' + TOKEN).then(function(r) { return r.json(); }).then(function(result) {
                 if (result.status === 'done') {
                     clearInterval(poller);
-                    clearInterval(crawlTimer);
+                    clearInterval(countdownTimer);
                     clearInterval(tipTimer);
-                    clearInterval(activeCountTimer);
+                    clearInterval(loopTimer);
 
-                    // Complete the progress bar
-                    bar.style.width = '100%';
                     status.textContent = '全部完成！正在准备报告...';
-                    subtitle.textContent = '准备评估';
-
-                    // Store result data for Phase 2 & 3
                     window._resultData = result;
 
                     setTimeout(function() {
                         startRevealPhase(result);
                     }, 800);
+                } else if (result.answered) {
+                    // Update status with real progress
+                    status.textContent = '已完成 ' + result.answered + '/12 题';
                 }
             }).catch(function() {});
         }, 5000);
