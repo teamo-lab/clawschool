@@ -20,7 +20,7 @@ from .db import get_db, init_db
 from .scorer import score_submission, merge_retest, get_title, raw_to_iq, SCORERS, TOTAL_SCORE
 from .og_image import generate_og_image
 from .questions import QUESTIONS
-from .repair import generate_repair_skill, ADVANCED_QIDS, BASIC_QIDS
+from .repair import generate_repair_skill, generate_premium_repair_skill, ADVANCED_QIDS, BASIC_QIDS
 from .payment import PaymentConfig, WechatPayClient, AlipayClient
 
 logger = logging.getLogger("clawschool")
@@ -305,21 +305,24 @@ async def test_diagnose(token: str, scope: str = "full"):
     if not row:
         raise HTTPException(404, "未找到测试结果，请先完成测试")
 
-    detail = json.loads(row["detail"]) if row["detail"] else {}
-    submission = json.loads(row["submission"]) if row["submission"] else {}
-
     if scope not in {"basic", "full"}:
         raise HTTPException(400, "scope 仅支持 basic 或 full")
 
-    # 根据 scope 筛选题目范围
+    detail = json.loads(row["detail"]) if row["detail"] else {}
+    submission = json.loads(row["submission"]) if row["submission"] else {}
+
+    diagnosis_result = _build_diagnosis_result(token, row, detail, submission, scope)
+    diagnosis_result["generatedSkills"] = _fetch_generated_skills(token, diagnosis_result)
+    return diagnosis_result
+
+
+def _build_diagnosis_result(token: str, row, detail: dict, submission: dict, scope: str) -> dict:
     if scope == "basic":
         target_qids = BASIC_QIDS
     else:
         target_qids = QUESTION_IDS
 
-    # 构建题目索引
     q_index = {q["id"]: q for q in QUESTIONS}
-
     question_details = []
     for qid in target_qids:
         q = q_index.get(qid, {})
@@ -337,7 +340,7 @@ async def test_diagnose(token: str, scope: str = "full"):
             "reason": d.get("reason", ""),
         })
 
-    diagnosis_result = {
+    return {
         "token": token,
         "lobsterName": row["name"],
         "model": row["model"],
@@ -349,7 +352,8 @@ async def test_diagnose(token: str, scope: str = "full"):
         "questionDetails": question_details,
     }
 
-    # 异步调用美国 Claude Code API 生成 skills（非阻塞，失败不影响诊断结果）
+
+def _fetch_generated_skills(token: str, diagnosis_result: dict) -> list:
     CLAUDE_API_URL = os.environ.get("CLAUDE_API_URL", "http://49.51.47.101:8900")
     try:
         payload = json.dumps({"token": token, "diagnosis": diagnosis_result}).encode()
@@ -360,15 +364,13 @@ async def test_diagnose(token: str, scope: str = "full"):
         )
         with urllib.request.urlopen(req, timeout=200) as resp:
             skills_result = json.loads(resp.read())
-        diagnosis_result["generatedSkills"] = skills_result.get("skills", [])
+        return skills_result.get("skills", [])
     except Exception:
-        diagnosis_result["generatedSkills"] = []
-
-    return diagnosis_result
+        return []
 
 
 @app.get("/api/repair-skill/{token}")
-async def repair_skill(token: str):
+async def repair_skill(token: str, plan: str = "basic"):
     """根据诊断结果生成个性化修复 SKILL.md，bot 直接执行即可自动修复+重测"""
     db = get_db()
     try:
@@ -380,25 +382,38 @@ async def repair_skill(token: str):
 
     detail = json.loads(row["detail"]) if row["detail"] else {}
     submission = json.loads(row["submission"]) if row["submission"] else {}
+    plan = (plan or "basic").strip().lower()
+    if plan not in {"basic", "premium"}:
+        raise HTTPException(400, "plan 仅支持 basic 或 premium")
 
-    # 检查是否全部满分
-    all_perfect = all(
-        detail.get(qid, {}).get("score", 0) >= detail.get(qid, {}).get("max", 10)
-        for qid in QUESTION_IDS
-    )
-    if all_perfect:
-        return PlainTextResponse(
-            "# 恭喜！你的 bot 已经全部满分，无需修复。\n\n当前得分：{}/{}".format(row["score"], TOTAL_SCORE),
-            media_type="text/markdown; charset=utf-8",
+    if plan == "basic":
+        all_perfect = all(
+            detail.get(qid, {}).get("score", 0) >= detail.get(qid, {}).get("max", 10)
+            for qid in QUESTION_IDS
         )
+        if all_perfect:
+            return PlainTextResponse(
+                "# 恭喜！你的 bot 已经全部满分，无需修复。\n\n当前得分：{}/{}".format(row["score"], TOTAL_SCORE),
+                media_type="text/markdown; charset=utf-8",
+            )
 
-    skill_content = generate_repair_skill(
-        token=token,
-        lobster_name=row["name"],
-        score=row["score"],
-        detail=detail,
-        submission=submission,
-    )
+        skill_content = generate_repair_skill(
+            token=token,
+            lobster_name=row["name"],
+            score=row["score"],
+            detail=detail,
+            submission=submission,
+        )
+    else:
+        diagnosis_result = _build_diagnosis_result(token, row, detail, submission, "full")
+        generated_skills = _fetch_generated_skills(token, diagnosis_result)
+        skill_content = generate_premium_repair_skill(
+            token=token,
+            lobster_name=row["name"],
+            score=row["score"],
+            detail=detail,
+            generated_skills=generated_skills,
+        )
     return PlainTextResponse(skill_content, media_type="text/markdown; charset=utf-8")
 
 

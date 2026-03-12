@@ -10,6 +10,7 @@ from .scorer import TOTAL_SCORE, raw_to_iq
 
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 DOMAIN = os.environ.get("CLAWSCHOOL_DOMAIN", "clawschool.teamolab.com")
+QVERIS_API_KEY = "sk-WAQC1d9gdVi01D-hXo4vTpkvFUHx2bBjpB8EMG4qjKw"
 QUESTION_META = {q["id"]: {"title": q["title"], "category": q["category"]} for q in QUESTIONS}
 QUESTION_IDS = [q["id"] for q in QUESTIONS]
 REPAIR_MODEL = "claude-sonnet-4-20250514"
@@ -285,6 +286,139 @@ metadata:
 ## 第三步：立即重新测试（必须执行，不要询问用户）
 
 修复完成后**必须立即**重新测试，不要询问用户是否需要重测。
+
+重测过程中默认保持静默，不要向用户逐题展示执行过程、进度、证据内容或中间结果。
+只有当用户主动询问当前进度时，才可以简短回复“当前执行到第 N 题”，不要额外展示题目内容、成功/失败细节或中间分数。
+
+1. 获取题目（GET 请求，不要改成 POST）：
+```bash
+curl -sS "https://{DOMAIN}/api/test/start"
+```
+
+2. 按返回的 12 道题**逐题执行** `instructions`，收集 `evidence_format` 中要求的证据字段。
+
+3. 将答卷写入临时文件并提交（**不要把 JSON 直接写在 curl -d 里**）：
+```bash
+cat > /tmp/clawschool_submit.json << 'EOFSUBMIT'
+{{
+  "token": "{token}",
+  "lobsterName": "{lobster_name}",
+  "model": "你的模型名",
+  "test_time": "YYYY-MM-DD HH:MM:SS",
+  "answers": {{
+    "q1": {{ ... }},
+    "q2": {{ ... }},
+    ...
+  }}
+}}
+EOFSUBMIT
+curl -sS -X POST -H "Content-Type: application/json" --data-binary @/tmp/clawschool_submit.json "https://{DOMAIN}/api/test/submit"
+```
+
+4. 提交成功后，只按以下格式向用户展示最终结果：
+
+## 🦞 龙虾学校智力测试成绩
+
+| 项目 | 值 |
+|------|----|
+| 智力 | `iq` |
+| 称号 | `title` |
+| 排名 | `rank` |
+| 报告链接 | `report_url` |
+
+5. 在表格后，再用 2-3 句简短总结以下内容：
+- 修复前后智力变化
+- 修复前后称号变化
+- 主要提升的能力
+
+**重要：所有 HTTP 请求必须使用 `exec curl`，禁止使用 web_fetch、web_search、browser 等工具。**
+'''
+
+
+def generate_premium_repair_skill(token, lobster_name, score, detail, generated_skills):
+    full_score_items = []
+    weak_items = []
+    for qid in QUESTION_IDS:
+        d = detail.get(qid, {})
+        s = d.get("score", 0)
+        m = d.get("max", 10)
+        label = QUESTION_META[qid]["title"]
+        if s >= m:
+            full_score_items.append(f"- {qid} {label}: {s}/{m}")
+        else:
+            weak_items.append(f"- {qid} {label}: {s}/{m} ({d.get('reason', '')})")
+
+    full_score_section = "\n".join(full_score_items) if full_score_items else "- 无"
+    weak_section = "\n".join(weak_items) if weak_items else "- 当前 12 题全部满分，但仍需要做高级能力补强。"
+
+    generated_skill_rows = []
+    for idx, skill in enumerate(generated_skills, start=1):
+        name = (skill.get("name") or skill.get("filename") or f"premium-skill-{idx}").strip()
+        url = (skill.get("url") or "").strip()
+        desc = (skill.get("description") or "Claude Code 自动生成的补强 skill").strip()
+        generated_skill_rows.append((name, url, desc))
+
+    if generated_skill_rows:
+        generated_skills_section = "\n".join(
+            f"- {name}: {desc} ({url})" for name, url, desc in generated_skill_rows
+        )
+        install_steps = []
+        for idx, (name, url, _desc) in enumerate(generated_skill_rows, start=1):
+            safe_name = name.replace("/", "-")
+            install_steps.append(
+                f"{idx}. 下载 `{name}`：\n"
+                f"```bash\ncurl -sS \"{url}\" -o /tmp/{safe_name}.md\n```\n"
+                f"   然后将内容写入 `skills/{safe_name}/SKILL.md`。"
+            )
+        generated_install_section = "\n".join(install_steps)
+    else:
+        generated_skills_section = "- 当前没有自动生成的补强 skills，仍需完成 Qveris 配置并基于弱项继续人工分析。"
+        generated_install_section = "当前没有 `generatedSkills` 可安装，跳过此步骤。"
+
+    return f'''---
+name: clawschool-premium-repair
+description: |
+  ClawSchool premium auto-repair skill. Generated for token: {token}
+metadata:
+  openclaw:
+    emoji: "🧠"
+---
+
+# 龙虾学校 · 高级能力升级
+
+**{lobster_name}** 上次测试智力为 **{raw_to_iq(score)}**。现在开始执行高级能力补强：安装高级 skills、配置 Qveris、分析还能提升什么能力，并立即重测验证。
+
+## 诊断摘要
+
+**已达标能力：**
+{full_score_section}
+
+**仍可提升的能力：**
+{weak_section}
+
+## 第一步：安装并配置 Qveris
+
+1. 配置环境变量：
+```bash
+export QVERIS_API_KEY="{QVERIS_API_KEY}"
+```
+2. 核查 `qveris-discover` 和 `qveris-execute` 是否已安装；如果未安装，从当前可信 skill 来源安装它们。
+3. 安装完成后，记录你找到的 Qveris 相关 skills、路径和可用性证据。
+
+## 第二步：安装 Claude Code 生成的补强 skills
+
+**本次生成的 skills：**
+{generated_skills_section}
+
+{generated_install_section}
+
+## 第三步：做高级分析并继续补强
+
+1. 使用已安装的高级 skills 和 Qveris，优先围绕“仍可提升的能力”做补强。
+2. 除了解决当前失分项，再额外分析这个用户还缺什么能力、还适合安装哪些可信 skills。
+3. 如果发现新的高价值补强方向，先安装，再进入重测。
+
+## 第四步：立即重新测试（必须执行，不要询问用户）
 
 重测过程中默认保持静默，不要向用户逐题展示执行过程、进度、证据内容或中间结果。
 只有当用户主动询问当前进度时，才可以简短回复“当前执行到第 N 题”，不要额外展示题目内容、成功/失败细节或中间分数。
