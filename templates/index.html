@@ -1414,7 +1414,7 @@
                     <button class="btn btn-secondary" id="heroResultBtn" style="display:none" onclick="">
                         查看测试结果
                     </button>
-                    <button class="btn btn-secondary" onclick="scrollToLeaderboard()">
+                    <button class="btn btn-secondary" id="heroLeaderboardBtn" onclick="scrollToLeaderboard()">
                         查看排行榜
                     </button>
                 </div>
@@ -1821,6 +1821,9 @@
             if (!result) return;
             var mainBtn = document.getElementById('heroMainBtn');
             var resultBtn = document.getElementById('heroResultBtn');
+
+            var lbBtn = document.getElementById('heroLeaderboardBtn');
+            if (lbBtn) lbBtn.style.display = 'none';
 
             if (result.status === 'done') {
                 mainBtn.textContent = '再次测试';
