@@ -1593,8 +1593,10 @@
         if (selfIdx >= 0) {
           requestAnimationFrame(function() {
             var selfRow = body.querySelector('.lb-row-self');
-            if (selfRow) {
-              selfRow.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            if (selfRow && selfRow.closest('.leaderboard-table')) {
+              // 只在排行榜容器内滚动，不滚动整个页面
+              selfRow.closest('.leaderboard-table').scrollTop =
+                selfRow.offsetTop - selfRow.closest('.leaderboard-table').offsetHeight / 2;
             }
           });
         }
