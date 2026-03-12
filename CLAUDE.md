@@ -42,7 +42,7 @@
 - `GET /api/leaderboard` — 排行榜
 - `GET /api/stats` — 统计数据
 - `GET /api/og-image/{token}` — OG 分享图片
-- `POST /api/login/send-code` — 发送验证码（MVP 万能码 888888）
+- `POST /api/login/send-code` — 发送真实短信验证码（腾讯云 SMS），万能码 888888 保留作开发用
 - `POST /api/login` — 手机号登录
 - `POST /api/payment/create` — 创建支付订单
 - `POST /api/payment/confirm` — 确认支付
@@ -126,6 +126,16 @@ pytest tests/                         # 全部 197 cases
 - 集成测试用范围断言（避免服务端状态波动导致假失败）
 - 部署前跑一遍集成测试确认真实环境正常
 - 修 bug → 先写复现测试，再修复
+
+## 腾讯云短信（验证码）
+
+统一使用已审核通过的签名和模板，不要新建：
+
+- **签名**: 浮点奇迹北京 (SignId: 637699)
+- **模板**: AMA_login (TemplateId: 2359220)，内容: `验证码为：{1}，您正在登录，若非本人操作，请勿泄露。`
+- **SmsSdkAppId**: 1400950277
+- **环境变量**: `TC_SMS_SECRET_ID`, `TC_SMS_SECRET_KEY`, `TC_SMS_SDK_APP_ID`, `TC_SMS_SIGN_NAME=浮点奇迹北京`, `TC_SMS_TEMPLATE_ID=2359220`
+- SMS 发送失败不阻塞登录，888888 万能码始终可用
 
 ## 注意事项
 
