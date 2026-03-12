@@ -1849,6 +1849,14 @@
         '麻辣小龙虾': '🟡', '冻虾仁': '🔵', '虾皮': '💀'
     };
 
+    // IQ mapping function (mirrors backend raw_to_iq)
+    function rawToIq(raw) {
+        var iq;
+        if (raw <= 60) iq = 30 + (raw / 60) * 70;
+        else iq = 100 + ((raw - 60) / 60) * 170;
+        return Math.max(30, Math.min(270, Math.round(iq)));
+    }
+
     var tips = [
         '龙虾学校共测试 12 项 AI 实战能力，覆盖群聊整理、安全防护、Skill 核查等核心维度。',
         '全球已有超过 2,000 只龙虾完成测评，最高智力值 270！',
@@ -2000,14 +2008,6 @@
 
         var runningScore = 0;
         var idx = 0;
-
-        // IQ mapping function (mirrors backend raw_to_iq)
-        function rawToIq(raw) {
-            var iq;
-            if (raw <= 60) iq = 30 + (raw / 60) * 70;
-            else iq = 100 + ((raw - 60) / 60) * 170;
-            return Math.max(30, Math.min(270, Math.round(iq)));
-        }
 
         function revealNext() {
             if (idx >= total) {
@@ -2186,23 +2186,25 @@
 
     // ===== Upgrade Flow =====
     function previewUpgrade() {
-        var target = Math.min(SCORE + BOOST, 120);
-        var targetPct = (target / 120) * 100;
+        // 用 IQ 值做动画：当前 IQ → 升级后预估 IQ
+        var targetRaw = Math.min(SCORE + BOOST, 120);
+        var targetIQ = rawToIq(targetRaw);
+        var targetPct = Math.min(100, (targetIQ / 270) * 100);
         var numEl = document.getElementById('scoreNum');
         window.scrollTo({ top: 0, behavior: 'smooth' });
         setTimeout(function() {
             setRing(targetPct);
-            var current = SCORE;
-            var step = Math.ceil((target - current) / 20);
+            var current = IQ;
+            var step = Math.max(1, Math.ceil((targetIQ - current) / 20));
             var timer = setInterval(function() {
                 current += step;
-                if (current >= target) {
-                    current = target;
+                if (current >= targetIQ) {
+                    current = targetIQ;
                     clearInterval(timer);
                     setTimeout(function() {
                         document.getElementById('upgrade-step1').classList.add('show');
                         setRing(SCORE_PCT);
-                        numEl.textContent = SCORE;
+                        numEl.textContent = IQ;
                     }, 800);
                 }
                 numEl.textContent = current;
