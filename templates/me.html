@@ -525,27 +525,30 @@ body {
   </div>
 </div>
 
-<!-- P8 Step 3: 支付弹窗 -->
+<!-- P8 Step 3: 支付等待弹窗 -->
 <div class="overlay" id="qr-modal" onclick="if(event.target===this)this.classList.remove('show')">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <h3 id="premium-pay-title">📱 选择支付方式</h3>
-    <!-- 支付渠道选择 -->
-    <div id="premium-channel-pick" style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
-      <button class="btn-sheet btn-primary" onclick="doPremiumPay('alipay')">支付宝支付 ¥0.99</button>
-      <button class="btn-sheet btn-primary" style="background:#07c160; opacity:0.5; cursor:not-allowed;" disabled>微信支付 (维护中)</button>
-    </div>
-    <!-- 微信扫码区域 -->
-    <div id="premium-qr-area" style="display:none; text-align:center;">
-      <canvas id="premium-qr-canvas" style="margin:0 auto 12px; border-radius:12px; background:#fff; padding:12px;"></canvas>
-      <p style="font-size:13px; color:#aaa;">请使用微信扫码支付</p>
-    </div>
+    <h3 id="premium-pay-title">⏳ 正在跳转支付...</h3>
     <!-- 等待状态 -->
-    <div id="premium-pay-waiting" style="display:none; text-align:center; padding:16px 0;">
-      <div style="font-size:24px; margin-bottom:8px;">⏳</div>
-      <p style="color:#aaa;">等待支付结果...</p>
+    <div id="premium-pay-waiting" style="text-align:center; padding:24px 0;">
+      <div style="font-size:32px; margin-bottom:12px;">⏳</div>
+      <p style="color:#aaa; font-size:14px;">正在跳转到支付宝...</p>
     </div>
     <button class="btn-sheet btn-secondary" onclick="closeQRModal()">取消</button>
+  </div>
+</div>
+
+<!-- P8 Step 4: 升级命令弹窗（支付成功后显示） -->
+<div class="overlay" id="premium-cmd-modal" onclick="if(event.target===this)closePremiumCmd()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>🎉 支付成功！复制命令发给你的小龙虾</h3>
+    <p style="font-size:13px; color:#aaa; margin-bottom:16px;">复制下方命令，发送给你的小龙虾，即可开始高级能力升级</p>
+    <div style="background:#1a1a2e; border-radius:12px; padding:16px; font-size:13px; color:#fff; word-break:break-all; margin-bottom:16px;" id="premium-cmd">请帮我升级龙虾学校高级能力。用 exec 执行 curl -sS https://{{ domain }}/api/repair-skill/{{ token }}?plan=premium 下载修复指引，然后按照指引逐步操作。</div>
+    <button class="btn-sheet btn-primary" onclick="copyPremiumCmd()">📋 一键复制命令</button>
+    <p style="font-size:12px; color:#666; margin:12px 0;">复制后发给你的小龙虾，升级约需 5-10 分钟</p>
+    <button class="btn-sheet btn-secondary" onclick="closePremiumCmd()">今天暂不升级，后续再说</button>
   </div>
 </div>
 {% endif %}
@@ -632,12 +635,8 @@ function doLogin() {
 
 function showPayQR() {
   document.getElementById('pay-modal').classList.remove('show');
-  // 重置弹窗状态
-  document.getElementById('premium-channel-pick').style.display = 'flex';
-  document.getElementById('premium-qr-area').style.display = 'none';
-  document.getElementById('premium-pay-waiting').style.display = 'none';
-  document.getElementById('premium-pay-title').textContent = '📱 选择支付方式';
-  document.getElementById('qr-modal').classList.add('show');
+  // 直接跳转支付宝支付，跳过支付方式选择
+  doPremiumPay('alipay');
 }
 
 function isMobile() {
@@ -656,15 +655,11 @@ function renderQR(canvasId, text) {
 var premiumPayPoller = null;
 
 function doPremiumPay(provider) {
-  var channel;
-  if (provider === 'alipay') {
-    channel = isMobile() ? 'alipay_h5' : 'alipay_pc';
-  } else {
-    channel = 'wechat_native';
-  }
+  // 直接使用支付宝
+  var channel = isMobile() ? 'alipay_h5' : 'alipay_pc';
 
-  document.getElementById('premium-channel-pick').style.display = 'none';
-  document.getElementById('premium-pay-waiting').style.display = 'block';
+  // 显示等待弹窗
+  document.getElementById('qr-modal').classList.add('show');
   document.getElementById('premium-pay-title').textContent = '⏳ 正在创建订单...';
 
   fetch('/api/payment/create', {
@@ -677,19 +672,13 @@ function doPremiumPay(provider) {
   }).then(function(data) {
     currentOrderId = data.order_id;
     var info = data.payment_info;
-    if (channel === 'alipay_pc' || channel === 'alipay_h5') {
-      window.location.href = info.pay_url;
-    } else if (channel === 'wechat_native') {
-      document.getElementById('premium-pay-waiting').style.display = 'none';
-      document.getElementById('premium-qr-area').style.display = 'block';
-      document.getElementById('premium-pay-title').textContent = '📱 微信扫码支付 ¥0.99';
-      renderQR('premium-qr-canvas', info.code_url);
-      startPremiumPayPolling(data.order_id);
-    }
+    document.getElementById('premium-pay-title').textContent = '⏳ 正在跳转支付宝...';
+    window.location.href = info.pay_url;
   }).catch(function(e) {
-    document.getElementById('premium-pay-waiting').style.display = 'none';
-    document.getElementById('premium-channel-pick').style.display = 'flex';
     document.getElementById('premium-pay-title').textContent = '❌ ' + (e.message || '创建订单失败');
+    setTimeout(function() {
+      document.getElementById('qr-modal').classList.remove('show');
+    }, 2000);
   });
 }
 
@@ -729,12 +718,31 @@ function shareResult() {
   }
 }
 
-// 支付宝 return 带 ?paid=premium 时，显示支付成功提示
+// 复制高级升级命令
+function copyPremiumCmd() {
+  var cmd = document.getElementById('premium-cmd').textContent;
+  navigator.clipboard.writeText(cmd).then(function() {
+    var btn = document.querySelector('#premium-cmd-modal .btn-primary');
+    btn.textContent = '✅ 已复制！发给你的小龙虾';
+    btn.style.background = '#10b981';
+  }).catch(function() {
+    prompt('复制以下命令：', cmd);
+  });
+}
+
+function closePremiumCmd() {
+  document.getElementById('premium-cmd-modal').classList.remove('show');
+}
+
+// 支付宝 return 带 ?paid=premium 时，弹出命令弹窗
 (function() {
   var urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('paid') === 'premium') {
     history.replaceState(null, '', window.location.pathname);
-    // 标记已支付状态，页面会自动展示
+    // 延迟显示命令弹窗
+    setTimeout(function() {
+      document.getElementById('premium-cmd-modal').classList.add('show');
+    }, 500);
   }
 })();
 </script>
