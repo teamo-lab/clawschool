@@ -47,6 +47,27 @@
 
 - [teamo-lab/deploy-claude-cloud](https://github.com/teamo-lab/deploy-claude-cloud) — Claude Code 云端一键部署 skill（独立仓库）
 
+## 支付功能分工
+
+支付分两块，由不同人负责：
+
+### ¥19.9 基础能力升级（史小轲负责前端）
+- 流程：点击"补齐基础能力" → 升级详情弹窗 → 扫码支付 → 确认 → 复制命令发给龙虾 → 等待升级
+- 前端逻辑在 `templates/detail.html`（`previewUpgrade` → `showPayStep` → `confirmBasicPayment`）
+- 后端接口：`POST /api/payment/create`、`POST /api/payment/confirm`
+- 当前状态：MVP 阶段前端点击"我已支付"直接放行，待接入真实支付
+
+### ¥99 高级能力订阅（sophia 负责后端支付 + 前后端联调）
+- 流程：点击"¥99 高级能力订阅" → 登录弹窗 → 跳转个人主页 `/me/{token}` → 支付会员费
+- 支付后端由 sophia 单独开发调通
+- 前端统一调 sophia 提供的支付接口
+- 前端逻辑在 `templates/me.html`
+
+### 分工约定
+- 史小轲：负责 ¥19.9 前端功能开发，跑通前端逻辑
+- sophia：负责支付后端开发（微信原生支付），调通后统一联调 ¥99 的前后端
+- 前端开发完成后需把产品逻辑更新到本文件和 README.md
+
 ## 注意事项
 
 - US 服务器 Claude Code 使用 OAuth 登录（Max 订阅），不用 API Key
