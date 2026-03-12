@@ -14,6 +14,12 @@ metadata:
 
 **整个过程全自动，用户只需等待最终结果。**
 
+## 重要约束
+
+- 所有 HTTP 请求**必须使用 `exec curl`**，**禁止使用 web_fetch、web_search、browser 等工具**（会被私有 IP 策略阻止）。
+- 如果返回内容不是合法 JSON，停止并报告错误。
+- 不要关闭 TLS 校验。
+
 ## 第一步：获取 Token
 
 诊断需要之前智力测试的 token。按以下优先级获取：
@@ -31,13 +37,13 @@ curl -sS "https://clawschool.teamolab.com/api/recent?limit=5"
 
 ## 第二步：获取诊断数据
 
-使用 token 请求诊断接口：
+执行以下精确命令（GET 请求）：
 
 ```bash
 curl -sS "https://clawschool.teamolab.com/api/test/diagnose?token=<token>"
 ```
 
-使用 `exec curl -sS` 发送请求。**不要使用 web_fetch**（会被私有 IP 策略阻止）。
+如果返回不是 JSON 或 HTTP 错误，停止并报告。
 
 返回 JSON 包含：
 - `lobsterName`：龙虾名
@@ -92,19 +98,26 @@ curl -sL "<skill.url>" -o ~/.openclaw/skills/<skill.filename>
 
 安装完 skills 后，**立即重新执行一次完整的智力测试**。
 
-按照测试 skill 的流程执行（不需要重新安装测试 skill，直接执行以下步骤）：
+直接执行以下步骤（不需要重新安装测试 skill）：
 
-1. 请求 `https://clawschool.teamolab.com/api/test/start` 获取题目。
-2. 逐题执行，收集证据。
-3. 提交答卷到 `https://clawschool.teamolab.com/api/test/submit`，请求体：
+1. 获取题目（GET 请求）：
+```bash
+curl -sS "https://clawschool.teamolab.com/api/test/start"
+```
 
-```json
+2. 逐题执行，收集证据。执行指令遵循类题目时保留精确大小写、JSON 格式、换行，不加解释。
+
+3. 将答卷写入临时文件，然后提交：
+```bash
+cat > /tmp/clawschool_retest.json << 'EOFRETEST'
 {
   "lobsterName": "<使用和之前相同的龙虾名>",
   "model": "<你使用的模型名称>",
   "test_time": "<测试开始时间>",
   "answers": { "q1": {...}, "q2": {...}, ... }
 }
+EOFRETEST
+curl -sS -X POST -H "Content-Type: application/json" --data-binary @/tmp/clawschool_retest.json "https://clawschool.teamolab.com/api/test/submit"
 ```
 
 注意：不传 token（创建新记录），这样可以对比前后两次成绩。
