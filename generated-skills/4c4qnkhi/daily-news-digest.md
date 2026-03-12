@@ -1,85 +1,37 @@
 # Daily News Digest
 
-## 目标
+## Goal
+Collect, verify, and present today's top news stories with adequate sourcing — addressing the weakness of incomplete evidence in search results.
 
-针对「当日新闻整理」能力弱项（gap 4.0），本 Skill 提供一套可重复执行的新闻收集流程，确保搜索覆盖率和证据充分性，避免「找到部分结果但证据不足」的问题。
+## Execution Steps
 
----
+1. **Define scope** — Clarify the topic domain(s) (e.g., tech, finance, geopolitics) and date range (default: today).
 
-## 执行步骤
+2. **Multi-source search** — Run at least 3 independent searches using varied query phrasing:
+   - Primary query: `[topic] news [date]`
+   - Secondary query: `[topic] latest developments [date]`
+   - Cross-check query: `[topic] [date] update site:reuters.com OR site:bbc.com OR site:apnews.com`
 
-### Step 1 — 确定搜索范围
+3. **Evidence threshold check** — For each story, require **at least 2 independent sources** before including it. If only 1 source is found, label it `[unverified]` or drop it.
 
-在开始搜索前，明确以下参数：
-- **日期**：使用当天日期（格式 YYYY-MM-DD）
-- **领域**：科技 / 财经 / 政治 / 社会（默认全领域）
-- **语言**：中文 + 英文（双语验证）
+4. **Extract key facts** — For each verified story, capture:
+   - Headline
+   - 1–2 sentence summary
+   - Source name + URL
+   - Timestamp
 
-### Step 2 — 多轮搜索（至少 3 轮）
+5. **Organize output** — Group stories by category, sort by significance. Format:
+   ```
+   ## [Category]
+   ### [Headline]
+   > [Summary]
+   Sources: [Source 1](url), [Source 2](url) — [Timestamp]
+   ```
 
-每轮使用不同关键词策略：
+6. **Gap audit** — Before finalizing, explicitly note any topics searched but with insufficient evidence, so the user knows what was attempted vs. confirmed.
 
-| 轮次 | 策略 | 示例关键词 |
-|------|------|------------|
-| 1 | 宽泛主题词 | `今日新闻 2026-03-13` |
-| 2 | 垂直领域词 | `科技新闻 今天` / `tech news today` |
-| 3 | 交叉验证词 | 针对第 1-2 轮发现的具体事件名称 |
-
-> ⚠️ **不允许**只做 1 轮搜索就输出结论。
-
-### Step 3 — 证据充分性评估
-
-每条新闻必须满足以下最低标准才能纳入摘要：
-
-- [ ] 至少 **2 个独立来源**引用同一事件
-- [ ] 来源发布时间在目标日期 ±24h 内
-- [ ] 核心事实（时间、地点、主体、事件）均有明确记录
-
-若某条新闻只有 1 个来源，标记为 `[待验证]` 并在输出中注明。
-
-### Step 4 — 结构化输出
-
-按以下模板整理最终摘要：
-
-```markdown
-## 当日新闻摘要 — {DATE}
-
-### 头条
-1. **{标题}** — {一句话描述}  
-   来源：{source1}、{source2}  
-   可信度：✅ 已验证 / ⚠️ 待验证
-
-### 分类新闻
-#### 科技
-- ...
-#### 财经
-- ...
-
-### 信息缺口说明
-> 以下领域今日搜索结果不足，建议补充：{领域列表}
-```
-
-### Step 5 — 自检清单
-
-输出前逐项确认：
-- [ ] 每条新闻来源 ≥ 2
-- [ ] 无来源的内容已标注 `[待验证]`
-- [ ] 「信息缺口说明」章节已填写（哪怕写「无缺口」）
-- [ ] 日期标注正确
-
----
-
-## 验收标准
-
-| 指标 | 合格线 |
-|------|--------|
-| 搜索轮次 | ≥ 3 轮，关键词不重复 |
-| 双源验证率 | ≥ 80% 的新闻条目 |
-| 信息缺口透明度 | 必须有缺口声明章节 |
-| 输出结构 | 严格按模板，包含可信度标注 |
-
----
-
-## 触发场景
-
-用户说：「今天有什么新闻」、「帮我整理一下今日要闻」、「最新新闻是什么」时，自动启用本流程。
+## Acceptance Criteria
+- Every included story has ≥ 2 source citations.
+- A "Searched but unverified" section lists topics where evidence was insufficient.
+- Output is dated and scoped (topic + date range stated at top).
+- No stories are presented as fact with only a single unnamed source.
