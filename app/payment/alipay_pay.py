@@ -7,11 +7,23 @@ from .config import PaymentConfig
 logger = logging.getLogger(__name__)
 
 
+def _ensure_pem(key_str: str, key_type: str = "RSA PRIVATE KEY") -> str:
+    """裸 base64 密钥 → PEM 格式。已有 PEM 头则原样返回。"""
+    key_str = key_str.strip()
+    if key_str.startswith("-----"):
+        return key_str
+    header = f"-----BEGIN {key_type}-----"
+    footer = f"-----END {key_type}-----"
+    # 按 64 字符折行
+    body = "\n".join(key_str[i:i+64] for i in range(0, len(key_str), 64))
+    return f"{header}\n{body}\n{footer}"
+
+
 class AlipayClient:
     def __init__(self, config: PaymentConfig):
         self.config = config
-        app_private_key = config.alipay_app_private_key()
-        alipay_public_key = config.alipay_public_key()
+        app_private_key = _ensure_pem(config.alipay_app_private_key(), "RSA PRIVATE KEY")
+        alipay_public_key = _ensure_pem(config.alipay_public_key(), "PUBLIC KEY")
 
         if not config.ALIPAY_APP_ID or not app_private_key:
             self._client = None

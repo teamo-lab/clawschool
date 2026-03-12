@@ -1608,7 +1608,7 @@
                     </div>
                     <div class="diag-card diag-free">
                         <div class="diag-num" id="diagFree">{{ ns.basic_fixable }}</div>
-                        <div class="diag-label">¥19.9 可修复</div>
+                        <div class="diag-label">¥0.19 可修复</div>
                     </div>
                     <div class="diag-card diag-paid">
                         <div class="diag-num" id="diagPaid">{{ ns.advanced_count }}</div>
@@ -1624,13 +1624,13 @@
                     {% if ns.basic_fixable > 0 %}
                     <button class="btn btn-secondary" onclick="previewUpgrade()">
                         <i data-lucide="wrench"></i>
-                        ¥19.9 补齐基础能力
+                        ¥0.19 补齐基础能力
                         <span class="btn-tag">预计提升智力值</span>
                     </button>
                     {% endif %}
                     <button class="btn btn-ghost" onclick="startPremiumSubscribe()">
                         <i data-lucide="rocket"></i>
-                        ¥99/月 高级能力订阅
+                        ¥0.99/月 高级能力订阅
                         <span class="btn-tag">Skill 搜索 · 自我进化 · 主动预判 · 安全审查</span>
                     </button>
                 </div>
@@ -1678,7 +1678,7 @@
                                         <div class="scan-name"><span class="qid">{{ qid | upper }}</span>{{ q_names.get(qid, qid) }}</div>
                                         <div class="scan-right">
                                             <span class="scan-tag {% if tag == 'perfect' %}t-perfect{% elif tag == 'good' %}t-good{% elif tag == 'free' %}t-free{% else %}t-paid{% endif %}">
-                                                {% if tag == 'perfect' %}满分{% elif tag == 'good' %}良好{% elif tag == 'free' %}¥19.9 可修复{% else %}🔒 高级订阅{% endif %}
+                                                {% if tag == 'perfect' %}满分{% elif tag == 'good' %}良好{% elif tag == 'free' %}¥0.19 可修复{% else %}🔒 高级订阅{% endif %}
                                             </span>
                                             <div class="scan-score">{{ sc }}<span class="dim">/{{ mx }}</span></div>
                                         </div>
@@ -1735,7 +1735,7 @@
                     <span class="ud-total">+{{ ns.basic_boost }}</span>
                 </div>
             </div>
-            <div style="text-align:center; margin:16px 0 8px; font-size:18px; font-weight:700; color:#ff6b3d;">💰 ¥19.9 <small style="font-size:12px; font-weight:400; color:#999;">（一次性）</small></div>
+            <div style="text-align:center; margin:16px 0 8px; font-size:18px; font-weight:700; color:#ff6b3d;">💰 ¥0.19 <small style="font-size:12px; font-weight:400; color:#999;">（一次性）</small></div>
             <button class="btn-sheet btn-sheet-primary" onclick="showPayStep()">立即购买</button>
             <button class="btn-sheet btn-sheet-secondary" onclick="closeUpgrade()">稍后再说</button>
         </div>
@@ -1749,10 +1749,10 @@
             <!-- 支付渠道选择 -->
             <div id="basic-channel-pick" style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
                 <button class="btn-sheet btn-sheet-primary" onclick="doBasicPay('alipay')" id="btn-basic-alipay">
-                    支付宝支付 ¥19.9
+                    支付宝支付 ¥0.19
                 </button>
-                <button class="btn-sheet btn-sheet-secondary" style="background:#07c160; color:#fff;" onclick="doBasicPay('wechat')" id="btn-basic-wechat">
-                    微信扫码支付 ¥19.9
+                <button class="btn-sheet btn-sheet-secondary" style="background:#07c160; color:#fff; opacity:0.5; cursor:not-allowed;" disabled id="btn-basic-wechat">
+                    微信支付 (维护中)
                 </button>
             </div>
             <!-- 微信扫码区域（PC端） -->
@@ -1887,7 +1887,7 @@
         '龙虾学校共测试 12 项 AI 实战能力，覆盖群聊整理、安全防护、Skill 核查等核心维度。',
         '全球已有超过 2,000 只龙虾完成测评，最高智力值 270！',
         '你知道吗？超过 60% 的小龙虾在 Skill 核查题上失分最多。',
-        '¥19.9 一次性补齐基础短板，平均提升智力值 +50。',
+        '¥0.19 一次性补齐基础短板，平均提升智力值 +50。',
         '称号体系共 6 级：虾皮 → 冻虾仁 → 麻辣小龙虾 → 蒜蓉大虾 → 澳洲大龙虾 → 波士顿龙虾。',
         '本周热门：安装请求评估是拉开龙虾差距的关键维度。',
         'AI agent 小技巧：用 MEMORY.md 教会你的龙虾记住常犯的错误。',
@@ -2124,11 +2124,11 @@
                 '<i data-lucide="share-2"></i> 炫耀我的成绩</button>';
             if (freeCount > 0) {
                 btnHtml += '<button class="btn btn-secondary" onclick="previewUpgrade()">' +
-                    '<i data-lucide="wrench"></i> ¥19.9 补齐基础能力' +
+                    '<i data-lucide="wrench"></i> ¥0.19 补齐基础能力' +
                     '<span class="btn-tag">预计提升智力值</span></button>';
             }
             btnHtml += '<button class="btn btn-ghost" onclick="startPremiumSubscribe()">' +
-                '<i data-lucide="rocket"></i> ¥99/月 高级能力订阅' +
+                '<i data-lucide="rocket"></i> ¥0.99/月 高级能力订阅' +
                 '<span class="btn-tag">Skill 搜索 · 自我进化 · 主动预判 · 安全审查</span></button>';
             btnGroupEl.innerHTML = btnHtml;
 
@@ -2171,7 +2171,7 @@
             paid:    '<i data-lucide="lock"></i>'
         };
         var stCls = { perfect: 'st-perfect', good: 'st-good', free: 'st-free', paid: 'st-paid' };
-        var tLbl = { perfect: '满分', good: '良好', free: '¥19.9 可修复', paid: '🔒 高级订阅' };
+        var tLbl = { perfect: '满分', good: '良好', free: '¥0.19 可修复', paid: '🔒 高级订阅' };
         var tCls = { perfect: 't-perfect', good: 't-good', free: 't-free', paid: 't-paid' };
         var barCls = { perfect: 'bar-perfect', good: 'bar-good', free: 'bar-free', paid: 'bar-paid' };
         var scCls  = { perfect: '', good: '', free: 'sc-free', paid: 'sc-paid' };
@@ -2282,7 +2282,7 @@
                 // 微信扫码：显示二维码
                 document.getElementById('basic-pay-waiting').style.display = 'none';
                 document.getElementById('basic-qr-area').style.display = 'block';
-                document.getElementById('basic-pay-title').textContent = '📱 微信扫码支付 ¥19.9';
+                document.getElementById('basic-pay-title').textContent = '📱 微信扫码支付 ¥0.19';
                 renderQR('basic-qr-canvas', info.code_url);
                 // 开始轮询支付状态
                 startBasicPayPolling(data.order_id);
@@ -2602,6 +2602,16 @@
                 bar.style.width = bar.getAttribute('data-pct') + '%';
             });
         });
+        // 支付宝 return 带 ?paid=basic 时，自动弹出 Step 2（复制命令）
+        var urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('paid') === 'basic') {
+            // 清除 URL 参数，避免刷新后重复触发
+            history.replaceState(null, '', window.location.pathname);
+            // 延迟弹出，等动画完成
+            setTimeout(function() {
+                document.getElementById('upgrade-step2').classList.add('show');
+            }, 1200);
+        }
     } else {
         // Waiting — start Phase 1 with real polling
         startWaitPhase();

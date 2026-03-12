@@ -518,7 +518,7 @@ body {
       <div class="pi-row">✅ 网页访问容错</div>
       <div class="pi-row">✅ 全面 workspace 优化</div>
     </div>
-    <div class="pay-price">💰 ¥99 <small>/ 一次性</small></div>
+    <div class="pay-price">💰 ¥0.99 <small>/ 一次性</small></div>
     <button class="btn-sheet btn-primary" onclick="showPayQR()">立即升级</button>
     <p class="form-tip">预计 24 小时内完成交付 · 升级后可重测验证效果</p>
     <button class="btn-sheet btn-secondary" onclick="closePayModal()">稍后再说</button>
@@ -532,8 +532,8 @@ body {
     <h3 id="premium-pay-title">📱 选择支付方式</h3>
     <!-- 支付渠道选择 -->
     <div id="premium-channel-pick" style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
-      <button class="btn-sheet btn-primary" onclick="doPremiumPay('alipay')">支付宝支付 ¥99</button>
-      <button class="btn-sheet btn-primary" style="background:#07c160;" onclick="doPremiumPay('wechat')">微信扫码支付 ¥99</button>
+      <button class="btn-sheet btn-primary" onclick="doPremiumPay('alipay')">支付宝支付 ¥0.99</button>
+      <button class="btn-sheet btn-primary" style="background:#07c160; opacity:0.5; cursor:not-allowed;" disabled>微信支付 (维护中)</button>
     </div>
     <!-- 微信扫码区域 -->
     <div id="premium-qr-area" style="display:none; text-align:center;">
@@ -682,7 +682,7 @@ function doPremiumPay(provider) {
     } else if (channel === 'wechat_native') {
       document.getElementById('premium-pay-waiting').style.display = 'none';
       document.getElementById('premium-qr-area').style.display = 'block';
-      document.getElementById('premium-pay-title').textContent = '📱 微信扫码支付 ¥99';
+      document.getElementById('premium-pay-title').textContent = '📱 微信扫码支付 ¥0.99';
       renderQR('premium-qr-canvas', info.code_url);
       startPremiumPayPolling(data.order_id);
     }
@@ -728,6 +728,15 @@ function shareResult() {
     });
   }
 }
+
+// 支付宝 return 带 ?paid=premium 时，显示支付成功提示
+(function() {
+  var urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('paid') === 'premium') {
+    history.replaceState(null, '', window.location.pathname);
+    // 标记已支付状态，页面会自动展示
+  }
+})();
 </script>
 </body>
 </html>

@@ -617,7 +617,8 @@ async def payment_create(request: Request):
     if channel == "wechat_h5":
         raise HTTPException(400, "微信 H5 支付域名审核中，请使用支付宝 H5 或微信扫码支付")
 
-    amount = 1990 if plan_type == "basic" else 9900
+    # TODO: 测试期间使用小额，正式上线改回 1990 / 9900
+    amount = 19 if plan_type == "basic" else 99
     description = "龙虾学校 - 基础能力升级" if plan_type == "basic" else "龙虾学校 - 高级能力订阅"
     order_id = "PAY" + _gen_token(12)
     now = _now_iso()
@@ -722,11 +723,14 @@ async def alipay_return(request: Request):
     if out_trade_no:
         db = get_db()
         try:
-            row = db.execute("SELECT token FROM payments WHERE order_id=?", (out_trade_no,)).fetchone()
+            row = db.execute("SELECT token, plan_type FROM payments WHERE order_id=?", (out_trade_no,)).fetchone()
         finally:
             db.close()
         if row:
-            return RedirectResponse(url=f"/wait/{row['token']}", status_code=302)
+            if row["plan_type"] == "premium":
+                return RedirectResponse(url=f"/me/{row['token']}?paid=premium", status_code=302)
+            else:
+                return RedirectResponse(url=f"/wait/{row['token']}?paid=basic", status_code=302)
     return RedirectResponse(url="/", status_code=302)
 
 
