@@ -1,51 +1,56 @@
 # daily-news-digest
 
 ## Goal
-Address gaps in **real-time search** (q10) and **scheduled task scheduling** (q9) by giving the agent a repeatable, reliable workflow for fetching, summarizing, and delivering a daily news digest.
+Reliably fetch, deduplicate, and summarize current-day news across specified topics, then deliver a structured digest. Closes gaps: **定时任务调度** (q9) and **当日新闻整理** (q10).
 
 ## Trigger
-User says something like: "set up a daily news summary", "summarize today's news every morning", "schedule a news digest".
+User says something like: `/daily-news-digest [topic]` or a cron fires this skill.
 
 ## Execution Steps
 
-### 1. Parse schedule intent
-- Extract the desired cron schedule from the user's message (default: `0 8 * * *` — 08:00 daily).
-- Confirm the schedule with the user before creating the cron job.
-
-### 2. Create the cron job
-Use `CronCreate` to register a recurring job that invokes this skill:
+### Step 1 — Resolve today's date
 ```
-schedule: "0 8 * * *"
-prompt: "/daily-news-digest --run"
+currentDate is injected by the system prompt. Record it as TODAY.
 ```
 
-### 3. Fetch headlines (at runtime, `--run` mode)
-- Call `WebSearch` with query: `"top news today {YYYY-MM-DD}"` (inject current date).
-- Collect 5–10 result snippets.
+### Step 2 — Parallel web search
+Run **3 concurrent WebSearch calls** with queries:
+- `"[topic] news {TODAY}"`
+- `"[topic] latest updates {TODAY}"`
+- `"[topic] breaking {TODAY}"`
 
-### 4. Fetch full article bodies
-- For each result URL, call `WebFetch`.
-- On HTTP error or timeout: log the failure, skip the URL, and continue — do **not** abort the entire digest.
-- Retry each URL once with a 2-second pause before skipping.
+If a query returns 0 results, widen the date window by 1 day and retry once.
 
-### 5. Summarize
-- For each successfully fetched article produce a 2–3 sentence summary: headline → key facts → significance.
-- Combine into a structured Markdown digest:
-  ```markdown
-  ## Daily News Digest — {date}
-  ### 1. {Headline}
-  {2-3 sentence summary}
-  **Source:** {url}
-  ...
-  ```
+### Step 3 — Fetch & parse top URLs
+For each unique URL in the combined results (up to 8 URLs):
+1. Call `WebFetch` with a 10-second timeout.
+2. On HTTP error or timeout → skip and log `SKIP: <url> reason: <error>`.
+3. Extract: **headline**, **publish datetime**, **body snippet ≤ 200 words**.
 
-### 6. Deliver
-- Output the digest to the user in the conversation.
-- Optionally draft a Gmail message via `mcp__claude_ai_Gmail__gmail_create_draft` if the user requested email delivery.
+### Step 4 — Deduplicate
+Group articles by semantic similarity (same event = keep highest-quality source). Discard items where `publish_datetime < TODAY - 1 day`.
+
+### Step 5 — Summarize & format
+Output a Markdown digest:
+```
+## News Digest — {TODAY}  Topic: {topic}
+
+### 1. {Headline}
+**Source:** {domain} | **Time:** {datetime}
+{2-sentence summary}
+
+### 2. ...
+
+---
+_Skipped URLs: N_
+```
+
+### Step 6 — Schedule (optional)
+If the user requests a recurring digest, call `CronCreate` with the user-specified interval (default `0 8 * * *` — 08:00 daily) and this skill as the command.
 
 ## Acceptance Criteria
-- [ ] Cron job is created and visible in `CronList` output.
-- [ ] Digest contains at least 3 summarized articles.
-- [ ] Failed URLs are skipped gracefully with a logged warning — no crash or empty output.
-- [ ] Each summary is 2–3 sentences and cites the source URL.
-- [ ] Digest header shows the correct current date.
+- [ ] At least 3 articles retrieved and summarized for any mainstream topic.
+- [ ] Each article includes headline, source domain, and datetime.
+- [ ] Failed URLs are logged, not silently dropped.
+- [ ] Cron schedule created successfully when requested; `CronList` confirms it.
+- [ ] No articles older than 48 hours appear in the digest.
