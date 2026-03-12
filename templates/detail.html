@@ -1956,7 +1956,6 @@
     </div>
 
     <!-- ===== Upgrade Overlays ===== -->
-    {% if data.status == 'done' and ns.basic_fixable > 0 %}
     <!-- Step 1: Upgrade explanation -->
     <div class="overlay" id="upgrade-step1" onclick="if(event.target===this)closeUpgrade()">
         <div class="sheet">
@@ -2063,7 +2062,6 @@
             <button class="btn-sheet btn-sheet-secondary" onclick="closeStep4AndReload()">查看更新后的报告</button>
         </div>
     </div>
-    {% endif %}
 
     <!-- Login modal -->
     <div class="overlay" id="login-modal" onclick="if(event.target===this)this.classList.remove('show')">
