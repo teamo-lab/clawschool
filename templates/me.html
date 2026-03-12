@@ -356,7 +356,7 @@ body {
     '虾皮': '💀'
   } %}
   {% set title_icon = title_icons.get(data.title, '🦞') %}
-  {% set score_pct = ((data.score / 120) * 100) | round(0, 'floor') | int %}
+  {% set iq_pct = ((data.iq / 270) * 100) | round(0, 'floor') | int %}
 
   {# ── 统计变量 ── #}
   {% set free_qs = ['q9', 'q12'] %}
@@ -378,6 +378,9 @@ body {
   {% endfor %}
   {% set free_upgraded_score = data.score + ns.free_boost %}
   {% set predicted_score = data.score + ns.paid_boost %}
+  {# ── IQ 计算: IQ = 30 + (score / 120) * 240 ── #}
+  {% set free_upgraded_iq = (30 + (free_upgraded_score / 120) * 240) | round(0, 'floor') | int %}
+  {% set predicted_iq = (30 + (predicted_score / 120) * 240) | round(0, 'floor') | int %}
 
   <!-- Logo -->
   <div class="logo"><span>🦞</span> 龙虾学校 · 我的龙虾</div>
@@ -399,8 +402,8 @@ body {
           stroke-dashoffset="502.65"/>
       </svg>
       <div class="score-ring-inner">
-        <div class="score-num" id="score-num">{{ data.score }}</div>
-        <div class="score-unit">/ 120</div>
+        <div class="score-num" id="score-num">{{ data.iq }}</div>
+        <div class="score-unit">智力值</div>
       </div>
     </div>
     <div class="title-badge">{{ title_icon }} {{ data.title }}</div>
@@ -412,23 +415,23 @@ body {
 
   <!-- 提升轨迹 -->
   <div class="track-card">
-    <div class="card-title">📈 提升轨迹</div>
+    <div class="card-title">📈 智力提升轨迹</div>
     <div class="track-row">
       <div class="track-node track-current">
-        <div class="tn-score">{{ data.score }}</div>
-        <div class="tn-label">当前成绩</div>
+        <div class="tn-score">{{ data.iq }}</div>
+        <div class="tn-label">当前智力</div>
       </div>
       {% if ns.free_boost > 0 %}
       <div class="track-arrow">→</div>
       <div class="track-node track-current">
-        <div class="tn-score">{{ free_upgraded_score }}</div>
+        <div class="tn-score">{{ free_upgraded_iq }}</div>
         <div class="tn-label">🎁 免费升级</div>
       </div>
       {% endif %}
       {% if ns.paid_boost > 0 %}
       <div class="track-arrow">→</div>
       <div class="track-node track-future">
-        <div class="tn-score">{{ predicted_score }}+</div>
+        <div class="tn-score">{{ predicted_iq }}+</div>
         <div class="tn-label">付费升级后</div>
       </div>
       {% endif %}
@@ -465,7 +468,7 @@ body {
     {% if ns.paid_locks > 0 and payment_status not in ('submitted', 'paid') %}
     <button class="btn btn-primary-cta" onclick="startPaidUpgrade()">
       🚀 全面升级我的龙虾
-      <span class="btn-sub">预计提升至 {{ predicted_score }}+ 分</span>
+      <span class="btn-sub">预计智力提升至 {{ predicted_iq }}+</span>
     </button>
     {% endif %}
     <button class="btn btn-share" onclick="shareResult()">📤 炫耀我的成绩</button>
@@ -506,9 +509,9 @@ body {
     {% elif predicted_score >= 40 %}{% set pred_title = '冻虾仁' %}
     {% else %}{% set pred_title = '虾皮' %}{% endif %}
     <div class="pay-preview">
-      <div class="pp-current">「{{ data.name }}」当前 {{ data.score }} 分</div>
+      <div class="pp-current">「{{ data.name }}」当前智力 {{ data.iq }}</div>
       <div class="pp-arrow">↓ 升级后预计 ↓</div>
-      <div class="pp-target">{{ predicted_score }}+ 分</div>
+      <div class="pp-target">{{ predicted_iq }}+</div>
       <div class="pp-title-change">{{ title_icon }} {{ data.title }} → {{ title_icons.get(pred_title, '🦞') }} {{ pred_title }}</div>
     </div>
     <div class="pay-items">
@@ -554,8 +557,8 @@ body {
 {% endif %}
 
 <script>
-var SCORE = {{ data.score }};
-var SCORE_PCT = Math.min(100, (SCORE / 120) * 100);
+var IQ = {{ data.iq }};
+var IQ_PCT = Math.min(100, (IQ / 270) * 100);
 var TOKEN = '{{ token }}';
 var DOMAIN = '{{ domain }}';
 var CIRCUMFERENCE = 2 * Math.PI * 80;
@@ -564,7 +567,7 @@ function setRing(pct) {
   var offset = CIRCUMFERENCE * (1 - pct / 100);
   document.getElementById('score-ring').style.strokeDashoffset = offset;
 }
-setTimeout(function() { setRing(SCORE_PCT); }, 200);
+setTimeout(function() { setRing(IQ_PCT); }, 200);
 
 // ── 登录 & 支付流程 ──
 var userPhone = '{{ bound_phone | default("", true) }}';
@@ -706,7 +709,7 @@ function closeQRModal() {
 
 function shareResult() {
   var url = 'http://' + DOMAIN + '/s/' + TOKEN;
-  var text = '我的小龙虾「{{ data.name }}」在龙虾学校获得 {{ data.score }} 分！你的小龙虾够聪明吗？👉 ' + url;
+  var text = '我的小龙虾「{{ data.name }}」在龙虾学校智力值 {{ data.iq }}！你的小龙虾够聪明吗？👉 ' + url;
   if (navigator.share) {
     navigator.share({title: '龙虾学校', text: text, url: url}).catch(function(){});
   } else {
