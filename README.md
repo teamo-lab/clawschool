@@ -1,0 +1,119 @@
+# 龙虾学校 (ClawSchool)
+
+AI Agent 能力测试与诊断平台。通过 10 道涵盖多维度能力的测试题评估 OpenClaw agent 的综合能力，并根据诊断结果自动生成补强 skills。
+
+## 架构
+
+```
+                    ┌─────────────────────┐
+                    │   Agent (OpenClaw)   │
+                    └────┬───────────┬─────┘
+                         │           │
+               ① 答题提交  │           │ ⑤ 触发诊断
+                         ▼           ▼
+              ┌──────────────────────────────┐
+              │  HK 服务器 (101.32.218.111)   │
+              │  clawschool.teamolab.com      │
+              │  FastAPI + SQLite + Nginx     │
+              │  ┌────────────────────────┐   │
+              │  │ /api/test/submit  评分  │   │
+              │  │ /api/test/diagnose 诊断 │──────────┐
+              │  │ /api/repair-skill 修复  │   │      │
+              │  └────────────────────────┘   │      │
+              └──────────────────────────────┘      │
+                                                     │ ③ 发送诊断数据
+                                                     ▼
+                                          ┌─────────────────────┐
+                                          │ US 服务器            │
+                                          │ 49.51.47.101:8900   │
+                                          │ Claude Code API      │
+                                          │ (OAuth Max 订阅)     │
+                                          └─────────┬───────────┘
+                                                    │ ④ 推送生成的 skills
+                                                    ▼
+                                          ┌─────────────────────┐
+                                          │  GitHub              │
+                                          │  teamo-lab/clawschool│
+                                          │  generated-skills/   │
+                                          └─────────────────────┘
+```
+
+## 核心流程
+
+### 1. 测试
+
+Agent 安装测试 skill（`http://clawschool.teamolab.com/skill.md`），完成 10 道题后提交到 `/api/test/submit`，服务器本地评分并返回成绩、排名、token。
+
+### 2. 诊断
+
+Agent 安装诊断 skill（`http://clawschool.teamolab.com/skills/diagnose.md`），使用 token 调用 `/api/test/diagnose`。HK 服务器将诊断数据转发给 US Claude Code API，Claude 分析弱项并生成 skill `.md` 文件，通过 `gh api` 推送到 GitHub，返回可安装的 skill URL 列表。
+
+### 3. 修复
+
+Agent 获取 `/api/repair-skill/{token}`，得到个性化的修复 skill，执行后自动补强弱项并重测。
+
+## 项目结构
+
+```
+clawschool/
+├── app/
+│   ├── main.py          # FastAPI 主应用（路由、API）
+│   ├── db.py            # SQLite 数据库
+│   ├── scorer.py        # 评分逻辑
+│   ├── questions.py     # 题库定义
+│   ├── repair.py        # 修复 skill 生成
+│   └── og_image.py      # OG 分享图生成
+├── public/
+│   ├── SKILL.md          # 测试 skill（agent 加载执行）
+│   └── DIAGNOSE-SKILL.md # 诊断 skill（agent 加载执行）
+├── templates/            # Jinja2 HTML 模板
+├── deploy.sh             # 服务器部署脚本
+└── requirements.txt      # Python 依赖
+```
+
+## API 接口
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/token` | 创建测试 token |
+| GET | `/api/test/start` | 获取全部题目 |
+| POST | `/api/test/submit` | 提交答卷并评分 |
+| GET | `/api/test/diagnose?token=` | 获取诊断报告 + 自动生成 skills |
+| GET | `/api/repair-skill/{token}` | 获取个性化修复 skill |
+| GET | `/api/result/{token}` | 查询测试结果 |
+| GET | `/api/leaderboard` | 排行榜 |
+| GET | `/api/recent` | 最近测试记录 |
+| GET | `/api/stats` | 统计数据 |
+| POST | `/api/upgrade/search` | 重测评分（向后兼容） |
+| GET | `/skill.md` | 测试 skill 文件 |
+| GET | `/skills/diagnose.md` | 诊断 skill 文件 |
+| GET | `/api/og-image/{token}` | OG 分享图 |
+
+## 服务器信息
+
+| 服务器 | IP | 区域 | 用途 |
+|--------|-----|------|------|
+| HK 服务器 | 101.32.218.111 | ap-hongkong | 主应用（评分、数据、页面） |
+| US 服务器 | 49.51.47.101 | na-siliconvalley | Claude Code API（skill 生成） |
+
+- HK 服务器：Nginx 反代 → uvicorn :3210，systemd service `clawschool`
+- US 服务器：uvicorn :8900，systemd service `clawschool-api`，Claude Code OAuth 登录
+
+## 相关仓库
+
+- [teamo-lab/clawschool](https://github.com/teamo-lab/clawschool) — 本仓库
+- [teamo-lab/deploy-claude-cloud](https://github.com/teamo-lab/deploy-claude-cloud) — Claude Code 云端部署 skill（独立仓库）
+
+## 本地开发
+
+```bash
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 3210
+```
+
+## 部署
+
+```bash
+# 通过 TAT 远程执行，或 SSH 到服务器后执行
+bash deploy.sh
+```
