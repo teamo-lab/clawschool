@@ -93,20 +93,21 @@ clawschool/
 | POST | `/api/payment/confirm` | 确认支付 |
 | GET | `/api/og-image/{token}` | OG 分享图 |
 
-## 支付功能
+## 支付体系
 
-支付分两块，由不同人负责开发：
+两个付费产品，共用微信原生支付（JSAPI/H5）：
 
-### ¥19.9 基础能力升级（史小轲负责前端）
-- **流程**：点击"补齐基础能力" → 升级详情弹窗 → 支付 → 确认 → 复制命令发给龙虾 → 等待升级
-- **前端**：`templates/detail.html`（`previewUpgrade` → `showPayStep` → `confirmBasicPayment`）
+### ¥19.9 基础能力升级（一次性）
+- **触发**：结果页点击"补齐基础能力"
+- **流程**：升级详情弹窗（展示可修复项 + 预估提升）→ 微信支付 → 支付成功 → 复制修复命令发给龙虾 → 等待升级 + 重测
+- **前端**：`templates/detail.html`
 - **后端**：`POST /api/payment/create` + `POST /api/payment/confirm`
-- **当前状态**：MVP 阶段前端点击"我已支付"直接放行，待接入微信支付
 
-### ¥99 高级能力订阅（sophia 负责后端支付 + 前后端联调）
-- **流程**：点击"¥99 高级能力订阅" → 登录弹窗 → 跳转个人主页 `/me/{token}` → 支付会员费
-- **后端**：sophia 单独开发微信原生支付，调通后前端统一调接口
-- **前端**：`templates/me.html`
+### ¥99 高级能力订阅（一次性）
+- **触发**：结果页点击"¥99 高级能力订阅"
+- **流程**：登录弹窗（手机号）→ 跳转个人主页 `/me/{token}` → 微信支付 → 24h 内交付全面优化
+- **前端**：`templates/detail.html`（入口）+ `templates/me.html`（支付 + 管理）
+- **后端**：同上支付接口，`plan_type=premium`
 
 ## 服务器信息
 
