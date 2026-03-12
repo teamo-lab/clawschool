@@ -1,87 +1,66 @@
 # web-fetch-resilient
 
-## 目标
+## Goal
+Close the **web scraping error-handling** gap (q12) by wrapping `WebFetch` in a standardized retry-and-fallback pattern that any other skill can call.
 
-提供健壮的网页抓取封装，覆盖重试、降级、结构化错误报告全流程，将当前「部分容错」（q12, 6/10）提升至满分水准。
+## Trigger
+Any skill or workflow that needs to fetch a URL where partial failure is unacceptable. Also triggered directly when the user says: "fetch this page", "scrape this URL", "get the content of".
 
-## 使用方式
+## Execution Steps
 
+### 1. Receive input
+- Accept one or more URLs (array or single string).
+- Accept optional `max_retries` (default: 2) and `timeout_ms` (default: 10000).
+
+### 2. Fetch with retry loop
+For each URL:
 ```
-/web-fetch-resilient <url_or_urls> [max_retries?] [fallback_search?]
-```
-
-- `url_or_urls`：单个 URL 或逗号分隔的多个 URL
-- `max_retries`：最大重试次数（默认 2）
-- `fallback_search`：抓取彻底失败时的备用搜索关键词（可选）
-
-## 执行步骤
-
-### Step 1 — 预检
-
-对每个 URL：
-- 检查是否为有效 HTTP/HTTPS URL，否则立即标记 `INVALID_URL` 并跳过
-- 不修改或猜测用户未提供的 URL
-
-### Step 2 — 带重试的抓取
-
-```
-尝试 WebFetch(url)
-  成功 → 进入 Step 3
-  失败 → 等待 1s → 重试（最多 max_retries 次）
-  全部失败 → 记录错误码 / 错误信息 → 进入 Step 4
+attempt = 0
+while attempt <= max_retries:
+    result = WebFetch(url)
+    if result.ok:
+        break
+    attempt += 1
+    wait 2^attempt seconds  # exponential back-off: 2s, 4s
+if not result.ok:
+    mark URL as FAILED
 ```
 
-错误分类：
+### 3. Classify failures
+| HTTP Status / Error | Classification | Action |
+|---------------------|---------------|--------|
+| 404 | Permanent | Skip immediately, no retry |
+| 429 / 503 | Transient | Retry with back-off |
+| Timeout | Transient | Retry with back-off |
+| 403 / 401 | Auth error | Skip, report to user |
+| DNS / network error | Transient | Retry once |
 
-| 错误类型 | 标签 | 处理策略 |
-|----------|------|----------|
-| HTTP 4xx | `CLIENT_ERROR` | 不重试，直接降级 |
-| HTTP 5xx | `SERVER_ERROR` | 重试 |
-| 超时 | `TIMEOUT` | 重试 |
-| DNS / 网络 | `NETWORK_ERROR` | 重试 |
-| 内容为空 | `EMPTY_CONTENT` | 不重试，直接降级 |
+### 4. Fallback: search-based recovery
+- For each FAILED URL, extract the page title or domain.
+- Run `WebSearch` with query: `site:{domain} {title keywords}`.
+- If a matching result is found, attempt `WebFetch` on the search result URL.
+- Mark the final result as `RECOVERED_VIA_SEARCH` if successful.
 
-### Step 3 — 内容提取
-
-成功抓取后：
-- 提取正文（跳过导航、广告、页脚）
-- 截断至前 1500 字，附加 `[内容已截断]` 标注
-- 记录实际字符数
-
-### Step 4 — 降级 / Fallback
-
-若 URL 抓取失败且提供了 `fallback_search`：
-
-```
-WebSearch(fallback_search) → 取前 3 条结果摘要作为替代内容
-标注：[原始 URL 不可达，以下内容来自搜索降级]
-```
-
-若无 `fallback_search`：标注 `[内容不可用]`，继续。
-
-### Step 5 — 结构化报告
-
+### 5. Return structured report
 ```markdown
-## Web Fetch Report
-
-### 成功 (X/Y)
-- ✅ https://example.com — 1234 字符
-
-### 失败 (Y-X/Y)
-- ❌ https://bad-url.com — TIMEOUT (重试 2 次)
-  降级：[搜索结果摘要 或 内容不可用]
-
-### 汇总内容
-[各成功/降级内容正文]
+## Fetch Results
+| URL | Status | Notes |
+|-----|--------|-------|
+| https://... | OK | 1842 chars fetched |
+| https://... | FAILED | 404 — skipped |
+| https://... | RECOVERED_VIA_SEARCH | fallback URL used |
 ```
+- Attach fetched content for all OK / RECOVERED URLs.
+- List all FAILED URLs with their error classification.
 
-## 验收标准
+### 6. Caller contract
+- Always return at least the structured report even if all URLs fail.
+- Never throw an unhandled exception or return empty output.
 
-| 场景 | 期望结果 |
-|------|----------|
-| URL 全部成功 | 输出所有正文，报告 `成功 Y/Y` |
-| 单 URL 失败，有 fallback | 降级到搜索，标注来源变更 |
-| 单 URL 失败，无 fallback | 标注 `[内容不可用]`，不崩溃 |
-| HTTP 4xx | 不触发重试，立即降级 |
-| 多 URL 混合成败 | 成功/失败分组输出，不漏报 |
-| 无效 URL | 预检阶段拦截，不调用 WebFetch |
+## Acceptance Criteria
+- [ ] Transient errors (429, timeout) trigger exponential back-off retry.
+- [ ] Permanent errors (404, 403) are skipped immediately without wasted retries.
+- [ ] At least one fallback via `WebSearch` is attempted for each FAILED URL.
+- [ ] A structured Markdown report is always returned, even on total failure.
+- [ ] Successfully fetched content is passed back to the calling workflow intact.
+- [ ] No silent failures — every URL has an explicit OK / FAILED / RECOVERED status.
