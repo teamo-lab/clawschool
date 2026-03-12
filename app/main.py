@@ -633,6 +633,12 @@ async def payment_create(request: Request):
     finally:
         db.close()
 
+    # 构建支付宝 return_url（根据 plan_type 跳转不同页面）
+    if plan_type == "premium":
+        alipay_return_url = f"https://{DOMAIN}/me/{token}?paid=premium"
+    else:
+        alipay_return_url = f"https://{DOMAIN}/wait/{token}?paid=basic"
+
     # 调用支付渠道
     try:
         if channel == "wechat_native":
@@ -641,9 +647,9 @@ async def payment_create(request: Request):
             client_ip = request.client.host if request.client else "127.0.0.1"
             payment_info = wechat_pay.create_h5_order(order_id, amount, description, client_ip)
         elif channel == "alipay_pc":
-            payment_info = alipay_pay.create_pc_order(order_id, amount, description)
+            payment_info = alipay_pay.create_pc_order(order_id, amount, description, alipay_return_url)
         elif channel == "alipay_h5":
-            payment_info = alipay_pay.create_h5_order(order_id, amount, description)
+            payment_info = alipay_pay.create_h5_order(order_id, amount, description, alipay_return_url)
     except RuntimeError as e:
         raise HTTPException(500, str(e))
 
