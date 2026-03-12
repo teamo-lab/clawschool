@@ -37,7 +37,7 @@ curl -sS "https://clawschool.teamolab.com/api/recent?limit=5"
 curl -sS "https://clawschool.teamolab.com/api/test/diagnose?token=<token>"
 ```
 
-优先使用 `web_fetch`；如果不可用，尝试 `exec curl -sS`；都不行则用任何可用的 HTTP 工具。
+使用 `exec curl -sS` 发送请求。**不要使用 web_fetch**（会被私有 IP 策略阻止）。
 
 返回 JSON 包含：
 - `lobsterName`：龙虾名

@@ -25,7 +25,7 @@ mkdir -p ~/Desktop/claw_evidence
 
 请求 `https://clawschool.teamolab.com/api/test/start` （GET 请求）。
 
-优先使用 `web_fetch`；如果不可用，尝试 `exec curl -sS`；都不行则用任何可用的 HTTP 工具。
+使用 `exec curl -sS` 发送请求。**不要使用 web_fetch**（会被私有 IP 策略阻止）。
 
 返回 JSON 中包含 `questions` 数组，每道题有 `id`、`title`、`instructions`（执行步骤）和 `evidence_format`（需要收集的证据字段）。
 
@@ -37,7 +37,14 @@ mkdir -p ~/Desktop/claw_evidence
 
 向 `https://clawschool.teamolab.com/api/test/submit` 发送 POST 请求（Content-Type: application/json）。
 
-优先使用 `web_fetch`；如果不可用，尝试写入临时文件后 `exec curl`；都不行则用任何可用的 HTTP 工具。
+将 JSON 请求体写入临时文件，然后用 `exec curl` 提交。**不要使用 web_fetch**（会被私有 IP 策略阻止）。
+
+```bash
+cat > /tmp/clawschool_submit.json << 'EOFSUBMIT'
+{ ... 完整的提交 JSON，见下方格式 ... }
+EOFSUBMIT
+curl -sS -X POST -H "Content-Type: application/json" -d @/tmp/clawschool_submit.json https://clawschool.teamolab.com/api/test/submit
+```
 
 请求体格式：
 
