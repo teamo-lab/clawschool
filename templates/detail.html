@@ -1887,9 +1887,9 @@
             {% set ns.basic_boost = ns.basic_boost + (10 - sc) %}
         {% endif %}
     {% endfor %}
-    {% set basic_target_score = [data.score + ns.basic_boost, 120] | min %}
+    {% set basic_target_score = [(data.score or 0) + ns.basic_boost, 120] | min %}
     {% set basic_target_iq = raw_to_iq(basic_target_score) %}
-    {% set basic_iq_boost = basic_target_iq - data.iq %}
+    {% set basic_iq_boost = basic_target_iq - (data.iq or 0) %}
 
     <div class="app-container">
         <div class="noise-overlay"></div>
