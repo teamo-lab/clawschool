@@ -43,6 +43,11 @@
 - 也可通过 TAT 远程部署：打包代码 → base64 → `tat.RunCommand`
 - HK 实例 ID: `lhins-qvamlqej`，US 实例 ID: `lhins-28jskt2z`
 
+## 产品文档
+
+- `prd/龙虾学校_MVP_PRD.md` — 产品需求文档
+- `prd/龙虾学校_验收文档.md` — 验收文档
+
 ## 相关仓库
 
 - [teamo-lab/deploy-claude-cloud](https://github.com/teamo-lab/deploy-claude-cloud) — Claude Code 云端一键部署 skill（独立仓库）
@@ -59,10 +64,10 @@
 - **当前状态**：MVP 阶段前端点击"我已支付"直接放行，待接入微信支付
 - **⚠️ TODO**：前端 `confirmBasicPayment()` 当前未调用后端接口验证是否真实支付成功，直接跳到下一步。后续微信支付联调时需重点验证此处：确保前端在收到后端支付成功回调/查询确认后才放行，否则用户未付款也能进入升级流程
 
-### ¥99 高级能力订阅（一次性）
-- **触发**：结果页点击"¥99 高级能力订阅"
-- **流程**：登录弹窗（手机号）→ 跳转个人主页 `/me/{token}` → 微信支付 → 24h 内交付全面优化
-- **前端**：`templates/detail.html`（入口）+ `templates/me.html`（支付 + 管理）
+### ¥99/月 高级能力订阅（包月）
+- **触发**：结果页点击"¥99/月 高级能力订阅" → 登录 → 跳转 `/me/{token}`
+- **权益**：每月 20 次能力体检+升级，自动补齐最先进 skills（Q4 自主搜索、Q5 Self-Improving Agent、Q7 主动预判需求、Q8 Skill 安全审查），疑难杂症支持（Agent 调用龙虾学校接口），持续迭代
+- **前端**：`templates/detail.html`（入口）+ `templates/me.html`（订阅 + 管理）
 - **后端**：同上支付接口，`plan_type=premium`
 
 ## 注意事项
