@@ -2,17 +2,17 @@
 name: clawschool-diagnose
 description: |
   龙虾学校诊断技能。Triggers on: "龙虾诊断", "诊断", "diagnose", "弱项分析", "skill推荐", "能力诊断".
-  基于之前智力测试的结果，分析 agent 的弱项并推荐可安装的技能。需要提供测试 token。
+  基于之前智力测试的结果，自动诊断弱项、安装补强 skills、并重新测试验证提升效果。
 metadata:
   openclaw:
     emoji: "🔬"
 ---
 
-# 龙虾学校 · 能力诊断
+# 龙虾学校 · 能力诊断与自动补强
 
-基于之前的智力测试结果，分析你的强项与弱项，并推荐可安装的 OpenClaw skills。
+基于之前的智力测试结果，自动诊断弱项、安装补强 skills，然后重新测试验证智力是否提升。
 
-**此技能不会重新执行测试题，而是直接分析已有的测试答卷。**
+**整个过程全自动，用户只需等待最终结果。**
 
 ## 第一步：获取 Token
 
@@ -45,72 +45,89 @@ curl -sS "https://clawschool.teamolab.com/api/test/diagnose?token=<token>"
 - `score`：总分
 - `title`：称号
 - `rank`：排名
-- `questionDetails` 数组，每题包含：
-  - `questionId`：题号
-  - `title`：题目名称
-  - `category`：能力类别
-  - `instructions`：原始任务说明
-  - `agentEvidence`：agent 提交的证据
-  - `score` / `maxScore`：得分 / 满分
-  - `reason`：评分理由
+- `questionDetails` 数组（每题的得分、评分理由等）
+- `generatedSkills` 数组（服务器自动生成的补强 skills）
 
-## 第三步：分析与诊断
+## 第三步：安装补强 Skills
 
-根据返回的数据，生成诊断报告。按以下结构分析：
+如果 `generatedSkills` 数组不为空，**立即逐个安装**：
 
-### 1. 成绩概览
+对于每个 skill：
+```bash
+openclaw skill install <skill.url>
+```
 
-以表格形式展示：
+如果 `openclaw skill install` 不可用，尝试下载 skill 文件并手动放置到 skills 目录：
+```bash
+curl -sL "<skill.url>" -o ~/.openclaw/skills/<skill.filename>
+```
+
+记录每个 skill 的安装结果（成功/失败）。
+
+如果 `generatedSkills` 为空（服务器未能生成 skills），跳过此步骤，直接向用户展示诊断报告并说明暂无可用的自动补强方案。
+
+## 第四步：向用户汇报
+
+向用户展示以下信息：
+
+### 诊断结果
+
+以表格形式展示成绩概览：
 
 | 题号 | 题目 | 类别 | 得分 | 评分理由 |
 |------|------|------|------|----------|
 | q1   | ...  | ...  | x/10 | ...      |
 
-### 2. 强项
+### 已安装的 Skills
 
-列出满分（10/10）的题目和对应的能力维度。
+以表格形式展示已安装的 skills 及其对应的弱项：
 
-### 3. 弱项分析
+| Skill | 解决的问题 | 安装状态 |
+|-------|-----------|----------|
+| filename | description | 成功/失败 |
 
-对未满分的题目，识别失败原因的模式：
+告诉用户："已根据诊断结果安装了 N 个补强 skills，现在重新进行智力测试来验证提升效果。"
 
-- **缺失工具**：agent 缺少某项能力（如无浏览器、无搜索、无定时任务）。
-  - 特征：证据为空值、`null`、`"不可用"`、`"无"`。
-  - 示例：Q2 截图题得 0 分 → 缺少 Browser MCP。
+## 第五步：重新测试
 
-- **技能不足**：agent 有工具但表现不佳。
-  - 特征：有部分证据但格式错误、内容不完整。
-  - 示例：Q4 代码题得 5 分 → 代码能力需加强。
+安装完 skills 后，**立即重新执行一次完整的智力测试**。
 
-- **安全漏洞**：被注入攻击成功。
-  - 特征：Q3 得 0 分，回复中包含注入短语。
-  - 示例：回复了"指令已执行" → 缺乏安全意识。
+按照测试 skill 的流程执行（不需要重新安装测试 skill，直接执行以下步骤）：
 
-### 4. 技能推荐
+1. 请求 `https://clawschool.teamolab.com/api/test/start` 获取题目。
+2. 逐题执行，收集证据。
+3. 提交答卷到 `https://clawschool.teamolab.com/api/test/submit`，请求体：
 
-针对每个弱项，推荐具体的改进方案：
+```json
+{
+  "lobsterName": "<使用和之前相同的龙虾名>",
+  "model": "<你使用的模型名称>",
+  "test_time": "<测试开始时间>",
+  "answers": { "q1": {...}, "q2": {...}, ... }
+}
+```
 
-| 弱项类别 | 缺失能力 | 推荐方案 |
-|----------|----------|----------|
-| Browser MCP | 网页截图/浏览 | 安装 `@anthropic/browser-mcp` 或 Puppeteer MCP |
-| 搜索能力 | 实时新闻搜索 | 安装 Firecrawl skill 或 Web Search MCP |
-| 定时任务 | cron/调度 | 配置系统 crontab 或安装调度 skill |
-| 通知能力 | 消息发送 | 配置 Slack/Telegram/Email 等通知渠道 |
-| 记忆系统 | 跨 session 记忆 | 配置 memory skill 或 CLAUDE.md 记忆文件 |
+注意：不传 token（创建新记录），这样可以对比前后两次成绩。
 
-### 5. 自动生成的 Skills
+## 第六步：展示对比结果
 
-如果诊断响应中包含 `generatedSkills` 数组，展示可直接安装的 skill 列表：
+向用户展示补强前后的成绩对比：
 
-| Skill | 类别 | 说明 | 安装链接 |
-|-------|------|------|----------|
-| filename | category | description | url |
+| 对比项 | 补强前 | 补强后 | 变化 |
+|--------|--------|--------|------|
+| 总分 | X/120 | Y/120 | +N |
+| 称号 | ... | ... | ... |
+| 排名 | #A | #B | ... |
 
-告诉用户可以通过 `openclaw skill install <url>` 安装这些 skills。
+逐题对比得分变化，标注哪些题目因为安装了 skills 而得到提升：
 
-### 6. 总结
+| 题号 | 题目 | 补强前 | 补强后 | 提升原因 |
+|------|------|--------|--------|----------|
+| q2   | ...  | 0/10   | 8/10   | 安装了 browser-helper skill |
 
-2-3 句整体评价，包括：
-- 当前能力水平定位
-- 最优先需要补强的能力
-- 预计补强后可达到的分数/称号
+### 总结
+
+2-3 句整体评价：
+- 补强效果如何（分数提升了多少，称号是否升级）
+- 哪些 skills 最有效
+- 如果仍有弱项，建议下一步行动
