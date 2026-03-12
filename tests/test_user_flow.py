@@ -200,6 +200,8 @@ class TestSkillFiles:
         r = client.get("/skills/diagnose.md")
         assert r.status_code == 200
         assert "诊断" in r.text or "diagnose" in r.text.lower()
+        assert "qveris-discover" in r.text
+        assert "QVERIS_API_KEY" in r.text
 
     def test_local_domain_uses_http_urls(self, client):
         import app.main as main_module
@@ -442,6 +444,8 @@ class TestSkillFilesIntegration:
         r = http.get("/skills/diagnose.md")
         assert r.status_code == 200
         assert "诊断" in r.text or "diagnose" in r.text.lower()
+        assert "qveris-discover" in r.text
+        assert "QVERIS_API_KEY" in r.text
 
 
 @pytest.mark.integration
