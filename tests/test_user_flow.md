@@ -29,7 +29,7 @@ SSR 页面渲染 + 重定向 + OG 标签 + CDN 合规 + Skill 文件下载 + 统
 - OG URLs 全部 https（无 http://）
 - 无 GFW 阻断 CDN（fonts.googleapis.com, unpkg.com）
 - 包含 IQ 值
-- 升级命令使用 repair-skill（非 diagnose skill）
+- 基础能力升级命令使用 `skills/diagnose.md`，并携带 `scope=basic`
 - 模板变量 advanced_qids/basic_qids 正确传入
 
 ### 分享页
@@ -76,7 +76,7 @@ SSR 页面渲染 + 重定向 + OG 标签 + CDN 合规 + Skill 文件下载 + 统
 | OG URLs https | 无 http:// |
 | CDN 合规 | 无 fonts.googleapis.com / unpkg.com |
 | IQ 显示 | 包含 IQ 值 |
-| 升级命令 | /api/repair-skill/{token} |
+| 升级命令 | /skills/diagnose.md + token + `scope=basic` |
 
 ### 分享页
 | 用例 | 预期 |

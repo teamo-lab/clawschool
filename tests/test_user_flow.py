@@ -64,8 +64,10 @@ class TestDetailPage:
     def test_upgrade_command_uses_repair_skill(self, client):
         d = submit_test(client)
         r = client.get(f"/wait/{d['token']}")
-        assert f"/api/repair-skill/{d['token']}" in r.text
-        assert "skills/diagnose.md" not in r.text
+        assert "skills/diagnose.md" in r.text
+        assert "scope 是 basic" in r.text
+        assert d["token"] in r.text
+        assert "repair-skill" not in r.text
 
     def test_passes_advanced_basic_qids(self, client):
         d = submit_test(client)
@@ -319,8 +321,10 @@ class TestDetailPageIntegration:
     def test_upgrade_command_uses_repair_skill(self, http):
         d = integration_submit(http)
         r = http.get(f"/wait/{d['token']}")
-        assert f"/api/repair-skill/{d['token']}" in r.text
-        assert "skills/diagnose.md" not in r.text
+        assert "skills/diagnose.md" in r.text
+        assert "scope 是 basic" in r.text
+        assert d["token"] in r.text
+        assert "repair-skill" not in r.text
 
     def test_upgrade_modal_uses_real_low_score_basic_questions(self, http):
         answers = {
