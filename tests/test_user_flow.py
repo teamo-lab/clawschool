@@ -132,6 +132,14 @@ class TestMePage:
         assert "生效中" in r.text
         assert 'var PAYMENT_STATUS = "paid";' in r.text
 
+    def test_premium_command_uses_diagnose_skill_full_scope(self, client):
+        d = submit_test(client)
+        r = client.get(f"/me/{d['token']}")
+        assert "skills/diagnose.md" in r.text
+        assert "scope 是 full" in r.text
+        assert d["token"] in r.text
+        assert "repair-skill" not in r.text
+
 
 class TestRedirects:
     """/r/{token} 重定向 + /leaderboard 重定向。"""
@@ -323,6 +331,22 @@ class TestMePageIntegration:
         d = integration_submit(http)
         r = http.get(f"/me/{d['token']}")
         assert str(d["iq"]) in r.text
+
+    def test_premium_command_uses_diagnose_skill_full_scope(self, http):
+        d = integration_submit(http)
+        r = http.get(f"/me/{d['token']}")
+        assert "skills/diagnose.md" in r.text
+        assert "scope 是 full" in r.text
+        assert d["token"] in r.text
+        assert "repair-skill" not in r.text
+
+    def test_premium_command_uses_diagnose_skill_full_scope(self, http):
+        d = integration_submit(http)
+        r = http.get(f"/me/{d['token']}")
+        assert "skills/diagnose.md" in r.text
+        assert "scope 是 full" in r.text
+        assert d["token"] in r.text
+        assert "repair-skill" not in r.text
 
 
 @pytest.mark.integration
