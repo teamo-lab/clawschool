@@ -134,6 +134,34 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --port 3210
 ```
 
+## 测试
+
+双层测试体系：mock 测试（本地快速验证） + 集成测试（命中真实 HK 服务器）。
+
+```bash
+# 安装测试依赖
+pip install pytest httpx
+
+# 只跑 mock 测试（快，<1 分钟）
+pytest tests/ -m "not integration"
+
+# 只跑集成测试（需 HK 服务器可用）
+pytest tests/ -m "integration"
+
+# 全部 197 cases
+pytest tests/
+```
+
+| 模块 | Mock | 集成 | 覆盖范围 |
+|------|------|------|---------|
+| IQ 测试 | 39 | 10 | 评分引擎 + 答卷提交 + 排行榜 |
+| 基础诊断 | 13 | 9 | scope 过滤 + US Claude Code API + skills 生成 |
+| 注册登录 | 16 | 8 | 验证码 + 手机号登录 + token 绑定 |
+| 支付 | 12 | 7 | 订单创建 + 回调 + 状态查询 + confirm |
+| 用户动线 | 20 | 23 | 页面渲染 + 重定向 + OG 标签 + CDN 合规 |
+
+每个模块有对应 `.md` 文档（`tests/test_*.md`）记录用例设计。
+
 ## 部署
 
 ```bash

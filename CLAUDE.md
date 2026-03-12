@@ -96,6 +96,36 @@
 - **前端**：`templates/detail.html`（入口）+ `templates/me.html`（订阅 + 管理）
 - **后端**：同上支付接口，`plan_type=premium`
 
+## 测试体系
+
+### 结构
+```
+tests/
+├── conftest.py           # 共享 fixtures（mock client + 集成 httpx client）
+├── test_iq_test.py/.md   # IQ 测试模块（评分引擎 + 答卷提交）
+├── test_diagnose.py/.md  # 基础诊断模块（scope 过滤 + US API 调用）
+├── test_auth.py/.md      # 注册登录模块（验证码 + 手机号登录）
+├── test_payment.py/.md   # 支付模块（订单创建 + 回调 + 状态查询）
+└── test_user_flow.py/.md # 前端用户动线（页面渲染 + 重定向 + OG + CDN）
+```
+
+### 双层测试
+- **Mock 测试**（140 cases）：TestClient + 内存 SQLite，外部依赖全 mock
+- **集成测试**（57 cases）：httpx 命中 `https://clawschool.teamolab.com`，标记 `@pytest.mark.integration`
+
+### 运行
+```bash
+pytest tests/ -m "not integration"   # 只跑 mock（快，<1 分钟）
+pytest tests/ -m "integration"       # 只跑集成（需 HK 服务器可用，~1 分钟）
+pytest tests/                         # 全部 197 cases
+```
+
+### 规则
+- 新增/修改 API → 同步写 mock + 集成测试 + 更新对应 `.md` 文档
+- 集成测试用范围断言（避免服务端状态波动导致假失败）
+- 部署前跑一遍集成测试确认真实环境正常
+- 修 bug → 先写复现测试，再修复
+
 ## 注意事项
 
 - US 服务器 Claude Code 使用 OAuth 登录（Max 订阅），不用 API Key
