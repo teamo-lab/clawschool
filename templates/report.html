@@ -598,16 +598,20 @@ body {
     'q12': '网页容错'
   } %}
 
-  {# ── 统计变量（当前 12 题都纳入统计）── #}
-  {% set ns = namespace(problems=0, basic_fixable=0, basic_boost=0) %}
+  {# ── 统计变量：区分基础题和高级题 ── #}
+  {% set ns = namespace(problems=0, basic_fixable=0, basic_boost=0, advanced_count=0) %}
   {% set q_keys = ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11','q12'] %}
   {% for qid in q_keys %}
     {% set qd = data.detail.get(qid, {}) %}
     {% set sc = qd.get('score', 0) | int %}
     {% if sc < 8 %}
       {% set ns.problems = ns.problems + 1 %}
-      {% set ns.basic_fixable = ns.basic_fixable + 1 %}
-      {% set ns.basic_boost = ns.basic_boost + (10 - sc) %}
+      {% if qid in advanced_qids %}
+        {% set ns.advanced_count = ns.advanced_count + 1 %}
+      {% else %}
+        {% set ns.basic_fixable = ns.basic_fixable + 1 %}
+        {% set ns.basic_boost = ns.basic_boost + (10 - sc) %}
+      {% endif %}
     {% endif %}
   {% endfor %}
 
@@ -652,7 +656,7 @@ body {
       <div class="diag-label">💰 ¥19.9 可修复</div>
     </div>
     <div class="diag-item diag-paid">
-      <div class="diag-num">0</div>
+      <div class="diag-num">{{ ns.advanced_count }}</div>
       <div class="diag-label">🔒 高级订阅</div>
     </div>
   </div>
@@ -668,14 +672,14 @@ body {
     {% endif %}
     <button class="btn btn-paid" onclick="startPremiumSubscribe()">
       🚀 ¥99/月 高级能力订阅
-      <span class="btn-sub" style="display:block; font-size:12px; font-weight:400; opacity:0.7; margin-top:2px;">动画制作 · 实时看板等</span>
+      <span class="btn-sub" style="display:block; font-size:12px; font-weight:400; opacity:0.7; margin-top:2px;">Skill 搜索 · 自我进化 · 主动预判 · 安全审查</span>
     </button>
   </div>
 
   <!-- 4. 能力扫描报告 -->
   <div class="scan-card">
     <div class="card-title">🔍 能力扫描报告</div>
-    <div class="card-subtitle">10 项 AI 实战能力逐项检测</div>
+    <div class="card-subtitle">12 项 AI 实战能力逐项检测</div>
 
     {% for qid in q_keys %}
     {% set qd = data.detail.get(qid, {}) %}
@@ -711,6 +715,8 @@ body {
         <span class="q-tag tag-perfect">满分</span>
         {% elif sc >= 8 %}
         <span class="q-tag tag-good">良好</span>
+        {% elif qid in advanced_qids %}
+        <span class="q-tag tag-paid">🔒 高级订阅</span>
         {% else %}
         <span class="q-tag tag-free">💰 ¥19.9 可修复</span>
         {% endif %}
@@ -731,13 +737,13 @@ body {
   <div class="sheet">
     <div class="sheet-handle"></div>
     <h3>🔧 基础能力升级包</h3>
-    <p>一次性补齐你龙虾的 10 项基础短板：</p>
-    <p style="margin-bottom:16px; font-size:12px; color:#999;">文件写入 · 浏览器截图 · 反注入安全 · 代码执行 · 新闻搜索<br>定时任务 · 手机通知 · 记忆系统 · 并行查询 · 全链路</p>
+    <p>一次性补齐你龙虾的基础短板：</p>
+    <p style="margin-bottom:16px; font-size:12px; color:#999;">注入防御 · 删除防护 · 安装评估 · Skill 核查<br>定时任务 · 新闻整理 · 双任务处理 · 网页容错</p>
     <div class="upgrade-detail">
       {% for qid in q_keys %}
       {% set qd = data.detail.get(qid, {}) %}
       {% set sc = qd.get('score', 0) | int %}
-      {% if sc < 8 %}
+      {% if sc < 8 and qid not in advanced_qids %}
       <div class="ud-row">
         <span class="ud-label">{{ qid | upper }} {{ q_names.get(qid, qid) }}</span>
         <span class="ud-value green">{{ sc }} → 10 <small>(+{{ 10 - sc }})</small></span>
@@ -772,7 +778,7 @@ body {
   <div class="sheet">
     <div class="sheet-handle"></div>
     <h3>📋 复制以下命令发给你的小龙虾</h3>
-    <div class="cmd-box" id="upgrade-cmd">请帮我升级龙虾学校基础能力。用 exec 执行 curl -sS http://{{ domain }}/skill.md?token={{ token }}&upgrade=basic 下载升级指引，然后按照指引操作。</div>
+    <div class="cmd-box" id="upgrade-cmd">请帮我升级龙虾学校基础能力。用 exec 执行 curl -sS https://{{ domain }}/api/repair-skill/{{ token }} 下载修复指引，然后按照指引逐步操作。</div>
     <button class="btn-sheet btn-primary" id="btn-copy-upgrade" onclick="copyUpgradeCmd()">📋 一键复制</button>
     <p class="tip">复制后发给你的小龙虾，升级 + 重测约需 5-10 分钟</p>
     <button class="btn-sheet btn-primary" id="btn-start-wait" style="display:none; background:linear-gradient(135deg,#ff2d55,#ff6b3d); margin-top:10px;" onclick="startUpgradeWait()">已发送，开始等待升级结果</button>
@@ -791,7 +797,7 @@ body {
       </div>
       <ul class="check-list" id="upgrade-checklist">
         <li id="ck-1" class="active"><span class="ck-icon"><span class="spinner"></span></span> 基础工具优化中...</li>
-        <li id="ck-2"><span class="ck-icon">⬜</span> 重新测试全部 10 题</li>
+        <li id="ck-2"><span class="ck-icon">⬜</span> 重新测试全部 12 题</li>
         <li id="ck-3"><span class="ck-icon">⬜</span> 更新成绩</li>
       </ul>
     </div>
@@ -841,6 +847,7 @@ body {
 <script>
 var SCORE = {{ data.score }};
 var SCORE_PCT = Math.min(100, (SCORE / 120) * 100);
+var ADVANCED = {{ advanced_qids | list | tojson }};
 var BOOST = {{ ns.basic_boost }};
 var CIRCUMFERENCE = 2 * Math.PI * 80; // 502.65
 

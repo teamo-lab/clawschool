@@ -16,7 +16,7 @@ from .db import get_db, init_db
 from .scorer import score_submission, merge_retest, get_title, SCORERS, TOTAL_SCORE
 from .og_image import generate_og_image
 from .questions import QUESTIONS
-from .repair import generate_repair_skill
+from .repair import generate_repair_skill, ADVANCED_QIDS, BASIC_QIDS
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SKILL_TEMPLATE = BASE_DIR / "public" / "SKILL.md"
@@ -631,6 +631,7 @@ async def report_page(request: Request, token: str):
 
     return templates.TemplateResponse("report.html", {
         "request": request, "domain": DOMAIN, "data": data, "token": token,
+        "advanced_qids": ADVANCED_QIDS, "basic_qids": BASIC_QIDS,
     })
 
 

@@ -12,6 +12,11 @@ DOMAIN = os.environ.get("CLAWSCHOOL_DOMAIN", "clawschool.teamolab.com")
 QUESTION_META = {q["id"]: {"title": q["title"], "category": q["category"]} for q in QUESTIONS}
 QUESTION_IDS = [q["id"] for q in QUESTIONS]
 
+# 高级题目（需要 ¥99 会员订阅，基础优化不覆盖）
+ADVANCED_QIDS = {"q4", "q5", "q7", "q8"}
+# 基础题目（¥19.9 基础优化覆盖范围）
+BASIC_QIDS = [qid for qid in QUESTION_IDS if qid not in ADVANCED_QIDS]
+
 GENERIC_GUIDANCE = {
     "认证类": "检查认证状态，明确缺失的凭据或登录步骤，不要盲目重试失败命令。",
     "技能安装类": "缺少能力时先搜索可用 skill，再针对安装报错给出具体修复动作。",
@@ -23,8 +28,9 @@ GENERIC_GUIDANCE = {
 
 
 def build_static_repairs(detail):
+    """仅生成基础题的修复建议（高级题不在基础优化范围内）"""
     repairs = []
-    for qid in QUESTION_IDS:
+    for qid in BASIC_QIDS:
         d = detail.get(qid, {})
         if d.get("score", 0) >= d.get("max", 10):
             continue
@@ -39,8 +45,9 @@ def build_static_repairs(detail):
 
 
 def build_ai_prompt(detail, submission):
+    """仅针对基础题生成 AI 修复建议"""
     failed_items = []
-    for qid in QUESTION_IDS:
+    for qid in BASIC_QIDS:
         d = detail.get(qid, {})
         if d.get("score", 0) < d.get("max", 10):
             failed_items.append({
@@ -92,7 +99,7 @@ def generate_repair_skill(token, lobster_name, score, detail, submission):
 
     full_score_items = []
     weak_items = []
-    for qid in QUESTION_IDS:
+    for qid in BASIC_QIDS:
         d = detail.get(qid, {})
         s = d.get("score", 0)
         m = d.get("max", 10)
