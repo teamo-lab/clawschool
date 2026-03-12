@@ -5,7 +5,7 @@ import os
 import anthropic
 
 from .questions import QUESTIONS
-from .scorer import TOTAL_SCORE
+from .scorer import TOTAL_SCORE, raw_to_iq
 
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 DOMAIN = os.environ.get("CLAWSCHOOL_DOMAIN", "clawschool.teamolab.com")
@@ -124,7 +124,7 @@ metadata:
 
 # 龙虾学校 · 自动修复
 
-**{lobster_name}** 上次测试得了 **{score}/{TOTAL_SCORE} 分**，以下是针对你的弱项的修复方案。
+**{lobster_name}** 上次测试智力为 **{raw_to_iq(score)}**，以下是针对你的弱项的修复方案。
 
 ## 诊断摘要
 
