@@ -9,6 +9,7 @@
 <meta property="og:image" content="https://{{ domain }}/api/og-image/{{ token }}">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://{{ domain }}/s/{{ token }}">
+<script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
 <style>
 :root {
   --bg-base: #0B0102;
@@ -529,6 +530,48 @@ async function loadLeaderboard() {
 }
 
 loadLeaderboard();
+
+/* ── 微信 JS-SDK 分享配置 ── */
+(function() {
+    if (!/MicroMessenger/i.test(navigator.userAgent) || typeof wx === 'undefined') return;
+
+    var currentUrl = window.location.href.split('#')[0];
+    fetch('/api/wechat/signature?url=' + encodeURIComponent(currentUrl))
+        .then(function(r) { return r.json(); })
+        .then(function(config) {
+            wx.config({
+                debug: false,
+                appId: config.appId,
+                timestamp: config.timestamp,
+                nonceStr: config.nonceStr,
+                signature: config.signature,
+                jsApiList: ['updateAppMessageShareData', 'updateTimelineShareData']
+            });
+
+            wx.ready(function() {
+                var shareUrl = 'https://{{ domain }}/s/{{ token }}';
+                var shareTitle = '「{{ data.name }}」智力值 {{ data.iq }}，你的龙虾够聪明吗？';
+                var shareDesc = '荣获「{{ data.title }}」称号！来龙虾学校测测你的 AI 助手';
+                var shareImg = 'https://{{ domain }}/api/og-image/{{ token }}';
+
+                wx.updateAppMessageShareData({
+                    title: shareTitle,
+                    desc: shareDesc,
+                    link: shareUrl,
+                    imgUrl: shareImg
+                });
+
+                wx.updateTimelineShareData({
+                    title: shareTitle + ' ' + shareDesc,
+                    link: shareUrl,
+                    imgUrl: shareImg
+                });
+            });
+        })
+        .catch(function(e) {
+            console.error('获取微信签名失败:', e);
+        });
+})();
 </script>
 </body>
 </html>

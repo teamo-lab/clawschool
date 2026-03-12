@@ -7,6 +7,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 class PaymentConfig:
+    # ── 微信公众号（JS-SDK 分享）──
+    WECHAT_MP_APP_ID = os.environ.get("WECHAT_MP_APP_ID", "wx0fbf1bd51f218408")
+    WECHAT_MP_APP_SECRET = os.environ.get("WECHAT_MP_APP_SECRET", "")
+
     # ── 微信支付 ──
     WECHAT_MCH_ID = os.environ.get("WECHAT_MCH_ID", "")
     WECHAT_API_V3_KEY = os.environ.get("WECHAT_API_V3_KEY", "")

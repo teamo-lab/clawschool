@@ -80,21 +80,35 @@
 
 ## 支付体系
 
-两个付费产品，共用微信原生支付（JSAPI/H5）：
+两个付费产品，支持支付宝（PC/H5）和微信支付（Native/H5，微信 H5 域名审核中暂不可用）：
 
 ### ¥19.9 基础能力升级（一次性）
 - **触发**：结果页点击"补齐基础能力"
-- **流程**：升级详情弹窗（展示可修复项 + 预估提升）→ 微信支付 → 支付成功 → 复制修复命令发给龙虾 → 等待升级 + 重测
-- **前端**：`templates/detail.html`（`previewUpgrade` → `showPayStep` → `confirmBasicPayment`）
-- **后端**：`POST /api/payment/create`、`POST /api/payment/confirm`
-- **当前状态**：MVP 阶段前端点击"我已支付"直接放行，待接入微信支付
-- **⚠️ TODO**：前端 `confirmBasicPayment()` 当前未调用后端接口验证是否真实支付成功，直接跳到下一步。后续微信支付联调时需重点验证此处：确保前端在收到后端支付成功回调/查询确认后才放行，否则用户未付款也能进入升级流程
+- **流程**：升级详情弹窗（展示可修复项 + 预估提升）→ 点击"立即购买"直接跳转支付宝 → 支付成功回调到 `/wait/{token}?paid=basic` → 自动弹出复制命令弹窗 → 复制修复命令发给龙虾 → 等待升级 + 重测
+- **前端**：`templates/detail.html`（`previewUpgrade` → `showPayStep` → `doBasicPay('alipay')`）
+- **后端**：`POST /api/payment/create`（创建订单）、`GET /api/payment/alipay/return`（支付宝同步回调）、`POST /api/payment/alipay/notify`（支付宝异步回调）
+- **当前状态**：支付宝支付已联调完成，微信支付 H5 域名审核中
 
 ### ¥99/月 高级能力订阅（包月）
 - **触发**：结果页点击"¥99/月 高级能力订阅" → 登录 → 跳转 `/me/{token}`
 - **权益**：每月 20 次能力体检+升级，自动补齐最先进 skills（Q4 自主搜索、Q5 Self-Improving Agent、Q7 主动预判需求、Q8 Skill 安全审查），疑难杂症支持（Agent 调用龙虾学校接口），持续迭代
 - **前端**：`templates/detail.html`（入口）+ `templates/me.html`（订阅 + 管理）
 - **后端**：同上支付接口，`plan_type=premium`
+
+## 微信分享
+
+使用微信 JS-SDK 实现原生分享功能：
+
+- **配置**：
+  - `WECHAT_MP_APP_ID`：微信公众号 AppID（已配置：`wx0fbf1bd51f218408`）
+  - `WECHAT_MP_APP_SECRET`：微信公众号 AppSecret（环境变量）
+- **后端接口**：`GET /api/wechat/signature?url=` — 返回 JS-SDK 签名配置
+- **前端**：
+  - 引入 `jweixin-1.6.0.js`
+  - 调用签名接口获取配置
+  - `wx.updateAppMessageShareData` — 自定义分享给朋友的内容
+  - `wx.updateTimelineShareData` — 自定义分享到朋友圈的内容
+- **交互**：微信不允许主动弹出分享面板，点击"炫耀成绩"显示引导蒙层，提示用户点击右上角"..."分享
 
 ## 注意事项
 

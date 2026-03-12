@@ -462,7 +462,7 @@ body {
 
   <!-- CTA 按钮组 -->
   <div class="btn-stack">
-    {% if ns.paid_locks > 0 and payment_status != 'submitted' %}
+    {% if ns.paid_locks > 0 and payment_status not in ('submitted', 'paid') %}
     <button class="btn btn-primary-cta" onclick="startPaidUpgrade()">
       🚀 全面升级我的龙虾
       <span class="btn-sub">预计提升至 {{ predicted_score }}+ 分</span>
@@ -564,7 +564,7 @@ function setRing(pct) {
 setTimeout(function() { setRing(SCORE_PCT); }, 200);
 
 // ── 登录 & 支付流程 ──
-var userPhone = '';
+var userPhone = '{{ bound_phone | default("", true) }}';
 var currentOrderId = '';
 
 function startPaidUpgrade() {

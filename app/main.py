@@ -19,6 +19,7 @@ from .og_image import generate_og_image
 from .questions import QUESTIONS
 from .repair import generate_repair_skill, ADVANCED_QIDS, BASIC_QIDS
 from .payment import PaymentConfig, WechatPayClient, AlipayClient
+from . import wechat_jssdk
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SKILL_TEMPLATE = BASE_DIR / "public" / "SKILL.md"
@@ -220,7 +221,7 @@ async def get_result(token: str):
         raise HTTPException(404, "Token 不存在")
 
     data = dict(row)
-    resp = {"status": data["status"], "name": data["name"]}
+    resp = {"status": data["status"], "name": data["name"], "created_at": data["created_at"]}
 
     if data["status"] == "done":
         resp.update({
@@ -774,6 +775,28 @@ async def payment_confirm(request: Request):
     return {"success": True, "paid": paid}
 
 
+# ─── 微信 JS-SDK ───
+
+@app.get("/api/wechat/signature")
+async def wechat_signature(request: Request, url: str = ""):
+    """获取微信 JS-SDK 签名配置"""
+    if not url:
+        # 如果没有传 url，从 referer 获取
+        url = request.headers.get("referer", f"https://{DOMAIN}/")
+
+    app_id = pay_config.WECHAT_MP_APP_ID
+    app_secret = pay_config.WECHAT_MP_APP_SECRET
+
+    if not app_secret:
+        raise HTTPException(500, "微信公众号 AppSecret 未配置")
+
+    result = wechat_jssdk.generate_signature(app_id, app_secret, url)
+    if not result:
+        raise HTTPException(500, "生成签名失败，请检查微信公众号配置")
+
+    return result
+
+
 # ─── SSR 页面路由 ───
 
 @app.get("/", response_class=HTMLResponse)
@@ -847,7 +870,7 @@ async def me_page(request: Request, token: str):
     data["rank"] = _get_rank(data["score"], token) if data["status"] == "done" else None
     data["iq"] = raw_to_iq(data["score"]) if data["status"] == "done" else 0
 
-    # 查看是否有付费订单
+    # 查看是否有付费订单和已绑定的手机号
     db = get_db()
     try:
         payment = db.execute(
@@ -857,10 +880,16 @@ async def me_page(request: Request, token: str):
         total_done = db.execute(
             "SELECT COUNT(*) as cnt FROM tests WHERE status='done'"
         ).fetchone()["cnt"]
+        # 查询已绑定的手机号
+        bound_user = db.execute(
+            "SELECT phone FROM user_tokens WHERE token=? LIMIT 1",
+            (token,)
+        ).fetchone()
     finally:
         db.close()
 
     payment_status = payment["status"] if payment else None
+    bound_phone = bound_user["phone"] if bound_user else ""
     expire_date = ""
     if payment and payment["confirmed_at"]:
         from datetime import datetime, timedelta
@@ -876,6 +905,7 @@ async def me_page(request: Request, token: str):
         "payment_status": payment_status, "total_done": total_done,
         "advanced_qids": ADVANCED_QIDS, "basic_qids": BASIC_QIDS,
         "expire_date": expire_date,
+        "bound_phone": bound_phone,
     })
 
 

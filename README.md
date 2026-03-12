@@ -98,17 +98,17 @@ clawschool/
 
 ## 支付体系
 
-两个付费产品，共用微信原生支付（JSAPI/H5）：
+两个付费产品，支持支付宝（PC/H5）和微信支付（Native/H5，微信 H5 域名审核中暂不可用）：
 
 ### ¥19.9 基础能力升级（一次性）
 - **触发**：结果页点击"补齐基础能力"
-- **流程**：升级详情弹窗（展示可修复项 + 预估提升）→ 微信支付 → 支付成功 → 复制修复命令发给龙虾 → 等待升级 + 重测
+- **流程**：升级详情弹窗（展示可修复项 + 预估提升）→ 点击"立即购买"直接跳转支付宝 → 支付成功回调 → 自动弹出复制命令弹窗 → 发给龙虾 → 等待升级 + 重测
 - **前端**：`templates/detail.html`
-- **后端**：`POST /api/payment/create` + `POST /api/payment/confirm`
+- **后端**：`POST /api/payment/create`、`GET /api/payment/alipay/return`、`POST /api/payment/alipay/notify`
 
 ### ¥99 高级能力订阅（一次性）
 - **触发**：结果页点击"¥99 高级能力订阅"
-- **流程**：登录弹窗（手机号）→ 跳转个人主页 `/me/{token}` → 微信支付 → 24h 内交付全面优化
+- **流程**：登录弹窗（手机号）→ 跳转个人主页 `/me/{token}` → 支付宝支付 → 24h 内交付全面优化
 - **前端**：`templates/detail.html`（入口）+ `templates/me.html`（支付 + 管理）
 - **后端**：同上支付接口，`plan_type=premium`
 
