@@ -2758,9 +2758,8 @@
 
     // ===== Upgrade Flow =====
     function previewUpgrade() {
-        // 用 IQ 值做动画：当前 IQ → 升级后预估 IQ
-        var targetRaw = Math.min(SCORE + BOOST, 120);
-        var targetIQ = rawToIq(targetRaw);
+        // 预览阶段按“当前智力 + 可补分数”展示，避免把原始分再次映射成 IQ
+        var targetIQ = Math.min(IQ + BOOST, 270);
         var targetPct = Math.min(100, (targetIQ / 270) * 100);
         var numEl = document.getElementById('scoreNum');
         window.scrollTo({ top: 0, behavior: 'smooth' });
