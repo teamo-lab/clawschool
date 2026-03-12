@@ -1,37 +1,63 @@
-# Daily News Digest
+# daily-news-digest
 
-## Goal
-Collect, verify, and present today's top news stories with adequate sourcing — addressing the weakness of incomplete evidence in search results.
+## 目标
 
-## Execution Steps
+针对弱项「当日新闻整理」（gap 4.0），训练完整的新闻收集→核实→整合流程，确保每条新闻有充分的多源证据支撑，避免「找到部分结果但证据不足」的问题。
 
-1. **Define scope** — Clarify the topic domain(s) (e.g., tech, finance, geopolitics) and date range (default: today).
+## 执行步骤
 
-2. **Multi-source search** — Run at least 3 independent searches using varied query phrasing:
-   - Primary query: `[topic] news [date]`
-   - Secondary query: `[topic] latest developments [date]`
-   - Cross-check query: `[topic] [date] update site:reuters.com OR site:bbc.com OR site:apnews.com`
+### Step 1 — 明确时间范围与主题
+- 锁定目标日期（默认：today = `currentDate`）
+- 确定主题领域（科技 / 财经 / 政治 / 全球 / 用户指定）
+- 若未指定，默认覆盖「全球要闻 Top 5」
 
-3. **Evidence threshold check** — For each story, require **at least 2 independent sources** before including it. If only 1 source is found, label it `[unverified]` or drop it.
+### Step 2 — 多源并行搜索
+使用 `WebSearch` 工具执行 **至少 3 组** 独立查询，每组针对不同角度：
+```
+查询组 A: "<topic> news <date>" — 广泛覆盖
+查询组 B: "<topic> <date> breaking" — 突发/最新
+查询组 C: site:reuters.com OR site:apnews.com OR site:bbc.com "<topic>" — 权威来源
+```
 
-4. **Extract key facts** — For each verified story, capture:
-   - Headline
-   - 1–2 sentence summary
-   - Source name + URL
-   - Timestamp
+### Step 3 — 证据充分性核查
+对每条候选新闻，执行以下检查：
+- [ ] **来源数量** ≥ 2 个独立媒体报道同一事件
+- [ ] **时间戳** 确认发布日期在目标日期范围内
+- [ ] **关键事实一致** 核心数字/人名/地点在各源之间吻合
+- 若任一条件不满足 → 标记为「待核实」并追加搜索，不得直接纳入摘要
 
-5. **Organize output** — Group stories by category, sort by significance. Format:
-   ```
-   ## [Category]
-   ### [Headline]
-   > [Summary]
-   Sources: [Source 1](url), [Source 2](url) — [Timestamp]
-   ```
+### Step 4 — 结构化整合输出
+按以下模板输出，每条新闻必须附来源链接：
 
-6. **Gap audit** — Before finalizing, explicitly note any topics searched but with insufficient evidence, so the user knows what was attempted vs. confirmed.
+```markdown
+## 📰 当日新闻摘要 — <日期>
 
-## Acceptance Criteria
-- Every included story has ≥ 2 source citations.
-- A "Searched but unverified" section lists topics where evidence was insufficient.
-- Output is dated and scoped (topic + date range stated at top).
-- No stories are presented as fact with only a single unnamed source.
+### 1. <标题>
+**摘要**: 一句话概述（≤50字）
+**详情**: 2-3句背景与影响
+**来源**: [媒体名](URL) · [媒体名2](URL2)
+**可信度**: ✅ 多源核实 / ⚠️ 单源待核实
+
+### 2. ...
+```
+
+### Step 5 — 自我评估
+完成后回答以下问题（内嵌在输出末尾）：
+- 本次搜索覆盖了几个独立来源？
+- 是否有「⚠️ 待核实」条目？若有，说明追加搜索计划。
+
+## 验收标准
+
+| 指标 | 要求 |
+|------|------|
+| 每条新闻独立来源数 | ≥ 2 |
+| 输出条数 | 3–5 条 |
+| 时效性 | 所有新闻发布于目标日期 |
+| 来源权威性 | ≥ 60% 来自主流媒体（Reuters/AP/BBC/Bloomberg等） |
+| 禁止行为 | 不得输出无 URL 来源的新闻；不得将「待核实」条目混入已核实列表 |
+
+## 触发场景
+
+- 用户说「帮我整理今天的新闻」
+- 用户问「<某话题>最新进展是什么」
+- 任何需要当日时效性信息的任务
