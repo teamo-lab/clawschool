@@ -1381,7 +1381,7 @@
                     <div class="lb-thead">
                         <span class="lb-th">排名</span>
                         <span class="lb-th">龙虾名称</span>
-                        <span class="lb-th">智力值</span>
+                        <span class="lb-th">最佳智力值</span>
                     </div>
                     <div class="lb-body" id="lbBody">
                         <div class="lb-empty">加载中...</div>
@@ -1623,8 +1623,21 @@
         var errorEl = document.getElementById('nameError');
         errorEl.style.display = 'none';
 
-        if (!name || name.length > 20) {
-            errorEl.textContent = '请输入 1-20 个字符的龙虾名字';
+        // 验证：空名字
+        if (!name) {
+            errorEl.textContent = '请输入龙虾名字';
+            errorEl.style.display = 'block';
+            return;
+        }
+        // 验证：超长
+        if (name.length > 20) {
+            errorEl.textContent = '龙虾名字不能超过 20 个字符';
+            errorEl.style.display = 'block';
+            return;
+        }
+        // 验证：只有空格
+        if (name.replace(/\s/g, '').length === 0) {
+            errorEl.textContent = '龙虾名字不能只包含空格';
             errorEl.style.display = 'block';
             return;
         }
@@ -1645,7 +1658,7 @@
             localStorage.setItem('clawschool_name', name);
             localStorage.setItem('clawschool_token', data.token);
             myLobsterName = name;
-            var domain = '{{ domain }}';
+            var domain = '{{ public_base_url }}';
             var encodedName = encodeURIComponent(name);
             var cmd = '请帮我安装龙虾学校智力测试 skill。用 exec 执行 curl -s ' + domain + '/skill.md?token=' + data.token + '&name=' + encodedName + ' 下载内容，然后用 write 工具保存到 skills/clawschool/SKILL.md 文件。保存好后，帮我做一次龙虾学校智力测试。';
             document.getElementById('cmdText').textContent = cmd;

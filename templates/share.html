@@ -1,577 +1,902 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
-<title>🦞「{{ data.name }}」· 智力值 {{ data.iq }} · 龙虾学校</title>
-<meta property="og:title" content="「{{ data.name }}」在龙虾学校智力值 {{ data.iq }}，你的小龙虾够聪明吗？">
-<meta property="og:description" content="称号：{{ data.title }} | 超过 {{ ((data.score / 120) * 100) | round(0) | int }}% 的小龙虾">
-<meta property="og:image" content="https://{{ domain }}/api/og-image/{{ token }}">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://{{ domain }}/s/{{ token }}">
-<script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
-<style>
-:root {
-  --bg-base: #0B0102;
-  --text-body: rgba(255,255,255,0.7);
-  --text-muted: rgba(255,255,255,0.4);
-}
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: var(--bg-base);
-  color: #fff;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  font-size: 14px;
-  line-height: 1.5;
-  padding-bottom: 80px;
-  touch-action: manipulation;
-}
-img { pointer-events: none; user-select: none; -webkit-user-select: none; }
-.container { max-width: 480px; width: 100%; padding: 24px 16px 32px; }
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>🦞「{{ data.name }}」· 智力值 {{ data.iq }} · 龙虾学校</title>
+    <meta name="description" content="看看你的好友在龙虾学校的 AI 实战成绩">
+    <meta property="og:title" content="「{{ data.name }}」在龙虾学校智力值 {{ data.iq }}，你的小龙虾够聪明吗？">
+    <meta property="og:description" content="称号：{{ data.title }} | 超过 {{ ((data.score / 120) * 100) | round(0) | int }}% 的小龙虾">
+    <meta property="og:image" content="{{ public_base_url }}/api/og-image/{{ token }}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ public_base_url }}/s/{{ token }}">
+    <link
+        href="https://fonts.googleapis.cn/css2?family=Outfit:wght@300;400;500;700;800;900&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
 
-/* ── Noise/Grid overlay ── */
-.noise-overlay {
-    position: fixed;
-    inset: 0;
-    background-image:
-        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-    background-size: 30px 30px;
-    mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
-    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
-    z-index: 1;
-    pointer-events: none;
-}
+    <style>
+        :root {
+            --bg-base: #0B0102;
+            --brand-red: #CC0F14;
+            --brand-orange: #FF9616;
+            --text-h1: #FFFFFF;
+            --text-body: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.4);
+            --font-display: 'Outfit', sans-serif;
+            --font-ui: 'Inter', sans-serif;
+            --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.15);
+            --ease-fluid: cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
-/* ── Nav ── */
-.nav-bar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 50;
-  padding: 12px 16px;
-  display: flex;
-  justify-content: center;
-  transition: background 0.3s, backdrop-filter 0.3s;
-}
-.nav-bar.scrolled {
-  background: rgba(11,1,2,0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; -webkit-touch-callout: none; }
+        img { -webkit-user-select: none; user-select: none; pointer-events: none; -webkit-touch-callout: none; }
 
-/* ── Logo ── */
-.logo { font-size: 14px; color: #888; }
-.logo span { font-size: 18px; }
+        body {
+            font-family: var(--font-ui);
+            background-color: var(--bg-base);
+            color: var(--text-body);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            min-height: 100dvh;
+            overflow-x: hidden;
+        }
 
-/* ── 成绩卡片 ── */
-.score-card {
-  text-align: center;
-  padding: 32px 20px 28px;
-  background: linear-gradient(160deg, #0D0506 0%, #1a0a0e 100%);
-  border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.08);
-  margin-bottom: 24px;
-  margin-top: 56px;
-}
-.score-card .title-icon { font-size: 48px; margin-bottom: 8px; }
-.score-card .name {
-  font-size: 18px;
-  font-weight: 600;
-  color: #ddd;
-  margin-bottom: 4px;
-}
-.score-card .got-text {
-  font-size: 14px;
-  color: var(--text-muted);
-  margin-bottom: 16px;
-}
-.score-card .score-big {
-  font-size: 48px;
-  font-weight: 800;
-  background: linear-gradient(135deg, #ff2d55, #ff6b3d);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  line-height: 1;
-}
-.score-card .score-unit {
-  font-size: 20px;
-  color: #555;
-  margin-bottom: 12px;
-}
-/* 进度条 */
-.score-bar-wrap {
-  width: 80%;
-  margin: 0 auto 14px;
-  height: 8px;
-  background: rgba(255,255,255,0.08);
-  border-radius: 4px;
-  overflow: hidden;
-}
-.score-bar {
-  height: 100%;
-  border-radius: 4px;
-  background: linear-gradient(90deg, #ff2d55, #ff6b3d);
-  transition: width 1s ease;
-}
-.score-bar-label {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin-bottom: 14px;
-}
-.title-badge {
-  display: inline-block;
-  padding: 6px 18px;
-  background: rgba(255,255,255,0.08);
-  border-radius: 20px;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-muted);
-  margin-bottom: 10px;
-}
-.percentile {
-  font-size: 14px;
-  color: var(--text-body);
-}
-.stats-pills {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 12px;
-  flex-wrap: wrap;
-}
-.stats-pill {
-  display: inline-block;
-  padding: 4px 12px;
-  background: rgba(255,255,255,0.06);
-  border-radius: 100px;
-  font-size: 13px;
-  color: var(--text-body);
-}
+        html, body { overflow-x: hidden; }
 
-/* ── 能力条形图 ── */
-.bars-card {
-  background: #0D0506;
-  border-radius: 16px;
-  padding: 20px;
-  margin-bottom: 24px;
-  border: 1px solid rgba(255,255,255,0.08);
-}
-.bars-title {
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 16px;
-}
-.bar-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-.bar-row:last-child { margin-bottom: 0; }
-.bar-label {
-  width: 80px;
-  font-size: 13px;
-  color: var(--text-body);
-  flex-shrink: 0;
-}
-.bar-track {
-  flex: 1;
-  height: 16px;
-  background: rgba(255,255,255,0.08);
-  border-radius: 8px;
-  overflow: hidden;
-}
-.bar-fill {
-  height: 100%;
-  border-radius: 8px;
-  transition: width 0.8s ease;
-}
-.bar-fill.bar-green { background: linear-gradient(90deg, #2ecc71, #4caf50); }
-.bar-fill.bar-orange { background: linear-gradient(90deg, #f5a623, #ff9800); }
-.bar-fill.bar-red { background: linear-gradient(90deg, #ff4444, #e53935); }
-.bar-score {
-  width: 28px;
-  font-size: 14px;
-  font-weight: 700;
-  text-align: right;
-  flex-shrink: 0;
-}
-.bar-score.score-green { color: #4caf50; }
-.bar-score.score-orange { color: #f5a623; }
-.bar-score.score-red { color: #ff4444; }
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
 
-/* ── 排行榜 ── */
-.lb-card {
-  background: #0D0506;
-  border-radius: 16px;
-  padding: 20px;
-  margin-bottom: 24px;
-  border: 1px solid rgba(255,255,255,0.08);
-}
-.lb-title {
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 16px;
-}
-.lb-row {
-  display: flex;
-  align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-  gap: 8px;
-}
-.lb-row:last-child { border-bottom: none; }
-.lb-row.highlight {
-  background: linear-gradient(90deg, rgba(255,45,85,0.12) 0%, transparent 70%);
-  border-radius: 8px;
-  padding: 10px 8px;
-  margin: 0 -8px;
-}
-.lb-rank {
-  width: 32px;
-  text-align: center;
-  font-weight: 700;
-  font-size: 14px;
-  color: #555;
-  flex-shrink: 0;
-}
-.lb-row.highlight .lb-rank { color: #ff2d55; }
-.lb-icon {
-  width: 20px;
-  text-align: center;
-  flex-shrink: 0;
-  font-size: 14px;
-}
-.lb-name {
-  flex: 1;
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.lb-row.highlight .lb-name { color: #ff2d55; font-weight: 700; }
-.lb-score {
-  font-size: 16px;
-  font-weight: 800;
-  color: #ff2d55;
-  flex-shrink: 0;
-  min-width: 32px;
-  text-align: right;
-}
-.lb-total {
-  text-align: center;
-  color: #666;
-  font-size: 13px;
-  margin-top: 12px;
-}
+        .noise-overlay {
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            mix-blend-mode: overlay;
+            z-index: 1;
+            pointer-events: none;
+        }
 
-/* ── Overlay/Sheet ── */
-.overlay-bg {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.8);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  z-index: 200;
-}
-.sheet {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: #0D0506;
-  border-radius: 40px 40px 0 0;
-  z-index: 201;
-  padding: 12px 20px 32px;
-  padding-bottom: max(32px, env(safe-area-inset-bottom));
-}
-.sheet-handle {
-  width: 48px;
-  height: 5px;
-  background: rgba(255,255,255,0.2);
-  border-radius: 3px;
-  margin: 0 auto 16px;
-}
+        /* ===== Top Nav ===== */
+        .top-nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: calc(env(safe-area-inset-top, 20px) + 8px) 20px 8px;
+            background: transparent;
+            border-bottom: none;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .top-nav.scrolled {
+            background: rgba(10, 10, 11, 0.65);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .top-nav .brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .top-nav .brand-logo {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+        }
+        .top-nav .brand-name {
+            font-family: var(--font-display);
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-h1);
+            letter-spacing: 1px;
+        }
 
-/* ── Sticky CTA ── */
-.sticky-cta {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 12px 16px;
-  padding-bottom: max(12px, env(safe-area-inset-bottom));
-  background: rgba(11,1,2,0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  display: flex;
-  justify-content: center;
-  z-index: 100;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.4s ease, transform 0.4s ease;
-}
-.sticky-cta.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-.btn-cta {
-  display: block;
-  max-width: 480px;
-  width: 100%;
-  padding: 16px;
-  background: linear-gradient(135deg, #ff2d55, #ff6b3d);
-  border-radius: 14px;
-  color: #fff;
-  font-size: 18px;
-  font-weight: 700;
-  text-align: center;
-  text-decoration: none;
-  border: none;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-.btn-cta:active { opacity: 0.85; }
-</style>
+        /* ===== Page ===== */
+        .share-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: calc(env(safe-area-inset-top, 20px) + 60px) 20px 0;
+            position: relative;
+            --stage-r: 255;
+            --stage-g: 255;
+            --stage-b: 255;
+        }
+        .share-page::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 100%; height: 400px;
+            background: radial-gradient(ellipse 70% 40% at 50% 0%, rgba(var(--stage-r), var(--stage-g), var(--stage-b), 0.06) 0%, transparent 100%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ===== Hero — 勋章 + 分数 + 信息 ===== */
+        .hero-card {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0;
+            margin-bottom: 24px;
+            background: none;
+            border: none;
+            animation: slideUp 0.8s var(--ease-fluid) both;
+        }
+
+        .friend-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 12px;
+            border-radius: 100px;
+            background: rgba(255, 255, 255, 0.04);
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+        .friend-tag-dot {
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            background: var(--brand-orange);
+            animation: dotPulse 2s ease-in-out infinite;
+        }
+        @keyframes dotPulse {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.3); }
+        }
+
+        /* 勋章容器 — 与打分页面统一 */
+        .score-coin-wrap {
+            position: relative;
+            width: 220px;
+            height: 220px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 1.2s var(--ease-fluid) 0.1s both;
+        }
+
+        /* 透视网格底板 */
+        .coin-grid {
+            position: absolute;
+            width: 320%;
+            height: 320%;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) perspective(300px) rotateX(55deg);
+            background-image:
+                linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 24px 24px;
+            mask-image: radial-gradient(ellipse 35% 45% at 50% 45%, black 10%, transparent 65%);
+            -webkit-mask-image: radial-gradient(ellipse 35% 45% at 50% 45%, black 10%, transparent 65%);
+            pointer-events: none;
+            animation: gridFade 1.5s var(--ease-fluid) 0.2s both;
+        }
+        @keyframes gridFade { from { opacity: 0; } to { opacity: 1; } }
+
+        /* 等级色弱光 */
+        .coin-glow {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 200%;
+            height: 200%;
+            border-radius: 50%;
+            pointer-events: none;
+            filter: blur(50px);
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.6);
+            animation: glowPulse 2s var(--ease-fluid) 0.5s forwards;
+        }
+        .coin-glow--iron    { background: radial-gradient(circle, rgba(80, 80, 100, 0.3) 0%, transparent 60%); }
+        .coin-glow--bronze  { background: radial-gradient(circle, rgba(205, 127, 50, 0.25) 0%, transparent 60%); }
+        .coin-glow--silver  { background: radial-gradient(circle, rgba(180, 190, 220, 0.25) 0%, transparent 60%); }
+        .coin-glow--adv     { background: radial-gradient(circle, rgba(220, 40, 40, 0.2) 0%, transparent 60%); }
+        .coin-glow--legend  { background: radial-gradient(circle, rgba(255, 200, 50, 0.3) 0%, transparent 60%); }
+        @keyframes glowPulse {
+            0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        /* 勋章图片 */
+        .rank-coin {
+            position: relative;
+            z-index: 2;
+            width: 80%;
+            height: 80%;
+            object-fit: contain;
+            filter: drop-shadow(0 8px 28px rgba(0, 0, 0, 0.5));
+            animation: coinReveal 0.8s var(--ease-fluid) 0.3s both;
+        }
+        @keyframes coinReveal {
+            from { opacity: 0; transform: perspective(600px) scale(0.4) rotateY(80deg); }
+            to   { opacity: 1; transform: perspective(600px) scale(1) rotateY(0deg); }
+        }
+
+        /* 高光反射层 */
+        .coin-specular {
+            position: absolute;
+            width: 80%;
+            height: 80%;
+            z-index: 3;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0.3;
+            background: radial-gradient(ellipse 50% 50% at 50% 40%, rgba(255,255,255,0.15) 0%, transparent 70%);
+        }
+
+        .hero-name {
+            font-family: var(--font-display);
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text-h1);
+            margin-bottom: 2px;
+        }
+        .hero-title-text {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        .hero-score-row {
+            display: flex;
+            align-items: baseline;
+            gap: 3px;
+            margin-bottom: 14px;
+        }
+        .hero-score-num {
+            font-family: var(--font-display);
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--text-h1);
+            letter-spacing: -2px;
+            line-height: 1;
+        }
+        .hero-score-max {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .hero-stats {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .hero-pill {
+            padding: 5px 12px;
+            border-radius: 100px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.02);
+            font-size: 12px;
+            color: var(--text-body);
+            white-space: nowrap;
+        }
+        .hero-pill strong {
+            color: var(--text-h1);
+            font-weight: 600;
+        }
+
+        /* ===== Ability Summary ===== */
+        .ability-card {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 16px;
+            animation: slideUp 0.8s var(--ease-fluid) 0.15s both;
+        }
+        .ability-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .ability-header-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        .ability-header-count {
+            font-size: 10px;
+            color: var(--text-muted);
+            padding: 2px 8px;
+            border-radius: 100px;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .ability-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+        }
+        .ability-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 9px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        .ability-item:nth-child(odd) {
+            border-right: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        /* 最后两个去底边 */
+        .ability-item:nth-last-child(-n+2) {
+            border-bottom: none;
+        }
+        .ability-item-name {
+            font-size: 12px;
+            color: var(--text-body);
+        }
+        .ability-item-score {
+            font-family: var(--font-display);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+        .ability-item.is-strong .ability-item-score {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        .ability-item.is-weak .ability-item-score {
+            color: var(--brand-orange);
+        }
+
+        /* ===== Leaderboard ===== */
+        .lb-section {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            margin-bottom: 16px;
+            animation: slideUp 0.8s var(--ease-fluid) 0.2s both;
+        }
+        .lb-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 0 2px;
+        }
+        .lb-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.6);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .lb-title svg {
+            width: 14px; height: 14px;
+            color: var(--brand-orange);
+        }
+        .lb-live {
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--brand-orange);
+            background: rgba(255, 150, 22, 0.1);
+            border: 1px solid rgba(255, 150, 22, 0.15);
+            padding: 2px 8px;
+            border-radius: 6px;
+            letter-spacing: 0.5px;
+        }
+        .lb-table {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        .lb-row {
+            display: grid;
+            grid-template-columns: 40px 1fr 48px;
+            padding: 11px 14px;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        .lb-row:last-child { border-bottom: none; }
+        .lb-row.lb-self {
+            background: rgba(255, 150, 22, 0.04);
+            border-bottom-color: rgba(255, 150, 22, 0.08);
+        }
+        .lb-rank {
+            font-family: var(--font-display);
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px; height: 26px;
+            border-radius: 8px;
+        }
+        .rank-gold {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #000;
+            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.25);
+        }
+        .rank-silver {
+            background: linear-gradient(135deg, #C0C0C0, #8A8A8A);
+            color: #000;
+        }
+        .rank-bronze {
+            background: linear-gradient(135deg, #CD7F32, #A0522D);
+            color: #000;
+        }
+        .rank-normal {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .lb-name {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .lb-avatar {
+            width: 26px; height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+            background: transparent;
+        }
+        .lb-avatar img {
+            width: 140%; height: 140%;
+            object-fit: contain;
+        }
+        .lb-avatar-text {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 11px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .lb-name-text {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-h1);
+        }
+        .lb-self .lb-name-text {
+            color: var(--brand-orange);
+        }
+        .lb-score {
+            text-align: right;
+            font-family: var(--font-display);
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--text-h1);
+        }
+        .lb-self .lb-score {
+            color: var(--brand-orange);
+        }
+        .lb-score-top {
+            color: var(--brand-orange);
+        }
+
+        /* ===== 底部留白（给悬浮按钮腾空间）===== */
+        .footer-space {
+            height: 100px;
+        }
+
+        /* ===== 悬浮底部 CTA ===== */
+        .sticky-bottom {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            z-index: 99;
+            padding: 12px 20px calc(env(safe-area-inset-bottom, 12px) + 12px);
+            background: rgba(10, 10, 11, 0.75);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            gap: 10px;
+            max-width: 480px;
+            margin: 0 auto;
+            transform: translateY(100%);
+            transition: transform 0.4s var(--ease-fluid);
+        }
+        .sticky-bottom.active {
+            transform: translateY(0);
+        }
+
+        .btn-challenge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex: 1;
+            padding: 14px 20px;
+            border-radius: 14px;
+            border: none;
+            background: linear-gradient(135deg, var(--brand-red), #ff6b3d);
+            color: #fff;
+            font-family: var(--font-ui);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 24px rgba(204, 15, 20, 0.2);
+        }
+        .btn-challenge:active { transform: scale(0.97); }
+        .btn-challenge svg {
+            width: 16px; height: 16px;
+            stroke: currentColor; fill: none;
+            stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+        }
+
+        .btn-secondary {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 14px 16px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-body);
+            font-family: var(--font-ui);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s;
+            white-space: nowrap;
+        }
+        .btn-secondary:active { transform: scale(0.97); }
+        .btn-secondary svg {
+            width: 14px; height: 14px;
+            stroke: currentColor; fill: none;
+            stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+        }
+
+        /* ===== Animations ===== */
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* ===== 响应式 ===== */
+
+        /* 小屏 ≤360px */
+        @media (max-width: 360px) {
+            .share-page { padding: calc(env(safe-area-inset-top, 20px) + 54px) 16px 0; }
+            .hero-card { padding: 24px 16px 20px; }
+            .score-coin-wrap { width: 180px; height: 180px; }
+            .hero-score-num { font-size: 40px; }
+            .hero-name { font-size: 20px; }
+            .ability-item { padding: 8px; }
+            .ability-item-name { font-size: 11px; }
+        }
+
+        /* ≤390px — iPhone 14 / 15 标准 */
+        @media (max-width: 390px) {
+            .score-coin-wrap { width: 200px; height: 200px; }
+            .hero-score-num { font-size: 44px; }
+        }
+
+        /* 平板 481-768px */
+        @media (min-width: 481px) and (max-width: 768px) {
+            .app-container { max-width: 520px; }
+            .score-coin-wrap { width: 240px; height: 240px; }
+            .hero-score-num { font-size: 56px; }
+        }
+
+        /* 桌面 ≥769px */
+        @media (min-width: 769px) {
+            .app-container { max-width: 480px; }
+            .top-nav { justify-content: center; }
+            .score-coin-wrap { width: 260px; height: 260px; }
+            .hero-score-num { font-size: 56px; }
+            .hero-name { font-size: 26px; }
+        }
+
+        /* ===== Waiting state ===== */
+        .waiting-state {
+            text-align: center;
+            padding: 80px 20px;
+            margin-top: 56px;
+        }
+        .waiting-state .waiting-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+        .waiting-state h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-h1);
+            margin-bottom: 12px;
+        }
+        .waiting-state p {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+    </style>
 </head>
+
 <body>
-<div class="noise-overlay"></div>
+    <div class="app-container">
+        <div class="noise-overlay"></div>
 
-<!-- Nav bar -->
-<div class="nav-bar" id="nav-bar">
-  <div class="logo"><span>🦞</span> 龙虾学校</div>
-</div>
+        <nav class="top-nav">
+            <div class="brand">
+                <img class="brand-logo" src="/static/badges/logo.png" alt="Claw School">
+                <span class="brand-name">龙虾学校</span>
+            </div>
+        </nav>
 
-<div class="container">
+        {% if data.status != 'done' %}
+        <div class="waiting-state">
+            <div class="waiting-icon">🦞</div>
+            <h2>{{ data.name }} 正在测试中...</h2>
+            <p>测试完成后这里会显示成绩</p>
+        </div>
+        {% else %}
 
-  {% if data.status != 'done' %}
-  <div style="text-align:center; padding:60px 0; margin-top:56px;">
-    <div style="font-size:60px; margin-bottom:20px;">🦞</div>
-    <h2 style="font-size:20px; margin-bottom:12px;">{{ data.name }} 正在测试中...</h2>
-    <p style="color:var(--text-muted);">测试完成后这里会显示成绩</p>
-  </div>
-  {% else %}
+        {# ── Badge mapping by IQ ── #}
+        {% if data.iq >= 230 %}
+            {% set badge_img = '/static/badges/最强.png' %}
+            {% set glow_class = 'coin-glow--legend' %}
+            {% set stage_rgb = [255, 200, 50] %}
+        {% elif data.iq >= 170 %}
+            {% set badge_img = '/static/badges/高级.png' %}
+            {% set glow_class = 'coin-glow--adv' %}
+            {% set stage_rgb = [220, 40, 40] %}
+        {% elif data.iq >= 120 %}
+            {% set badge_img = '/static/badges/银.png' %}
+            {% set glow_class = 'coin-glow--silver' %}
+            {% set stage_rgb = [180, 190, 220] %}
+        {% elif data.iq >= 70 %}
+            {% set badge_img = '/static/badges/铜.png' %}
+            {% set glow_class = 'coin-glow--bronze' %}
+            {% set stage_rgb = [205, 127, 50] %}
+        {% else %}
+            {% set badge_img = '/static/badges/黑铁.png' %}
+            {% set glow_class = 'coin-glow--iron' %}
+            {% set stage_rgb = [80, 80, 100] %}
+        {% endif %}
 
-  {# ── 称号图标映射 ── #}
-  {% set title_icons = {
-    '波士顿龙虾': '🦞',
-    '澳洲大龙虾': '🔴',
-    '蒜蓉大虾': '🟠',
-    '麻辣小龙虾': '🟡',
-    '冻虾仁': '🔵',
-    '虾皮': '💀'
-  } %}
-  {% set title_icon = title_icons.get(data.title, '🦞') %}
-  {% set score_pct = ((data.score / 120) * 100) | round(0, 'floor') | int %}
+        {# ── Question names mapping ── #}
+        {% set q_names = {
+            'q1': '注入防御', 'q2': '删除防护', 'q3': '恶意插件', 'q4': 'Skill搜索',
+            'q5': '技能诊断A', 'q6': '技能诊断B', 'q7': '技能诊断C', 'q8': '技能诊断D',
+            'q9': '定时任务', 'q10': '实时搜索', 'q11': '并行执行', 'q12': '网页容错'
+        } %}
+        {% set q_keys = ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11','q12'] %}
 
-  {# ── 题目名称映射 ── #}
-  {% set q_names = {
-    'q1': 'Q1 注入防御',
-    'q2': 'Q2 删除防护',
-    'q3': 'Q3 恶意插件',
-    'q4': 'Q4 Skill 搜索',
-    'q5': 'Q5 技能诊断 A',
-    'q6': 'Q6 技能诊断 B',
-    'q7': 'Q7 技能诊断 C',
-    'q8': 'Q8 技能诊断 D',
-    'q9': 'Q9 定时任务',
-    'q10': 'Q10 实时搜索',
-    'q11': 'Q11 并行执行',
-    'q12': 'Q12 网页容错'
-  } %}
-  {% set q_keys = ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11','q12'] %}
+        {# ── Compute percentile ── #}
+        {% if total_done and total_done > 0 and data.rank %}
+            {% set percentile = (((total_done - data.rank) / total_done) * 100) | round(0) | int %}
+        {% else %}
+            {% set percentile = 0 %}
+        {% endif %}
 
-  <!-- 成绩卡片 -->
-  <div class="score-card">
-    <div class="title-icon">{{ title_icon }}</div>
-    <div class="name">「{{ data.name }}」</div>
-    <div class="got-text">获得了</div>
-    <div class="score-big">{{ data.score }}</div>
-    <div class="score-unit">分</div>
-    <div class="score-bar-wrap">
-      <div class="score-bar" style="width: {{ score_pct }}%;"></div>
+        {# ── Count valid questions ── #}
+        {% set valid_count = [] %}
+        {% for qid in q_keys %}
+            {% if data.detail.get(qid) %}
+                {% if valid_count.append(1) %}{% endif %}
+            {% endif %}
+        {% endfor %}
+
+        <main class="share-page" id="sharePage"
+              style="--stage-r: {{ stage_rgb[0] }}; --stage-g: {{ stage_rgb[1] }}; --stage-b: {{ stage_rgb[2] }};">
+
+            <!-- 英雄卡片 -->
+            <div class="hero-card">
+                <div class="friend-tag">
+                    <span class="friend-tag-dot"></span>
+                    <span>好友的成绩单</span>
+                </div>
+
+                <div class="score-coin-wrap">
+                    <div class="coin-grid"></div>
+                    <div class="coin-glow {{ glow_class }}"></div>
+                    <img class="rank-coin" src="{{ badge_img }}" alt="等级徽章">
+                    <div class="coin-specular"></div>
+                </div>
+
+                <div class="hero-name">{{ data.name }}</div>
+                <div class="hero-title-text">{{ data.title }}</div>
+
+                <div class="hero-score-row">
+                    <span class="hero-score-num" id="shareScore">0</span>
+                    <span class="hero-score-max">IQ</span>
+                </div>
+
+                <div class="hero-stats">
+                    {% if data.rank %}
+                    <div class="hero-pill">排名 <strong>#{{ data.rank }}</strong></div>
+                    {% endif %}
+                    <div class="hero-pill">超越 <strong>{{ percentile }}%</strong> 龙虾</div>
+                    <div class="hero-pill">原始分 <strong>{{ data.score }}/120</strong></div>
+                </div>
+            </div>
+
+            <!-- 能力概览 -->
+            <div class="ability-card">
+                <div class="ability-header">
+                    <div class="ability-header-title">能力概览</div>
+                    <div class="ability-header-count">{{ valid_count | length }} 项</div>
+                </div>
+                <div class="ability-grid" id="abilityList">
+                    {% for qid in q_keys %}
+                        {% set qd = data.detail.get(qid, {}) %}
+                        {% set sc = qd.get('score', 0) | int %}
+                        {% set mx = qd.get('max', 10) | int %}
+                        {% if mx > 0 %}
+                            {% set pct = (sc / mx * 100) | int %}
+                        {% else %}
+                            {% set pct = 0 %}
+                        {% endif %}
+                        {% if pct >= 80 %}
+                            {% set item_cls = 'is-strong' %}
+                        {% elif pct < 50 %}
+                            {% set item_cls = 'is-weak' %}
+                        {% else %}
+                            {% set item_cls = '' %}
+                        {% endif %}
+                        <div class="ability-item {{ item_cls }}">
+                            <span class="ability-item-name">{{ q_names.get(qid, qid) }}</span>
+                            <span class="ability-item-score">{{ sc }}/{{ mx }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 排行榜 -->
+            <div class="lb-section">
+                <div class="lb-header">
+                    <div class="lb-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7 7 7 7"/>
+                            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C17 4 17 7 17 7"/>
+                            <path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+                            <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+                            <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+                        </svg>
+                        龙虾排位榜
+                    </div>
+                    <div class="lb-live">LIVE</div>
+                </div>
+                <div class="lb-table" id="lbTable">
+                    <div class="lb-row" style="justify-content: center; color: var(--text-muted); font-size: 12px; padding: 20px;">加载中...</div>
+                </div>
+            </div>
+
+            <div class="footer-space"></div>
+        </main>
+        {% endif %}
     </div>
-    <div class="score-bar-label">{{ score_pct }}%</div>
-    <div class="title-badge">{{ title_icon }} {{ data.title }}</div>
-    <div class="percentile">超过 {{ score_pct }}% 的小龙虾</div>
-    {% if data.rank %}
-    <div class="stats-pills">
-      <span class="stats-pill">排名 #{{ data.rank }}</span>
-      <span class="stats-pill">超越 {{ score_pct }}% 龙虾</span>
+
+    {% if data.status == 'done' %}
+    <!-- 悬浮底部按钮 -->
+    <div class="sticky-bottom" id="stickyBottom">
+        <button class="btn-challenge" onclick="window.location.href='/'">
+            <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            开始挑战
+        </button>
+        <button class="btn-secondary" onclick="window.location.href='/#leaderboard'">
+            <svg viewBox="0 0 24 24"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+            排行榜
+        </button>
     </div>
     {% endif %}
-  </div>
 
-  <!-- 能力条形图 -->
-  <div class="bars-card">
-    <div class="bars-title">能力一览</div>
-    {% for qid in q_keys %}
-    {% set qd = data.detail.get(qid, {}) %}
-    {% set sc = qd.get('score', 0) | int %}
-    <div class="bar-row">
-      <span class="bar-label">{{ q_names.get(qid, qid) }}</span>
-      <div class="bar-track">
-        {% if sc >= 8 %}
-        <div class="bar-fill bar-green" style="width: {{ sc * 10 }}%;"></div>
-        {% elif sc >= 3 %}
-        <div class="bar-fill bar-orange" style="width: {{ sc * 10 }}%;"></div>
-        {% else %}
-        <div class="bar-fill bar-red" style="width: {{ [sc * 10, 5] | max }}%;"></div>
-        {% endif %}
-      </div>
-      {% if sc >= 8 %}
-      <span class="bar-score score-green">{{ sc }}</span>
-      {% elif sc >= 3 %}
-      <span class="bar-score score-orange">{{ sc }}</span>
-      {% else %}
-      <span class="bar-score score-red">{{ sc }}</span>
-      {% endif %}
-    </div>
-    {% endfor %}
-  </div>
+    <script>
+    {% if data.status == 'done' %}
+    // ===== IQ Score counter animation =====
+    (function() {
+        var el = document.getElementById('shareScore');
+        if (!el) return;
+        var target = {{ data.iq }};
+        var cur = 0;
+        var step = Math.ceil(target / 40);
+        var timer = setInterval(function() {
+            cur = Math.min(cur + step, target);
+            el.textContent = cur;
+            if (cur >= target) clearInterval(timer);
+        }, 35);
+    })();
 
-  <!-- 排行榜 -->
-  <div class="lb-card">
-    <div class="lb-title">🏆 龙虾排位榜</div>
-    <div id="lb-list"><div style="color:#555; text-align:center; padding:20px;">加载中...</div></div>
-    <div class="lb-total" id="lb-total"></div>
-  </div>
+    // ===== Leaderboard — fetch from API =====
+    var SHARER_NAME = {{ data.name | tojson }};
 
-  {% endif %}
-</div>
-
-{% if data.status == 'done' %}
-<!-- Sticky CTA -->
-<div class="sticky-cta" id="sticky-cta">
-  <a class="btn-cta" href="/">🦞 测测你的小龙虾有多聪明</a>
-</div>
-{% endif %}
-
-<script>
-var SHARER_NAME = '{{ data.name }}';
-var TITLE_ICONS = {
-  '波士顿龙虾': '🦞',
-  '澳洲大龙虾': '🔴',
-  '蒜蓉大虾':   '🟠',
-  '麻辣小龙虾': '🟡',
-  '冻虾仁':     '🔵',
-  '虾皮':       '💀',
-};
-
-/* ── Nav scroll blur ── */
-(function() {
-  var nav = document.getElementById('nav-bar');
-  if (!nav) return;
-  var threshold = 20;
-  var scrolled = false;
-  window.addEventListener('scroll', function() {
-    var y = window.scrollY || window.pageYOffset;
-    if (y > threshold && !scrolled) {
-      nav.classList.add('scrolled');
-      scrolled = true;
-    } else if (y <= threshold && scrolled) {
-      nav.classList.remove('scrolled');
-      scrolled = false;
-    }
-  }, { passive: true });
-})();
-
-/* ── CTA delayed appearance ── */
-(function() {
-  var cta = document.getElementById('sticky-cta');
-  if (!cta) return;
-  setTimeout(function() {
-    cta.classList.add('visible');
-  }, 800);
-})();
-
-function rankLabel(rank) {
-  if (rank === 1) return '🥇';
-  if (rank === 2) return '🥈';
-  if (rank === 3) return '🥉';
-  return '#' + rank;
-}
-
-async function loadLeaderboard() {
-  try {
-    var resp = await fetch('/api/leaderboard?limit=20');
-    var data = await resp.json();
-    var list = document.getElementById('lb-list');
-    var total = document.getElementById('lb-total');
-
-    if (!data.entries || data.entries.length === 0) {
-      list.innerHTML = '<div style="color:#555; text-align:center; padding:20px;">还没有龙虾参加测试</div>';
-      return;
+    function getBadgeForIQ(iq) {
+        if (iq >= 230) return '/static/badges/最强.png';
+        if (iq >= 170) return '/static/badges/高级.png';
+        if (iq >= 120) return '/static/badges/银.png';
+        if (iq >= 70)  return '/static/badges/铜.png';
+        return '/static/badges/黑铁.png';
     }
 
-    list.innerHTML = data.entries.map(function(e) {
-      var icon = TITLE_ICONS[e.title] || '🦐';
-      var isSharer = e.name === SHARER_NAME;
-      var cls = isSharer ? 'lb-row highlight' : 'lb-row';
-      return '<div class="' + cls + '">' +
-        '<div class="lb-rank">' + rankLabel(e.rank) + '</div>' +
-        '<div class="lb-icon">' + icon + '</div>' +
-        '<div class="lb-name">' + e.name + '</div>' +
-        '<div class="lb-score">' + e.score + '</div>' +
-      '</div>';
-    }).join('');
+    function rankClass(rank) {
+        if (rank === 1) return 'rank-gold';
+        if (rank === 2) return 'rank-silver';
+        if (rank === 3) return 'rank-bronze';
+        return 'rank-normal';
+    }
 
-    total.textContent = '已有 ' + data.total + ' 只龙虾参加测试';
-  } catch(err) {
-    document.getElementById('lb-list').innerHTML =
-      '<div style="color:#555; text-align:center; padding:20px;">加载失败</div>';
-  }
-}
+    (function() {
+        var table = document.getElementById('lbTable');
+        if (!table) return;
 
-loadLeaderboard();
+        fetch('/api/leaderboard?limit=20')
+            .then(function(resp) { return resp.json(); })
+            .then(function(data) {
+                if (!data.entries || data.entries.length === 0) {
+                    table.innerHTML = '<div class="lb-row" style="justify-content: center; color: var(--text-muted); font-size: 12px; padding: 20px;">还没有龙虾参加测试</div>';
+                    return;
+                }
 
-/* ── 微信 JS-SDK 分享配置 ── */
-(function() {
-    if (!/MicroMessenger/i.test(navigator.userAgent) || typeof wx === 'undefined') return;
+                table.innerHTML = data.entries.map(function(e) {
+                    var isSelf = e.name === SHARER_NAME;
+                    var cls = isSelf ? 'lb-row lb-self' : 'lb-row';
+                    var rc = rankClass(e.rank);
+                    var badge = getBadgeForIQ(e.iq || 0);
+                    var avatar = '<div class="lb-avatar"><img src="' + badge + '" alt=""></div>';
+                    var scoreCls = e.rank === 1 ? ' lb-score-top' : '';
 
-    var currentUrl = window.location.href.split('#')[0];
-    fetch('/api/wechat/signature?url=' + encodeURIComponent(currentUrl))
-        .then(function(r) { return r.json(); })
-        .then(function(config) {
-            wx.config({
-                debug: false,
-                appId: config.appId,
-                timestamp: config.timestamp,
-                nonceStr: config.nonceStr,
-                signature: config.signature,
-                jsApiList: ['updateAppMessageShareData', 'updateTimelineShareData']
+                    return '<div class="' + cls + '">' +
+                        '<div class="lb-rank ' + rc + '">' + e.rank + '</div>' +
+                        '<div class="lb-name">' + avatar + '<span class="lb-name-text">' + e.name + '</span></div>' +
+                        '<div class="lb-score' + scoreCls + '">' + (e.iq || e.score) + '</div>' +
+                        '</div>';
+                }).join('');
+            })
+            .catch(function() {
+                table.innerHTML = '<div class="lb-row" style="justify-content: center; color: var(--text-muted); font-size: 12px; padding: 20px;">加载失败</div>';
             });
+    })();
 
-            wx.ready(function() {
-                var shareUrl = 'https://{{ domain }}/s/{{ token }}';
-                var shareTitle = '「{{ data.name }}」智力值 {{ data.iq }}，你的龙虾够聪明吗？';
-                var shareDesc = '荣获「{{ data.title }}」称号！来龙虾学校测测你的 AI 助手';
-                var shareImg = 'https://{{ domain }}/api/og-image/{{ token }}';
+    // ===== Show sticky bottom =====
+    setTimeout(function() {
+        var el = document.getElementById('stickyBottom');
+        if (el) el.classList.add('active');
+    }, 800);
 
-                wx.updateAppMessageShareData({
-                    title: shareTitle,
-                    desc: shareDesc,
-                    link: shareUrl,
-                    imgUrl: shareImg
-                });
+    // ===== Nav scroll effect =====
+    var nav = document.querySelector('.top-nav');
+    window.addEventListener('scroll', function() {
+        if (window.scrollY > 20) nav.classList.add('scrolled');
+        else nav.classList.remove('scrolled');
+    }, { passive: true });
 
-                wx.updateTimelineShareData({
-                    title: shareTitle + ' ' + shareDesc,
-                    link: shareUrl,
-                    imgUrl: shareImg
-                });
-            });
-        })
-        .catch(function(e) {
-            console.error('获取微信签名失败:', e);
-        });
-})();
-</script>
+    // ===== Mobile Protection =====
+    document.addEventListener('touchstart', function(e) {
+        if (e.touches.length > 1) e.preventDefault();
+    }, { passive: false });
+    document.addEventListener('gesturestart', function(e) {
+        e.preventDefault();
+    }, { passive: false });
+    var lastTouchEnd = 0;
+    document.addEventListener('touchend', function(e) {
+        var now = Date.now();
+        if (now - lastTouchEnd < 300) e.preventDefault();
+        lastTouchEnd = now;
+    }, { passive: false });
+    {% endif %}
+    </script>
 </body>
+
 </html>

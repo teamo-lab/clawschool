@@ -8,14 +8,13 @@
     <title>🦞 {{ data.name }} - 龙虾学校能力扫描报告</title>
     <meta property="og:title" content="{{ data.name }} 在龙虾学校智力值 {{ data.iq }}！">
     <meta property="og:description" content="称号：{{ data.title }} | 12 道 AI 实战题测试">
-    <meta property="og:image" content="https://{{ domain }}/api/og-image/{{ token }}">
+    <meta property="og:image" content="{{ public_base_url }}/api/og-image/{{ token }}">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://{{ domain }}/r/{{ token }}">
+    <meta property="og:url" content="{{ public_base_url }}/r/{{ token }}">
     <link
         href="https://fonts.googleapis.cn/css2?family=Outfit:wght@300;400;500;700;800;900&family=Inter:wght@400;500;600&display=swap"
         rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-    <script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
 
     <style>
         :root {
@@ -34,8 +33,10 @@
             --ease-fluid: cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; touch-action: manipulation; }
-        img { pointer-events: none; user-select: none; -webkit-user-select: none; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; touch-action: manipulation; -webkit-touch-callout: none; }
+        img { -webkit-user-select: none; user-select: none; pointer-events: none; -webkit-touch-callout: none; }
+
+        html, body { overflow-x: hidden; }
 
         body {
             font-family: var(--font-ui);
@@ -54,17 +55,15 @@
             position: relative;
             display: flex;
             flex-direction: column;
+            overflow-x: hidden;
         }
 
         .noise-overlay {
             position: fixed;
             inset: 0;
-            background-image:
-                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-            background-size: 30px 30px;
-            mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
-            -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            mix-blend-mode: overlay;
             z-index: 1;
             pointer-events: none;
         }
@@ -79,11 +78,13 @@
         .phase-wait {
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             min-height: 100vh;
+            min-height: 100dvh;
             padding: 60px 24px 40px;
             position: relative;
             text-align: center;
+            gap: 0;
         }
 
         .phase-wait::before {
@@ -100,63 +101,27 @@
             z-index: 0;
         }
 
-        .wait-nav {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 20px;
-            z-index: 10;
-        }
-        .wait-back-btn {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 14px;
-            color: var(--text-muted);
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-        .wait-back-btn:hover { color: var(--text-body); }
-        .wait-brand-inline {
-            font-family: var(--font-ui);
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text-muted);
-            letter-spacing: 2px;
+        .wait-spacer {
+            flex: 1 1 0;
+            min-height: 0;
         }
 
-        .wait-brand {
-            position: relative;
-            z-index: 3;
-            font-family: var(--font-ui);
-            font-size: 16px;
-            font-weight: 500;
-            color: var(--text-body);
-            letter-spacing: 3px;
-            margin-bottom: 32px;
-            animation: fadeIn 1s var(--ease-fluid) both;
-            display: none; /* 已移到顶部导航栏 */
-        }
-
-        .wait-lobster {
+        /* Countdown timer */
+        .wait-countdown {
             position: relative;
             z-index: 2;
-            width: 200px;
-            height: 200px;
-            margin-bottom: 32px;
+            width: 180px;
+            flex-shrink: 0;
+            margin-bottom: 24px;
             animation: fadeIn 1.2s var(--ease-fluid) 0.1s both;
         }
 
-        .wait-lobster-glow {
+        .countdown-glow {
             position: absolute;
-            inset: -40px;
+            inset: -30px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(204, 15, 20, 0.2) 0%, rgba(255, 150, 22, 0.08) 50%, transparent 70%);
-            filter: blur(24px);
+            background: radial-gradient(circle, rgba(204, 15, 20, 0.12) 0%, rgba(255, 150, 22, 0.05) 50%, transparent 70%);
+            filter: blur(20px);
             animation: breathe 3s ease-in-out infinite;
         }
 
@@ -165,108 +130,157 @@
             50% { transform: scale(1.1); opacity: 1; }
         }
 
-        .wait-lobster-wrap {
-            position: absolute;
-            inset: -40px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            mask-image: radial-gradient(circle at center, black 35%, transparent 60%);
-            -webkit-mask-image: radial-gradient(circle at center, black 35%, transparent 60%);
+        .countdown-ring {
+            position: relative;
+            width: 100%;
+            padding-bottom: 100%;
         }
 
-        .wait-lobster-wrap img {
+        .countdown-ring svg {
+            position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            filter: contrast(1.08) brightness(1.06);
-            mix-blend-mode: screen;
-            animation: lobsterFloat 4s ease-in-out infinite;
+            transform: rotate(-90deg);
         }
 
-        @keyframes lobsterFloat {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
+        .countdown-track {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.04);
+            stroke-width: 3;
         }
 
-        .wait-title {
-            position: relative;
-            z-index: 3;
+        .countdown-fill {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.15);
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-dasharray: 452.39;
+            stroke-dashoffset: 0;
+            transition: stroke-dashoffset 1s linear, stroke 0.6s ease;
+        }
+
+        .countdown-mascot {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .countdown-mascot img {
+            width: 60%;
+            height: 60%;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 20px rgba(204, 15, 20, 0.3));
+        }
+
+        /* Loop entrance animations */
+        @keyframes loopZoomSpin {
+            0%   { opacity: 0; transform: scale(0) rotate(-180deg); }
+            60%  { opacity: 1; transform: scale(1.1) rotate(10deg); }
+            100% { opacity: 1; transform: scale(1) rotate(0deg); }
+        }
+        @keyframes loopDropBounce {
+            0%   { opacity: 0; transform: translateY(-60px) scale(0.6); }
+            50%  { opacity: 1; transform: translateY(8px) scale(1.05); }
+            75%  { transform: translateY(-4px) scale(0.98); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes loopFlipIn {
+            0%   { opacity: 0; transform: perspective(400px) rotateY(90deg) scale(0.8); }
+            60%  { opacity: 1; transform: perspective(400px) rotateY(-10deg) scale(1.05); }
+            100% { opacity: 1; transform: perspective(400px) rotateY(0deg) scale(1); }
+        }
+        @keyframes loopPopUp {
+            0%   { opacity: 0; transform: translateY(40px) scale(0.5); }
+            60%  { opacity: 1; transform: translateY(-6px) scale(1.08); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes loopSwingIn {
+            0%   { opacity: 0; transform: rotate(-25deg) scale(0.6); }
+            50%  { opacity: 1; transform: rotate(8deg) scale(1.05); }
+            75%  { transform: rotate(-3deg) scale(0.98); }
+            100% { opacity: 1; transform: rotate(0deg) scale(1); }
+        }
+        @keyframes loopSlideScale {
+            0%   { opacity: 0; transform: translateX(-40px) scale(0.6) rotate(10deg); }
+            60%  { opacity: 1; transform: translateX(4px) scale(1.05) rotate(-2deg); }
+            100% { opacity: 1; transform: translateX(0) scale(1) rotate(0deg); }
+        }
+
+        /* Post-entrance jelly bounce */
+        @keyframes loopJelly {
+            0%   { transform: translateY(0) scaleX(1) scaleY(1); }
+            15%  { transform: translateY(-10px) scaleX(0.92) scaleY(1.1); }
+            30%  { transform: translateY(0) scaleX(1.1) scaleY(0.88); }
+            42%  { transform: translateY(-5px) scaleX(0.96) scaleY(1.06); }
+            55%  { transform: translateY(0) scaleX(1.04) scaleY(0.94); }
+            65%  { transform: translateY(-2px) scaleX(0.98) scaleY(1.03); }
+            78%  { transform: translateY(0) scaleX(1.01) scaleY(0.99); }
+            100% { transform: translateY(0) scaleX(1) scaleY(1); }
+        }
+
+        /* Exit animation */
+        @keyframes loopExit {
+            0%   { opacity: 1; transform: scale(1) rotate(0deg); }
+            100% { opacity: 0; transform: scale(0.5) rotate(15deg); }
+        }
+
+        .countdown-time {
+            margin-top: 16px;
+            padding-bottom: 8px;
             font-family: var(--font-display);
             font-size: 24px;
-            font-weight: 800;
-            color: var(--text-h1);
-            margin-bottom: 12px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 2px;
+            font-variant-numeric: tabular-nums;
+            text-align: center;
+        }
+
+        /* Countdown warning state (< 2 min) */
+        .countdown-warning .countdown-fill {
+            stroke: var(--brand-orange);
+        }
+        .countdown-warning .countdown-time {
+            color: var(--brand-orange);
+        }
+        .countdown-warning .countdown-mascot img {
+            filter: drop-shadow(0 4px 20px rgba(255, 150, 22, 0.4));
+            animation: mascotShake 0.4s ease-in-out infinite;
+        }
+        @keyframes mascotShake {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-3deg); }
+            75% { transform: rotate(3deg); }
+        }
+        .countdown-warning .countdown-glow {
+            background: radial-gradient(circle, rgba(255, 150, 22, 0.15) 0%, transparent 60%);
+        }
+
+        .wait-info {
+            position: relative;
+            z-index: 3;
+            text-align: center;
+            max-width: 280px;
+            flex-shrink: 0;
             animation: slideUp 0.8s var(--ease-fluid) 0.3s both;
         }
 
-        .wait-subtitle {
-            position: relative;
-            z-index: 3;
-            font-size: 14px;
-            color: var(--text-body);
-            margin-bottom: 32px;
-            animation: slideUp 0.8s var(--ease-fluid) 0.4s both;
-        }
-
-        .wait-progress {
-            position: relative;
-            z-index: 3;
-            width: 100%;
-            max-width: 280px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.06);
-            border-radius: 100px;
-            overflow: hidden;
-            margin-bottom: 16px;
-            animation: slideUp 0.8s var(--ease-fluid) 0.5s both;
-        }
-
-        .wait-progress-bar {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, var(--brand-red), var(--brand-orange));
-            border-radius: 100px;
-            transition: width 0.6s var(--ease-fluid);
-            box-shadow: 0 0 12px rgba(255, 150, 22, 0.4);
-        }
-
         .wait-status {
-            position: relative;
-            z-index: 3;
-            font-size: 13px;
-            color: var(--text-muted);
-            animation: slideUp 0.8s var(--ease-fluid) 0.55s both;
+            font-size: 14px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 10px;
+            transition: opacity 0.3s;
         }
 
-        .wait-tips {
-            position: relative;
-            z-index: 3;
-            margin-top: 48px;
-            width: 100%;
-            padding: 16px 20px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 20px;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            animation: slideUp 0.8s var(--ease-fluid) 0.6s both;
-            min-height: 72px;
-        }
-
-        .wait-tip-text {
-            font-size: 13px;
-            line-height: 1.6;
-            color: var(--text-body);
+        .wait-tip {
+            font-size: 12px;
+            line-height: 1.7;
+            color: rgba(255, 255, 255, 0.35);
             transition: opacity 0.4s;
-        }
-
-        .wait-tip-label {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--brand-orange);
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
         }
 
         /* =============================================
@@ -519,6 +533,72 @@
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* ===== Coin Badge System ===== */
+        .coin-grid {
+            position: absolute;
+            width: 320%;
+            height: 320%;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) rotateX(55deg);
+            transform-style: preserve-3d;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 24px 24px;
+            mask-image: radial-gradient(ellipse 35% 45% at 50% 45%, black 10%, transparent 65%);
+            -webkit-mask-image: radial-gradient(ellipse 35% 45% at 50% 45%, black 10%, transparent 65%);
+            pointer-events: none;
+            animation: gridFade 1.5s var(--ease-fluid) 0.2s both;
+        }
+        @keyframes gridFade { from { opacity: 0; } to { opacity: 1; } }
+        .coin-glow {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 200%;
+            height: 200%;
+            border-radius: 50%;
+            pointer-events: none;
+            filter: blur(50px);
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.6);
+            animation: glowPulse 2s var(--ease-fluid) 0.5s forwards;
+        }
+        .coin-glow--iron    { background: radial-gradient(circle, rgba(80, 80, 100, 0.3) 0%, transparent 60%); }
+        .coin-glow--bronze  { background: radial-gradient(circle, rgba(205, 127, 50, 0.25) 0%, transparent 60%); }
+        .coin-glow--silver  { background: radial-gradient(circle, rgba(180, 190, 220, 0.25) 0%, transparent 60%); }
+        .coin-glow--adv     { background: radial-gradient(circle, rgba(220, 40, 40, 0.2) 0%, transparent 60%); }
+        .coin-glow--legend  { background: radial-gradient(circle, rgba(255, 200, 50, 0.3) 0%, transparent 60%); }
+        @keyframes glowPulse {
+            0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        .rank-coin {
+            position: relative;
+            z-index: 2;
+            width: 80%;
+            height: 80%;
+            object-fit: contain;
+            will-change: transform;
+            filter: drop-shadow(0 8px 28px rgba(0, 0, 0, 0.5));
+            animation: coinReveal 0.8s var(--ease-fluid) 0.3s both;
+        }
+        @keyframes coinReveal {
+            from { opacity: 0; transform: perspective(600px) scale(0.4) rotateY(80deg); }
+            to   { opacity: 1; transform: perspective(600px) scale(1) rotateY(0deg); }
+        }
+        .coin-specular {
+            position: absolute;
+            width: 80%;
+            height: 80%;
+            z-index: 3;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            background: radial-gradient(ellipse 50% 50% at 50% 40%, rgba(255,255,255,0.2) 0%, transparent 70%);
+        }
+        .coin-specular.active { opacity: 1; }
+
         /* =============================================
            PHASE 3 — Report
            ============================================= */
@@ -527,20 +607,82 @@
             align-items: center;
             padding: 60px 24px 0;
             position: relative;
+            --stage-r: 255;
+            --stage-g: 255;
+            --stage-b: 255;
         }
 
         .phase-result::before {
             content: '';
             position: absolute;
-            top: 32%;
+            top: 0;
             left: 50%;
-            transform: translate(-50%, -50%);
-            width: 420px;
-            height: 420px;
-            background: radial-gradient(circle, rgba(204, 15, 20, 0.08) 0%, rgba(255, 150, 22, 0.04) 40%, transparent 70%);
-            border-radius: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            height: 500px;
+            background: radial-gradient(ellipse 70% 40% at 50% 0%, rgba(var(--stage-r), var(--stage-g), var(--stage-b), 0.06) 0%, transparent 100%);
             pointer-events: none;
             z-index: 0;
+        }
+
+        .top-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: calc(env(safe-area-inset-top, 20px) + 10px) 20px 10px;
+            background: rgba(11, 1, 2, 0.65);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            animation: fadeIn 1s var(--ease-fluid) both;
+        }
+        .top-nav .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .top-nav .brand-logo {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+        }
+        .top-nav .brand-name {
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-h1);
+            letter-spacing: 1px;
+        }
+        .nav-share-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 20px;
+            border-radius: 100px;
+            border: none;
+            background: linear-gradient(135deg, #CC0F14, #ff6b3d);
+            color: #fff;
+            font-family: var(--font-ui);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+        .nav-share-btn:active { transform: scale(0.95); }
+        .nav-share-btn svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
         .brand-nav {
@@ -592,13 +734,17 @@
             letter-spacing: 3px;
         }
 
-        /* Score Unit */
-        .score-unit {
+        /* Score Unit — Coin Badge */
+        .score-coin-wrap {
             position: relative;
             z-index: 2;
-            width: 220px;
-            height: 220px;
-            margin-bottom: 24px;
+            width: 320px;
+            height: 320px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            perspective: 300px;
             animation: fadeIn 1.2s var(--ease-fluid) 0.1s both;
         }
 
@@ -703,6 +849,43 @@
             animation: slideUp 0.8s var(--ease-fluid) 0.45s both;
         }
 
+        .stat-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin-bottom: 28px;
+            animation: slideUp 0.8s var(--ease-fluid) 0.5s both;
+        }
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 7px 14px;
+            border-radius: 100px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .stat-value, .stat-num {
+            font-family: var(--font-display);
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-h1);
+        }
+        .stat-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.4);
+        }
+        .stat-sep { display: none; }
+        .stat-rank { border-color: rgba(255, 150, 22, 0.12); }
+        .stat-rank .stat-value { color: var(--brand-orange); }
+        .di-ok { border-color: rgba(16, 185, 129, 0.1); }
+        .di-ok .stat-num { color: var(--color-perfect); }
+        .di-fix { border-color: rgba(255, 150, 22, 0.1); }
+        .di-fix .stat-num { color: var(--brand-orange); }
+        .di-pro .stat-num { color: rgba(255, 255, 255, 0.35); }
+
         .meta-row {
             display: flex;
             align-items: center;
@@ -758,16 +941,104 @@
 
         .btn {
             position: relative; display: flex; align-items: center; justify-content: center; gap: 8px;
-            width: 100%; padding: 18px 24px; border-radius: 14px; border: none;
+            width: 100%; min-height: 52px; padding: 14px 24px; border-radius: 100px; border: none;
             font-family: var(--font-display); font-size: 16px; font-weight: 700;
-            cursor: pointer; transition: transform 0.2s var(--ease-spring);
+            cursor: pointer; transition: transform 0.2s var(--ease-spring), box-shadow 0.2s, background 0.2s;
+            -webkit-tap-highlight-color: transparent; outline: none;
         }
+        .btn:focus-visible { outline: 2px solid var(--brand-orange); outline-offset: 3px; }
         .btn:active { transform: scale(0.97); }
         .btn svg { width: 18px; height: 18px; flex-shrink: 0; }
-        .btn-primary { background: linear-gradient(135deg, #ff2d55, #ff6b3d); color: #fff; box-shadow: 0 8px 24px rgba(255, 45, 85, 0.3); }
+        .btn-primary { background: linear-gradient(135deg, var(--brand-orange) 0%, #FF7A16 100%); color: #000; box-shadow: 0 8px 24px rgba(255, 150, 22, 0.3); }
         .btn-secondary { background: rgba(255, 255, 255, 0.06); color: var(--text-body); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); }
         .btn-ghost { background: none; color: var(--text-muted); padding: 14px 24px; font-size: 14px; font-weight: 500; }
         .btn-tag { margin-left: auto; font-size: 12px; font-weight: 600; opacity: 0.6; }
+
+        /* --- Upgrade Cards --- */
+        .upgrade-cards {
+            width: 100%; display: flex; flex-direction: column; gap: 10px;
+            padding-bottom: 28px;
+            margin-bottom: 28px;
+            animation: slideUp 0.8s var(--ease-fluid) 0.6s both;
+        }
+        .upgrade-card {
+            position: relative;
+            display: flex; align-items: center; gap: 14px;
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.03);
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+            overflow: hidden;
+        }
+        .upgrade-card:active { transform: scale(0.98); }
+        .upgrade-card-icon {
+            flex-shrink: 0;
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+            background: rgba(255, 255, 255, 0.04);
+        }
+        .upgrade-card-body { flex: 1; min-width: 0; }
+        .upgrade-card-title {
+            font-size: 14px; font-weight: 600;
+            color: var(--text-h1);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .upgrade-card-price {
+            font-size: 14px; font-weight: 700;
+            color: var(--brand-orange);
+        }
+        .upgrade-card-desc {
+            font-size: 12px; font-weight: 400;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 2px;
+        }
+        .upgrade-card-arrow {
+            flex-shrink: 0;
+            width: 16px; height: 16px;
+            color: rgba(255, 255, 255, 0.3);
+        }
+        .upgrade-card-badge {
+            position: absolute; top: 0; right: 14px;
+            padding: 2px 8px 3px;
+            font-size: 10px; font-weight: 700; letter-spacing: 0.03em;
+            color: #000;
+            background: var(--brand-orange);
+            border-radius: 0 0 6px 6px;
+        }
+        /* PRO 卡片突出样式 */
+        .upgrade-card--pro {
+            background: linear-gradient(135deg, rgba(255, 150, 22, 0.15) 0%, rgba(204, 15, 20, 0.1) 100%);
+            border: 1.5px solid rgba(255, 150, 22, 0.5);
+            box-shadow: 0 4px 24px rgba(255, 150, 22, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+        .upgrade-card--pro:hover {
+            border-color: rgba(255, 150, 22, 0.7);
+            box-shadow: 0 6px 32px rgba(255, 150, 22, 0.3);
+        }
+        .upgrade-card--pro .upgrade-card-price {
+            color: var(--brand-orange);
+            font-size: 15px;
+            font-weight: 800;
+        }
+        .upgrade-card--pro .upgrade-card-badge {
+            background: linear-gradient(135deg, var(--brand-orange), #ff6b3d);
+            color: #000;
+            font-weight: 800;
+            padding: 3px 10px 4px;
+            font-size: 11px;
+        }
+        .upgrade-card--pro .upgrade-card-title { font-size: 15px; }
+        .upgrade-card--pro .upgrade-card-desc { color: rgba(255, 255, 255, 0.6); }
+        .upgrade-card--pro .upgrade-card-icon {
+            background: linear-gradient(135deg, rgba(255, 150, 22, 0.25), rgba(255, 100, 50, 0.18));
+        }
 
         .report-section {
             position: relative; z-index: 3; width: 100%;
@@ -775,68 +1046,58 @@
         }
 
         .section-header {
-            display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 16px; padding: 0 4px;
+            display: flex; align-items: baseline; justify-content: space-between;
+            margin-bottom: 16px;
         }
 
         .section-title {
-            font-family: var(--font-display); font-size: 18px; font-weight: 700;
-            color: var(--text-h1); display: flex; align-items: center; gap: 8px;
+            font-size: 14px; font-weight: 600;
+            color: rgba(255, 255, 255, 0.5);
         }
-        .section-title svg { width: 18px; height: 18px; color: var(--brand-orange); }
 
         .section-count {
-            font-size: 11px; font-weight: 600; color: var(--brand-orange);
-            background: rgba(255, 150, 22, 0.1); border: 1px solid rgba(255, 150, 22, 0.15);
-            padding: 4px 10px; border-radius: 8px; letter-spacing: 0.5px;
+            font-size: 12px; font-weight: 500; color: rgba(255, 255, 255, 0.35);
         }
 
         .scan-list {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 0;
         }
 
         .scan-card {
-            padding: 14px 16px;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            transition: border-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
             text-align: left;
         }
+        .scan-card:last-child { border-bottom: none; }
 
-        .scan-card.sc-free  { border-color: rgba(255, 150, 22, 0.12); background: rgba(255, 150, 22, 0.02); }
-        .scan-card.sc-paid  { border-color: rgba(255, 255, 255, 0.06); }
-
-        .scan-top {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-        }
-
-        .scan-status {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
+        .scan-score-ring {
+            width: 36px; height: 36px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            margin-top: 1px;
+            font-family: var(--font-display);
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--text-h1);
+            border: 2px solid rgba(255, 255, 255, 0.06);
+        }
+        .scan-card.sc-pass .scan-score-ring {
+            border-color: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .scan-card.sc-fail .scan-score-ring {
+            border-color: var(--brand-orange);
+            color: var(--brand-orange);
         }
 
-        .scan-status svg { width: 16px; height: 16px; }
-        .st-perfect svg, .st-good svg { color: var(--color-perfect); }
-        .st-free svg { color: var(--brand-orange); }
-        .st-paid svg { color: var(--text-muted); }
-
-        .st-perfect { background: rgba(16, 185, 129, 0.1); }
-        .st-good    { background: rgba(16, 185, 129, 0.06); }
-        .st-free    { background: rgba(255, 150, 22, 0.1); }
-        .st-paid    { background: rgba(255, 255, 255, 0.04); }
-
-        .scan-head {
+        .scan-body {
             flex: 1;
             min-width: 0;
         }
@@ -846,105 +1107,145 @@
             align-items: center;
             justify-content: space-between;
             gap: 8px;
-            margin-bottom: 4px;
         }
 
         .scan-name {
             font-size: 14px;
-            font-weight: 600;
-            color: var(--text-h1);
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.8);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
         .scan-name .qid {
-            color: var(--text-muted);
+            color: rgba(255, 255, 255, 0.35);
             font-weight: 500;
             margin-right: 4px;
             font-size: 12px;
         }
 
-        .scan-right {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .scan-tag {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 100px;
+            white-space: nowrap;
             flex-shrink: 0;
         }
-
-        .scan-tag {
-            font-size: 10px;
-            font-weight: 600;
-            padding: 2px 7px;
-            border-radius: 6px;
-            letter-spacing: 0.2px;
-            white-space: nowrap;
-        }
-
-        .t-perfect { background: rgba(16, 185, 129, 0.12); color: var(--color-perfect); }
-        .t-good    { background: rgba(16, 185, 129, 0.08); color: rgba(16, 185, 129, 0.7); }
-        .t-free    { background: rgba(255, 150, 22, 0.12); color: var(--brand-orange); }
-        .t-paid    { background: rgba(255, 255, 255, 0.06); color: var(--text-muted); }
-
-        .scan-score {
-            font-family: var(--font-display);
-            font-size: 15px;
-            font-weight: 800;
-            color: var(--text-h1);
-            white-space: nowrap;
-        }
-
-        .scan-score .dim {
-            font-weight: 400;
-            color: var(--text-muted);
-            font-size: 11px;
+        .scan-tag.tag-ok { color: rgba(255, 255, 255, 0.35); background: none; }
+        .scan-tag.tag-fix {
+            color: var(--brand-orange);
+            background: rgba(255, 150, 22, 0.08);
+            border: 1px solid rgba(255, 150, 22, 0.1);
         }
 
         .scan-reason {
             font-size: 12px;
-            color: var(--text-muted);
+            color: rgba(255, 255, 255, 0.35);
             line-height: 1.4;
-            margin-bottom: 10px;
+            margin-top: 3px;
         }
-
-        .scan-bar-wrap {
-            width: 100%;
-            height: 3px;
-            background: rgba(255, 255, 255, 0.04);
-            border-radius: 100px;
-            overflow: hidden;
-        }
-
-        .scan-bar {
-            height: 100%;
-            border-radius: 100px;
-            transition: width 1s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-
-        .bar-perfect { background: var(--color-perfect); box-shadow: 0 0 6px rgba(16, 185, 129, 0.3); }
-        .bar-good    { background: rgba(16, 185, 129, 0.6); }
-        .bar-free    { background: var(--brand-orange); box-shadow: 0 0 6px rgba(255, 150, 22, 0.3); }
-        .bar-paid    { background: rgba(255, 255, 255, 0.12); }
+        .scan-card.sc-pass .scan-reason { display: none; }
 
         .footer-space { height: calc(80px + env(safe-area-inset-bottom)); }
 
+        /* ===== Leaderboard (Result Page) ===== */
+        .result-leaderboard {
+            width: 100%;
+            margin-top: 32px;
+            animation: slideUp 1s var(--ease-fluid) 0.8s both;
+        }
+        .result-leaderboard .lb-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 12px; padding: 0 4px;
+        }
+        .result-leaderboard .lb-title {
+            font-family: var(--font-display); font-size: 16px; font-weight: 700;
+            color: var(--text-h1); display: flex; align-items: center; gap: 8px;
+        }
+        .result-leaderboard .lb-title svg { width: 16px; height: 16px; color: var(--brand-orange); }
+        .result-leaderboard .lb-live {
+            font-size: 11px; font-weight: 600; color: var(--brand-orange);
+            background: rgba(255, 150, 22, 0.1); border: 1px solid rgba(255, 150, 22, 0.15);
+            padding: 3px 8px; border-radius: 8px; letter-spacing: 0.5px;
+        }
+        .result-leaderboard .lb-table {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            overflow: hidden;
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        }
+        .result-leaderboard .lb-table-scroll {
+            max-height: 400px; overflow-y: auto;
+            scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;
+        }
+        .result-leaderboard .lb-table-scroll::-webkit-scrollbar { width: 4px; }
+        .result-leaderboard .lb-table-scroll::-webkit-scrollbar-track { background: transparent; }
+        .result-leaderboard .lb-table-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+        .result-leaderboard .lb-thead {
+            display: grid; grid-template-columns: 48px 1fr 64px;
+            padding: 12px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .result-leaderboard .lb-th {
+            font-size: 10px; font-weight: 600; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.8px;
+        }
+        .result-leaderboard .lb-th:last-child { text-align: right; }
+        .result-leaderboard .lb-row {
+            display: grid; grid-template-columns: 48px 1fr 64px;
+            padding: 12px 16px; align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            transition: background 0.2s;
+        }
+        .result-leaderboard .lb-row:last-child { border-bottom: none; }
+        .result-leaderboard .lb-row-self {
+            background: rgba(255, 150, 22, 0.08);
+            border-left: 3px solid var(--brand-orange);
+        }
+        .result-leaderboard .lb-rank {
+            font-family: var(--font-display); font-size: 13px; font-weight: 700;
+            color: var(--text-muted); display: flex; align-items: center;
+            justify-content: center; width: 26px; height: 26px; border-radius: 8px;
+        }
+        .result-leaderboard .rank-gold { background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3); }
+        .result-leaderboard .rank-silver { background: linear-gradient(135deg, #C0C0C0, #8A8A8A); color: #000; }
+        .result-leaderboard .rank-bronze { background: linear-gradient(135deg, #CD7F32, #A0522D); color: #000; }
+        .result-leaderboard .rank-normal { background: rgba(255, 255, 255, 0.05); }
+        .result-leaderboard .lb-name {
+            display: flex; align-items: center; gap: 8px;
+        }
+        .result-leaderboard .lb-avatar {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.06); display: flex;
+            align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;
+        }
+        .result-leaderboard .lb-avatar img { width: 140%; height: 140%; object-fit: contain; }
+        .result-leaderboard .lb-name-text {
+            font-size: 13px; font-weight: 600; color: var(--text-h1);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .result-leaderboard .lb-score {
+            text-align: right; font-family: var(--font-display);
+            font-size: 14px; font-weight: 800; color: var(--text-h1);
+        }
+        .result-leaderboard .lb-score-highlight { color: var(--brand-orange); }
+        .result-leaderboard .lb-empty {
+            text-align: center; color: var(--text-muted); font-size: 13px; padding: 24px 16px;
+        }
+
         .sticky-bottom {
-            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%) translateY(100%);
+            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
             width: 100%; max-width: 480px;
             padding: 12px 24px calc(12px + env(safe-area-inset-bottom));
-            background: rgba(11, 1, 2, 0.85);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            background: linear-gradient(to top, var(--bg-base) 60%, transparent);
             z-index: 40;
             display: none;
-            transition: transform 0.5s var(--ease-fluid);
         }
-        .sticky-bottom.active { display: block; animation: ctaSlideIn 0.5s var(--ease-fluid) 0.8s both; }
-        @keyframes ctaSlideIn {
-            from { transform: translateX(-50%) translateY(100%); }
-            to { transform: translateX(-50%) translateY(0); }
-        }
-        .sticky-bottom .btn { box-shadow: 0 8px 32px rgba(255, 45, 85, 0.35); }
+        .sticky-bottom.active { display: block; }
+        .sticky-bottom .btn { box-shadow: 0 8px 32px rgba(255, 150, 22, 0.35); }
 
         /* ===== Animations ===== */
         @keyframes fadeIn {
@@ -1257,11 +1558,11 @@
             .phase-reveal { padding: 48px 16px 32px; }
             .phase-result { padding: 48px 16px 0; }
 
-            .wait-lobster { width: 160px; height: 160px; }
-            .wait-title { font-size: 20px; }
-            .wait-subtitle { font-size: 13px; }
+            .wait-countdown { width: 140px; margin-bottom: 28px; }
+            .wait-status { font-size: 13px; }
+            .wait-tip { font-size: 12px; }
 
-            .score-unit { width: 180px; height: 180px; }
+            .score-coin-wrap { width: 180px; height: 180px; }
             .score-num { font-size: 52px; }
             .score-max { font-size: 16px; }
             .hero-title { font-size: 20px; }
@@ -1278,11 +1579,10 @@
 
             .scan-card { padding: 12px 14px; }
             .scan-name { font-size: 13px; }
-            .scan-tag { font-size: 9px; padding: 2px 5px; }
-            .scan-score { font-size: 14px; }
+            .scan-tag { font-size: 12px; padding: 2px 6px; }
 
             .section-title { font-size: 16px; }
-            .section-count { font-size: 10px; padding: 3px 8px; }
+            .section-count { font-size: 12px; padding: 3px 8px; }
 
             .reveal-score-num { font-size: 44px; }
             .reveal-row { grid-template-columns: 34px 1fr auto; gap: 10px; padding: 12px 14px; }
@@ -1298,8 +1598,8 @@
             .phase-reveal { padding: 72px 32px 48px; }
             .phase-result { padding: 72px 32px 0; }
 
-            .wait-lobster { width: 220px; height: 220px; }
-            .score-unit { width: 240px; height: 240px; }
+            .wait-countdown { width: 200px; }
+            .score-coin-wrap { width: 240px; height: 240px; }
             .score-num { font-size: 72px; }
             .hero-title { font-size: 28px; }
             .hero-subtitle { font-size: 15px; max-width: 380px; }
@@ -1316,7 +1616,7 @@
         }
 
         @media (min-width: 769px) {
-            .app-container { max-width: 480px; }
+            .app-container { max-width: 100%; }
 
             .phase-wait { padding: 64px 48px 56px; }
             .phase-reveal { padding: 64px 48px 56px; }
@@ -1332,12 +1632,8 @@
                     transparent 65%);
             }
 
-            .wait-brand { font-size: 13px; letter-spacing: 5px; margin-bottom: 28px; }
-            .wait-lobster { width: 180px; height: 180px; margin-bottom: 28px; }
-            .wait-title { font-size: 26px; }
-            .wait-subtitle { font-size: 14px; }
-            .wait-progress { max-width: 320px; }
-            .wait-tips { max-width: 480px; }
+            .wait-countdown { width: 180px; margin-bottom: 28px; }
+            .wait-info { max-width: 400px; }
 
             .reveal-brand { font-size: 13px; letter-spacing: 5px; }
             .reveal-hero { margin-bottom: 20px; }
@@ -1354,7 +1650,7 @@
             .back-btn svg { width: 16px; height: 16px; }
             .back-btn:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.15); }
 
-            .score-unit { width: 180px; height: 180px; margin-bottom: 0; }
+            .score-coin-wrap { width: 180px; height: 180px; margin-bottom: 0; }
 
             .hero-content { max-width: 720px; margin: 0 auto; }
             .score-display { margin-bottom: 8px; }
@@ -1373,13 +1669,28 @@
             .diag-num { font-size: 22px; }
             .diag-label { font-size: 9px; }
 
+            .upgrade-cards {
+                max-width: 720px;
+                margin: 0 auto 32px;
+                flex-direction: row;
+                gap: 14px;
+                padding-bottom: 0;
+                border-bottom: none;
+            }
+            .upgrade-card {
+                flex: 1;
+                padding: 18px 20px;
+                border-radius: 14px;
+            }
+            .upgrade-card-icon { width: 36px; height: 36px; font-size: 18px; border-radius: 10px; }
+
             .btn-group {
                 max-width: 720px; margin: 0 auto 32px;
                 flex-direction: column; align-items: center; gap: 12px;
                 padding-bottom: 0; border-bottom: none;
             }
 
-            .btn-primary { width: auto; min-height: 46px; padding: 12px 48px; font-size: 14px; border-radius: 14px; }
+            .btn-group .btn-primary { width: auto; min-height: 46px; padding: 12px 48px; font-size: 14px; border-radius: 14px; }
 
             .btn-group .btn-secondary,
             .btn-group .btn-ghost {
@@ -1406,19 +1717,27 @@
             }
             .section-header { margin-bottom: 16px; }
             .section-title { font-size: 15px; }
-            .section-title svg { width: 15px; height: 15px; }
-            .section-count { font-size: 10px; padding: 3px 8px; }
+            .section-count { font-size: 12px; padding: 3px 8px; }
 
-            .scan-list { display: flex; flex-direction: column; gap: 8px; }
+            .result-leaderboard { max-width: 720px; margin: 32px auto 0; }
+            .result-leaderboard .lb-table-scroll { max-height: 480px; }
+
+            /* Scan cards — desktop double column */
+            .scan-list {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
             .scan-card { padding: 12px 14px; border-radius: 12px; }
-            .scan-status { width: 26px; height: 26px; border-radius: 7px; }
-            .scan-status svg { width: 13px; height: 13px; }
             .scan-name { font-size: 13px; }
-            .scan-name .qid { font-size: 10px; }
-            .scan-tag { font-size: 9px; padding: 2px 5px; }
-            .scan-score { font-size: 13px; }
-            .scan-reason { font-size: 11px; margin-bottom: 8px; }
-            .scan-bar-wrap { height: 2px; }
+            .scan-name .qid { font-size: 12px; }
+            .scan-tag { font-size: 12px; padding: 2px 6px; }
+            .scan-reason { font-size: 12px; margin-bottom: 8px; }
+
+            .phase-result {
+                max-width: 960px;
+                margin: 0 auto;
+            }
 
             .sticky-bottom {
                 max-width: 480px; padding: 12px 24px;
@@ -1437,15 +1756,14 @@
             .phase-reveal::before,
             .phase-result::before { width: 720px; height: 720px; }
 
-            .wait-lobster { width: 200px; height: 200px; }
-            .wait-title { font-size: 30px; }
-            .wait-tips { max-width: 520px; }
+            .wait-countdown { width: 200px; }
+            .wait-info { max-width: 480px; }
 
             .reveal-list { max-width: 560px; }
 
             .brand-nav { max-width: 800px; }
 
-            .score-unit { width: 200px; height: 200px; }
+            .score-coin-wrap { width: 200px; height: 200px; }
             .hero-content { max-width: 800px; }
             .hero-title { font-size: 26px; }
             .hero-subtitle { font-size: 14px; max-width: 400px; }
@@ -1457,16 +1775,20 @@
             .diag-card { padding: 14px 10px; }
             .diag-num { font-size: 24px; }
 
+            .upgrade-cards { max-width: 800px; gap: 16px; }
+            .upgrade-card { padding: 20px 22px; }
+            .upgrade-card-title { font-size: 15px; }
+            .upgrade-card-desc { font-size: 12px; }
+
             .btn-group { max-width: 800px; flex-direction: row; flex-wrap: wrap; justify-content: center; }
-            .btn-primary { flex: 0 0 auto; }
-            .btn-secondary, .btn-ghost { flex: 0 0 auto; padding: 10px 28px; }
+            .btn-group .btn-primary { flex: 0 0 auto; }
+            .btn-group .btn-secondary, .btn-group .btn-ghost { flex: 0 0 auto; padding: 10px 28px; }
             .btn-tag { display: inline; }
 
             .report-section { max-width: 800px; padding: 28px; border-radius: 24px; }
             .scan-list { gap: 10px; }
             .scan-card { padding: 14px 16px; border-radius: 14px; }
             .scan-name { font-size: 14px; }
-            .scan-score { font-size: 14px; }
             .scan-reason { font-size: 12px; }
 
             .sticky-bottom { max-width: 520px; }
@@ -1481,14 +1803,13 @@
             .phase-reveal::before,
             .phase-result::before { width: 840px; height: 840px; }
 
-            .wait-lobster { width: 220px; height: 220px; }
-            .wait-title { font-size: 32px; }
+            .wait-countdown { width: 200px; }
 
             .reveal-list { max-width: 600px; }
 
             .brand-nav { max-width: 900px; }
 
-            .score-unit { width: 220px; height: 220px; }
+            .score-coin-wrap { width: 220px; height: 220px; }
             .hero-content { max-width: 900px; }
             .hero-title { font-size: 28px; }
             .hero-subtitle { font-size: 15px; max-width: 440px; }
@@ -1497,13 +1818,21 @@
             .meta-row { max-width: 560px; }
             .diagnosis { max-width: 440px; }
 
+            .upgrade-cards { max-width: 900px; gap: 18px; }
+            .upgrade-card { padding: 22px 24px; border-radius: 16px; }
+            .upgrade-card-icon { width: 42px; height: 42px; font-size: 20px; }
+            .upgrade-card-title { font-size: 16px; }
+            .upgrade-card-price { font-size: 16px; }
+            .upgrade-card-desc { font-size: 12px; }
+
             .btn-group { max-width: 900px; }
-            .btn-primary { min-height: 48px; padding: 13px 52px; font-size: 15px; }
-            .btn-secondary, .btn-ghost { padding: 11px 32px; font-size: 14px; }
+            .btn-group .btn-primary { min-height: 48px; padding: 13px 52px; font-size: 15px; }
+            .btn-group .btn-secondary, .btn-group .btn-ghost { padding: 11px 32px; font-size: 14px; }
 
             .report-section { max-width: 900px; padding: 32px; }
             .scan-card { padding: 16px 18px; }
             .scan-name { font-size: 14px; }
+            .scan-reason { font-size: 12px; }
 
             .sticky-bottom { max-width: 600px; }
         }
@@ -1558,6 +1887,9 @@
             {% set ns.basic_boost = ns.basic_boost + (10 - sc) %}
         {% endif %}
     {% endfor %}
+    {% set basic_target_score = [(data.score or 0) + ns.basic_boost, 120] | min %}
+    {% set basic_target_iq = raw_to_iq(basic_target_score) %}
+    {% set basic_iq_boost = basic_target_iq - (data.iq or 0) %}
 
     <div class="app-container">
         <div class="noise-overlay"></div>
@@ -1565,40 +1897,28 @@
         {% if data.status != 'done' %}
         <!-- ===== PHASE 1: Wait (polling) ===== -->
         <section class="phase phase-wait active" id="phaseWait">
-            <div class="wait-nav">
-                <a class="wait-back-btn" href="/" id="waitBackBtn">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                    <span>返回首页</span>
-                </a>
-                <span class="wait-brand-inline">龙虾学校</span>
-            </div>
+            <div class="wait-spacer"></div>
 
-            <div class="wait-lobster">
-                <div class="wait-lobster-glow"></div>
-                <div class="wait-lobster-wrap">
-                    <img src="/static/3d_cyber_lobster.png" alt="Lobster">
+            <div class="wait-countdown">
+                <div class="countdown-glow"></div>
+                <div class="countdown-ring">
+                    <svg viewBox="0 0 160 160">
+                        <circle class="countdown-track" cx="80" cy="80" r="72" />
+                        <circle class="countdown-fill" id="countdownFill" cx="80" cy="80" r="72" />
+                    </svg>
+                    <div class="countdown-mascot" id="countdownMascot">
+                        <img id="loopImg" src="/static/badges/loop/logo.png" alt="龙虾" style="border-radius:14px;">
+                    </div>
                 </div>
+                <div class="countdown-time" id="countdownText">10:00</div>
             </div>
 
-            <div class="wait-title">{{ data.name }} 正在答题...</div>
-            <div class="wait-subtitle" id="waitSubtitle">正在连接你的小龙虾</div>
-
-            <div class="wait-progress">
-                <div class="wait-progress-bar" id="waitProgressBar"></div>
-            </div>
-            <div class="wait-status" id="waitStatus">准备中...</div>
-
-            <div class="wait-tips">
-                <div class="wait-tip-label">💡 你知道吗</div>
-                <div class="wait-tip-text" id="waitTip">龙虾学校共测试 12 项 AI 实战能力，覆盖群聊整理、安全防护、Skill 核查等核心维度。</div>
+            <div class="wait-info">
+                <div class="wait-status" id="waitStatus">你的小龙虾正在答题...</div>
+                <div class="wait-tip" id="waitTip">龙虾学校共测试 12 项 AI 实战能力，覆盖群聊整理、安全防护、Skill 核查等核心维度。</div>
             </div>
 
-            <div class="wait-active-count" id="waitActiveCount" style="
-                position: relative; z-index: 3; margin-top: 20px;
-                font-size: 12px; color: var(--text-muted);
-                animation: slideUp 0.8s var(--ease-fluid) 0.7s both;
-                text-align: center;
-            "></div>
+            <div class="wait-spacer"></div>
         </section>
 
         <!-- ===== PHASE 2: Reveal ===== -->
@@ -1624,95 +1944,84 @@
 
         <!-- ===== PHASE 3: Report ===== -->
         <section class="phase phase-result {% if data.status == 'done' %}active{% endif %}" id="phaseResult">
-            <div class="brand-nav">
-                <a class="back-btn" href="/">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                </a>
-                <span class="brand-name">龙虾学校</span>
-            </div>
-
-            <div class="score-unit">
-                <svg class="ring-svg" viewBox="0 0 220 220">
-                    <defs>
-                        <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#ff2d55"/>
-                            <stop offset="100%" stop-color="#FF9616"/>
-                        </linearGradient>
-                    </defs>
-                    <circle class="ring-bg" cx="110" cy="110" r="104"/>
-                    <circle class="ring-progress" id="ringProgress" cx="110" cy="110" r="104"
-                        stroke-dasharray="653" stroke-dashoffset="653"/>
-                </svg>
-                <div class="ring-lobster">
-                    <div class="ring-lobster-glow"></div>
-                    <img src="/static/3d_cyber_lobster.png" class="ring-lobster-img" alt="3D Lobster">
+            <nav class="top-nav">
+                <div class="brand">
+                    <img class="brand-logo" src="/static/badges/logo.png" alt="Claw School">
+                    <span class="brand-name">龙虾学校</span>
                 </div>
+                <button class="nav-share-btn" onclick="shareResult()">
+                    <svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                    分享
+                </button>
+            </nav>
+
+            <div class="score-coin-wrap">
+                <div class="coin-grid"></div>
+                <div class="coin-glow" id="coinGlow"></div>
+                <img id="rankCoin" class="rank-coin" src="/static/badges/黑铁.png" alt="等级徽章">
+                <div class="coin-specular" id="coinSpecular"></div>
             </div>
 
             <div class="hero-content">
                 <div class="score-display">
-                    <span class="score-num" id="scoreNum">{% if data.status == 'done' %}0{% else %}0{% endif %}</span>
-                    <span class="score-max">智力值</span>
+                    <span class="score-num" id="scoreNum">0</span>
+                    <span class="score-max">/ 270</span>
                 </div>
 
-                <div class="hero-title" id="heroTitle">能力扫描完成，你的潜力无限</div>
-                <div class="hero-subtitle" id="heroSubtitle">已完成 12 项 AI 实战能力检测<br>超过 <strong style="color:var(--brand-orange)" id="percentText">{{ score_pct }}%</strong> 的小龙虾</div>
+                <div class="hero-title" id="heroTitle"><span id="lobsterName">{{ data.name }}</span></div>
+                <div class="hero-subtitle" id="heroSubtitle">超过 <strong style="color:rgba(255,255,255,0.7)" id="percentText">{{ score_pct }}%</strong> 的小龙虾</div>
 
-                <div class="meta-row">
-                    <div class="meta-item">
-                        <div class="meta-value" id="lobsterName">{{ data.name }}</div>
-                        <div class="meta-label">龙虾名称</div>
+                <div class="stat-bar">
+                    <div class="stat-item stat-rank">
+                        <span class="stat-value accent" id="rankNum">{% if data.rank %}#{{ data.rank }}{% else %}-{% endif %}</span>
                     </div>
-                    <div class="meta-item">
-                        <div class="meta-value" id="titleBadge">{{ data.title }}</div>
-                        <div class="meta-label">称号</div>
+                    <div class="stat-item di-ok">
+                        <span class="stat-num" id="diagOk">{{ ns.ok_count }}</span>
+                        <span class="stat-label">通过</span>
                     </div>
-                    <div class="meta-item">
-                        <div class="meta-value accent" id="rankNum">{% if data.rank %}#{{ data.rank }}{% else %}-{% endif %}</div>
-                        <div class="meta-label">排行榜</div>
+                    <div class="stat-item di-fix">
+                        <span class="stat-num" id="diagFree">{{ ns.basic_fixable }}</span>
+                        <span class="stat-label">可修复</span>
+                    </div>
+                    <div class="stat-item di-pro">
+                        <span class="stat-num" id="diagPaid">{{ ns.advanced_count }}</span>
+                        <span class="stat-label">高级</span>
                     </div>
                 </div>
+                <span id="titleBadge" style="display:none">{{ data.title }}</span>
 
-                <div class="diagnosis">
-                    <div class="diag-card diag-ok">
-                        <div class="diag-num" id="diagOk">{{ ns.ok_count }}</div>
-                        <div class="diag-label">无问题</div>
-                    </div>
-                    <div class="diag-card diag-free">
-                        <div class="diag-num" id="diagFree">{{ ns.basic_fixable }}</div>
-                        <div class="diag-label">¥0.19 可修复</div>
-                    </div>
-                    <div class="diag-card diag-paid">
-                        <div class="diag-num" id="diagPaid">{{ ns.advanced_count }}</div>
-                        <div class="diag-label">高级订阅</div>
-                    </div>
-                </div>
-
-                <div class="btn-group" id="btnGroup">
-                    <button class="btn btn-primary" onclick="shareResult()">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>
-                        炫耀我的成绩
-                    </button>
+                <div class="upgrade-cards" id="btnGroup">
                     {% if ns.basic_fixable > 0 %}
-                    <button class="btn btn-secondary" onclick="previewUpgrade()">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-                        ¥0.19 补齐基础能力
-                        <span class="btn-tag">预计提升智力值</span>
+                    <button class="upgrade-card" onclick="previewUpgrade()">
+                        <div class="upgrade-card-badge">推荐</div>
+                        <div class="upgrade-card-icon">⚡</div>
+                        <div class="upgrade-card-body">
+                            <div class="upgrade-card-title">
+                                补齐基础能力
+                                <span class="upgrade-card-price">¥0.19</span>
+                            </div>
+                            <div class="upgrade-card-desc">一次购买 · 预计提升智力值 +{{ basic_iq_boost }}</div>
+                        </div>
+                        <svg class="upgrade-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                     </button>
                     {% endif %}
-                    <button class="btn btn-ghost" onclick="startPremiumSubscribe()">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
-                        ¥0.99/月 高级能力订阅
-                        <span class="btn-tag">Skill 搜索 · 自我进化 · 主动预判 · 安全审查</span>
+                    <button class="upgrade-card upgrade-card--pro" onclick="startPremiumSubscribe()">
+                        <div class="upgrade-card-badge">PRO</div>
+                        <div class="upgrade-card-icon">🧠</div>
+                        <div class="upgrade-card-body">
+                            <div class="upgrade-card-title">
+                                高级能力订阅
+                                <span class="upgrade-card-price">¥99/月</span>
+                            </div>
+                            <div class="upgrade-card-desc">自主进化 · 实时看板 · 高阶技能全解锁</div>
+                        </div>
+                        <svg class="upgrade-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                     </button>
                 </div>
 
                 <div class="report-section">
                     <div class="section-header">
-                        <div class="section-title">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.07 4.93A10 10 0 0 0 6.99 3.34"/><path d="M4 6h.01"/><path d="M2.29 9.62A10 10 0 1 0 21.31 8.35"/><path d="M16.24 7.76A6 6 0 1 0 8.23 16.67"/><path d="M12 18h.01"/><path d="M17.99 11.66A6 6 0 0 1 15.77 16.67"/><circle cx="12" cy="12" r="2"/></svg>
-                            能力扫描报告
-                        </div>
+                        <div class="section-title">📡 能力扫描报告</div>
                         <div class="section-count">12 项 AI 实战能力逐项检测</div>
                     </div>
                     <div class="scan-list" id="scanList">
@@ -1732,53 +2041,69 @@
                         {% else %}
                             {% set tag = 'free' %}
                         {% endif %}
-                        <div class="scan-card {% if tag == 'free' %}sc-free{% elif tag == 'paid' %}sc-paid{% endif %}">
-                            <div class="scan-top">
-                                <div class="scan-status {% if tag == 'perfect' %}st-perfect{% elif tag == 'good' %}st-good{% elif tag == 'free' %}st-free{% else %}st-paid{% endif %}">
+                        {% set is_pass = (tag == 'perfect' or tag == 'good') %}
+                        <div class="scan-card {% if is_pass %}sc-pass{% else %}sc-fail{% endif %}">
+                            <div class="scan-score-ring">{{ sc }}</div>
+                            <div class="scan-body">
+                                <div class="scan-row1">
+                                    <div class="scan-name"><span class="qid">{{ qid | upper }}</span>{{ q_names.get(qid, qid) }}</div>
                                     {% if tag == 'perfect' %}
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+                                    <span class="scan-tag tag-ok">满分</span>
                                     {% elif tag == 'good' %}
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+                                    <span class="scan-tag tag-ok">良好</span>
                                     {% elif tag == 'free' %}
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                                    <span class="scan-tag tag-fix">💰 可修复</span>
                                     {% else %}
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                    <span class="scan-tag tag-fix">💰 高级</span>
                                     {% endif %}
                                 </div>
-                                <div class="scan-head">
-                                    <div class="scan-row1">
-                                        <div class="scan-name"><span class="qid">{{ qid | upper }}</span>{{ q_names.get(qid, qid) }}</div>
-                                        <div class="scan-right">
-                                            <span class="scan-tag {% if tag == 'perfect' %}t-perfect{% elif tag == 'good' %}t-good{% elif tag == 'free' %}t-free{% else %}t-paid{% endif %}">
-                                                {% if tag == 'perfect' %}满分{% elif tag == 'good' %}良好{% elif tag == 'free' %}¥0.19 可修复{% else %}🔒 高级订阅{% endif %}
-                                            </span>
-                                            <div class="scan-score">{{ sc }}<span class="dim">/{{ mx }}</span></div>
-                                        </div>
-                                    </div>
-                                    {% if qd.get('reason') %}
-                                    {% set ability_name = ability_names.get(qid) %}
-                                    <div class="scan-reason">
-                                        {% if ability_name %}
-                                            {% if sc == mx %}
-                                                已具备{{ ability_name }}，且给出了明确检查证据
-                                            {% elif sc == 0 %}
-                                                缺少{{ ability_name }}
-                                            {% else %}
-                                                完成了部分{{ ability_name }}检查
-                                            {% endif %}
+                                {% if qd.get('reason') %}
+                                {% set ability_name = ability_names.get(qid) %}
+                                <div class="scan-reason">
+                                    {% if ability_name %}
+                                        {% if sc == mx %}
+                                            已具备{{ ability_name }}，且给出了明确检查证据
+                                        {% elif sc == 0 %}
+                                            缺少{{ ability_name }}
                                         {% else %}
-                                            {{ qd.get('reason', '') }}
+                                            完成了部分{{ ability_name }}检查
                                         {% endif %}
-                                    </div>
+                                    {% else %}
+                                        {{ qd.get('reason', '') }}
                                     {% endif %}
-                                    <div class="scan-bar-wrap">
-                                        <div class="scan-bar {% if tag == 'perfect' %}bar-perfect{% elif tag == 'good' %}bar-good{% elif tag == 'free' %}bar-free{% else %}bar-paid{% endif %}" data-pct="{{ (sc / mx * 100) | int }}" style="width:0%"></div>
-                                    </div>
                                 </div>
+                                {% endif %}
                             </div>
                         </div>
                         {% endfor %}
                         {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leaderboard -->
+            <div class="result-leaderboard" id="resultLeaderboard" style="display:none">
+                <div class="lb-header">
+                    <div class="lb-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7 7 7 7"/>
+                            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C17 4 17 7 17 7"/>
+                            <path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+                            <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+                            <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+                        </svg>
+                        龙虾排位榜
+                    </div>
+                    <div class="lb-live">LIVE</div>
+                </div>
+                <div class="lb-table">
+                    <div class="lb-thead">
+                        <span class="lb-th">排名</span>
+                        <span class="lb-th">龙虾名称</span>
+                        <span class="lb-th">智力值</span>
+                    </div>
+                    <div class="lb-table-scroll" id="lbScroll">
+                        <div id="resultLbBody"><div class="lb-empty">加载中...</div></div>
                     </div>
                 </div>
             </div>
@@ -1796,7 +2121,6 @@
     </div>
 
     <!-- ===== Upgrade Overlays ===== -->
-    {% if data.status == 'done' and ns.basic_fixable > 0 %}
     <!-- Step 1: Upgrade explanation -->
     <div class="overlay" id="upgrade-step1" onclick="if(event.target===this)closeUpgrade()">
         <div class="sheet">
@@ -1817,7 +2141,7 @@
                 {% endfor %}
                 <div class="ud-row" style="border-top:1px solid rgba(255,255,255,0.1); padding-top:10px; margin-top:4px;">
                     <span class="ud-label" style="font-weight:600; color:#ddd;">预计智力值提升</span>
-                    <span class="ud-total">+{{ ns.basic_boost }}</span>
+                    <span class="ud-total">+{{ basic_iq_boost }}</span>
                 </div>
             </div>
             <div style="text-align:center; margin:16px 0 8px; font-size:18px; font-weight:700; color:#ff6b3d;">💰 ¥0.19 <small style="font-size:12px; font-weight:400; color:#999;">（一次性）</small></div>
@@ -1859,7 +2183,7 @@
         <div class="sheet">
             <div class="sheet-handle"></div>
             <h3>📋 复制以下命令发给你的小龙虾</h3>
-            <div class="cmd-box" id="upgrade-cmd">请帮我升级龙虾学校基础能力。用 exec 执行 curl -sS https://{{ domain }}/api/repair-skill/{{ token }} 下载修复指引，然后按照指引逐步操作。</div>
+            <div class="cmd-box" id="upgrade-cmd">请帮我升级龙虾学校基础能力。用 exec 执行 curl -sS {{ public_base_url }}/api/repair-skill/{{ token }} 下载修复指引，然后按照指引逐步操作。</div>
             <button class="btn-sheet btn-sheet-primary" id="btn-copy-upgrade" onclick="copyUpgradeCmd()">📋 一键复制</button>
             <p class="tip">复制后发给你的小龙虾，升级 + 重测约需 5-10 分钟</p>
             <button class="btn-sheet btn-sheet-cta" id="btn-start-wait" style="display:none; margin-top:10px;" onclick="startUpgradeWait()">已发送，开始等待升级结果</button>
@@ -1903,7 +2227,6 @@
             <button class="btn-sheet btn-sheet-secondary" onclick="closeStep4AndReload()">查看更新后的报告</button>
         </div>
     </div>
-    {% endif %}
 
     <!-- Login modal -->
     <div class="overlay" id="login-modal" onclick="if(event.target===this)this.classList.remove('show')">
@@ -1923,59 +2246,18 @@
         </div>
     </div>
 
-    <!-- 微信分享引导蒙层 -->
-    <div class="share-guide-overlay" id="share-guide" onclick="hideShareGuide()">
-        <div class="share-guide-arrow">
-            <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
-                <path d="M30 5 L30 35 M20 25 L30 35 L40 25" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        </div>
-        <div class="share-guide-text">
-            点击右上角「...」<br>选择「发送给朋友」或「分享到朋友圈」
-        </div>
-    </div>
-    <style>
-        .share-guide-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.85);
-            z-index: 9999;
-            flex-direction: column;
-            align-items: flex-end;
-            padding: 20px 20px 0 0;
-        }
-        .share-guide-overlay.show { display: flex; }
-        .share-guide-arrow {
-            animation: bounce 1s ease-in-out infinite;
-        }
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-        .share-guide-text {
-            margin-top: 20px;
-            text-align: center;
-            font-size: 18px;
-            font-weight: 600;
-            color: #fff;
-            line-height: 1.6;
-        }
-    </style>
-
     <script>
     // ===== Constants =====
     var TOKEN = '{{ token }}';
     var DOMAIN = '{{ domain }}';
     var DATA_STATUS = '{{ data.status }}';
-    var CREATED_AT = '{{ data.created_at or "" }}';
-    var TEST_TIMEOUT_SECONDS = 600; // 10分钟预估完成时间
     var SCORE = {{ data.score or 0 }};
     var IQ = {{ data.iq or 0 }};
     var CIRCUMFERENCE = 653; // 2 * PI * 104
     var SCORE_PCT = Math.min(100, (IQ / 270) * 100);
     var ADVANCED = {{ advanced_qids | list | tojson }};
     var BOOST = {{ ns.basic_boost }};
+    var BOOST_IQ = {{ basic_iq_boost }};
     var ORIGINAL_SCORE = SCORE;
     var ORIGINAL_IQ = IQ;
     var ORIGINAL_RANK = {{ data.rank or 0 }};
@@ -2062,29 +2344,70 @@
 
     // ===== PHASE 1: Wait with real polling =====
     function startWaitPhase() {
-        var bar = document.getElementById('waitProgressBar');
         var status = document.getElementById('waitStatus');
-        var subtitle = document.getElementById('waitSubtitle');
         var tipEl = document.getElementById('waitTip');
+        var countdownText = document.getElementById('countdownText');
+        var countdownFill = document.getElementById('countdownFill');
+        var countdownWrap = document.querySelector('.wait-countdown');
+        var loopImg = document.getElementById('loopImg');
         var tipIdx = 0;
-        var pollCount = 0;
 
-        // 基于 created_at 计算已过去时间，初始化进度
-        var elapsedSeconds = 0;
-        if (CREATED_AT) {
-            var createdTime = new Date(CREATED_AT).getTime();
-            var now = Date.now();
-            elapsedSeconds = Math.floor((now - createdTime) / 1000);
+        // Loop image carousel
+        var loopItems = [
+            { src: '/static/badges/loop/logo.png',        anim: 'loopZoomSpin',   radius: '14px' },
+            { src: '/static/badges/loop/Rectangle-1.png', anim: 'loopSwingIn',    radius: '0' },
+            { src: '/static/badges/loop/Rectangle-2.png', anim: 'loopDropBounce', radius: '0' },
+            { src: '/static/badges/loop/Rectangle-3.png', anim: 'loopPopUp',      radius: '0' },
+            { src: '/static/badges/loop/Rectangle-4.png', anim: 'loopSlideScale', radius: '0' },
+            { src: '/static/badges/loop/Rectangle-5.png', anim: 'loopFlipIn',     radius: '0' },
+        ];
+        var loopIdx = 0;
+        // Preload images
+        loopItems.forEach(function(item) { var i = new Image(); i.src = item.src; });
+
+        // Start jelly bounce after initial entrance
+        loopImg.style.animation = 'loopJelly 2s ease-in-out infinite';
+
+        var loopTimer = setInterval(function() {
+            // Exit animation
+            loopImg.style.animation = 'loopExit 0.3s ease forwards';
+            setTimeout(function() {
+                loopIdx = (loopIdx + 1) % loopItems.length;
+                var item = loopItems[loopIdx];
+                loopImg.src = item.src;
+                loopImg.style.borderRadius = item.radius;
+                // Entrance animation
+                loopImg.style.animation = item.anim + ' 0.5s var(--ease-spring) forwards';
+                // Switch to jelly bounce after entrance
+                setTimeout(function() {
+                    loopImg.style.animation = 'loopJelly 2s ease-in-out infinite';
+                }, 500);
+            }, 300);
+        }, 2500);
+
+        // Countdown: 10 minutes = 600 seconds
+        var TOTAL_SECONDS = 600;
+        var CIRCUMFERENCE = 2 * Math.PI * 72; // r=72
+        var remaining = TOTAL_SECONDS;
+
+        function updateCountdown() {
+            var min = Math.floor(remaining / 60);
+            var sec = remaining % 60;
+            countdownText.textContent = min + ':' + (sec < 10 ? '0' : '') + sec;
+            var progress = remaining / TOTAL_SECONDS;
+            countdownFill.style.strokeDashoffset = (CIRCUMFERENCE * (1 - progress)).toFixed(2);
+            if (remaining <= 120 && !countdownWrap.classList.contains('countdown-warning')) {
+                countdownWrap.classList.add('countdown-warning');
+            }
         }
 
-        // 进度最大88%（留12%给完成动画）
-        // 每秒增长约0.25%（2秒增长0.5%），10分钟(600秒)到达约88%
-        var baseProgress = Math.min(88, 5 + (elapsedSeconds * 0.138));
-        var fakeProgress = Math.max(5, baseProgress);
-
-        // Fetch active count immediately and every 15s
-        fetchActiveCount();
-        var activeCountTimer = setInterval(fetchActiveCount, 15000);
+        updateCountdown();
+        var countdownTimer = setInterval(function() {
+            remaining--;
+            if (remaining < 0) remaining = 0;
+            updateCountdown();
+            if (remaining <= 0) clearInterval(countdownTimer);
+        }, 1000);
 
         // Tip rotation
         var tipTimer = setInterval(function() {
@@ -2096,80 +2419,37 @@
             }, 300);
         }, 4000);
 
-        // 更新状态文本的函数
-        function updateStatusText(progress) {
-            if (progress < 20) {
-                status.textContent = '正在连接你的小龙虾...';
-                subtitle.textContent = '测试已启动，正在等待结果';
-            } else if (progress < 40) {
-                status.textContent = '你的龙虾正在思考...';
-                subtitle.textContent = '正在逐题作答中';
-            } else if (progress < 60) {
-                status.textContent = '已进入中间阶段...';
-                subtitle.textContent = '核心能力测试中';
-            } else if (progress < 80) {
-                status.textContent = '快要完成了...';
-                subtitle.textContent = '最后几道题';
-            } else {
-                status.textContent = '即将揭晓智力值...';
-                subtitle.textContent = '正在汇总评估';
-            }
-        }
-
-        // 检查是否已超时（超过 15 分钟）
-        var TIMEOUT_SECONDS = 900; // 15分钟
-        var isTimeout = elapsedSeconds > TIMEOUT_SECONDS;
-
-        // 初始化进度条（基于已过去时间）
-        bar.style.width = fakeProgress + '%';
-        if (isTimeout) {
-            status.textContent = '等待时间较长...';
-            subtitle.textContent = '你的龙虾可能还没收到命令，请确认已发送给 bot';
-            subtitle.style.color = '#ff9616';
-        } else {
-            updateStatusText(fakeProgress);
-        }
-
-        var crawlTimer = setInterval(function() {
-            fakeProgress += 0.5;
-            elapsedSeconds += 2;
-            if (fakeProgress > 88) fakeProgress = 88;
-            bar.style.width = fakeProgress + '%';
-
-            // 动态检查超时
-            if (elapsedSeconds > TIMEOUT_SECONDS) {
-                status.textContent = '等待时间较长...';
-                subtitle.textContent = '你的龙虾可能还没收到命令，请确认已发送给 bot';
-                subtitle.style.color = '#ff9616';
-            } else {
-                updateStatusText(fakeProgress);
-            }
-        }, 2000);
-
-        // Real polling
+        // Real polling with retry mechanism
+        var pollRetries = 0;
+        var maxRetries = 3;
         var poller = setInterval(function() {
-            pollCount++;
             fetch('/api/result/' + TOKEN).then(function(r) { return r.json(); }).then(function(result) {
+                pollRetries = 0; // 成功则重置重试计数
                 if (result.status === 'done') {
                     clearInterval(poller);
-                    clearInterval(crawlTimer);
+                    clearInterval(countdownTimer);
                     clearInterval(tipTimer);
-                    clearInterval(activeCountTimer);
+                    clearInterval(loopTimer);
 
-                    // Complete the progress bar
-                    bar.style.width = '100%';
                     status.textContent = '全部完成！正在准备报告...';
-                    subtitle.textContent = '准备评估';
-
-                    // Store result data for Phase 2 & 3
                     window._resultData = result;
 
                     setTimeout(function() {
                         startRevealPhase(result);
                     }, 800);
+                } else if (result.answered) {
+                    // Update status with real progress
+                    status.textContent = '已完成 ' + result.answered + '/12 题';
                 }
-            }).catch(function() {});
-        }, 5000);
+            }).catch(function() {
+                pollRetries++;
+                if (pollRetries >= maxRetries) {
+                    status.textContent = '网络不稳定，请刷新页面重试';
+                    status.style.color = '#ff9800';
+                    clearInterval(poller);
+                }
+            });
+        }, 3000);
     }
 
     // ===== PHASE 2: Reveal with real data =====
@@ -2277,6 +2557,64 @@
     }
 
     // ===== PHASE 3: Result =====
+    // ===== Coin badge mapping =====
+    var COIN_MAP = [
+        { min: 230, src: '/static/badges/最强.png', glow: 'coin-glow--legend', stage: [255, 200, 50]  },
+        { min: 170, src: '/static/badges/高级.png', glow: 'coin-glow--adv',    stage: [220, 40, 40]   },
+        { min: 120, src: '/static/badges/银.png',   glow: 'coin-glow--silver', stage: [180, 190, 220] },
+        { min: 70,  src: '/static/badges/铜.png',   glow: 'coin-glow--bronze', stage: [205, 127, 50]  },
+        { min: 0,   src: '/static/badges/黑铁.png', glow: 'coin-glow--iron',   stage: [80, 80, 100]   },
+    ];
+
+    function setCoinBadge(iq) {
+        var coin = COIN_MAP.find(function(c) { return iq >= c.min; }) || COIN_MAP[COIN_MAP.length - 1];
+        document.getElementById('rankCoin').src = coin.src;
+        document.getElementById('coinGlow').className = 'coin-glow ' + coin.glow;
+        var phaseResult = document.getElementById('phaseResult');
+        phaseResult.style.setProperty('--stage-r', coin.stage[0]);
+        phaseResult.style.setProperty('--stage-g', coin.stage[1]);
+        phaseResult.style.setProperty('--stage-b', coin.stage[2]);
+    }
+
+    // ===== Coin 3D parallax =====
+    var _coin3dOn = false;
+    function startCoin3D() {
+        if (_coin3dOn) return;
+        _coin3dOn = true;
+        var coinEl = document.getElementById('rankCoin');
+        var specEl = document.getElementById('coinSpecular');
+        var wrapEl = document.querySelector('.score-coin-wrap');
+        if (!coinEl || !wrapEl) return;
+        var MAX = 20, tX = 0, tY = 0, cX = 0, cY = 0, sX = 50, sY = 50;
+        function tick() {
+            cX += (tX - cX) * 0.1;
+            cY += (tY - cY) * 0.1;
+            coinEl.style.transform = 'perspective(600px) rotateX(' + cX.toFixed(1) + 'deg) rotateY(' + cY.toFixed(1) + 'deg)';
+            specEl.style.background = 'radial-gradient(ellipse 50% 50% at ' + sX.toFixed(0) + '% ' + sY.toFixed(0) + '%, rgba(255,255,255,0.25) 0%, transparent 65%)';
+            requestAnimationFrame(tick);
+        }
+        var isMobileDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        if (!isMobileDevice) {
+            document.addEventListener('mousemove', function(e) {
+                var r = wrapEl.getBoundingClientRect();
+                var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+                var dx = e.clientX - cx, dy = e.clientY - cy;
+                var d = Math.sqrt(dx * dx + dy * dy);
+                var zone = Math.max(r.width * 1.5, 400);
+                if (d < zone) {
+                    specEl.classList.add('active');
+                    var nx = dx / zone, ny = dy / zone;
+                    tX = -ny * MAX; tY = nx * MAX;
+                    sX = 50 + nx * 40; sY = 50 + ny * 40;
+                } else {
+                    tX = 0; tY = 0; sX = 50; sY = 50;
+                    specEl.classList.remove('active');
+                }
+            });
+        }
+        tick();
+    }
+
     function startResultPhase(resultData) {
         showPhase('phaseResult');
         document.getElementById('stickyBottom').classList.add('active');
@@ -2309,29 +2647,50 @@
             document.getElementById('diagFree').textContent = freeCount;
             document.getElementById('diagPaid').textContent = paidCount;
             BOOST = basicBoost;
+            BOOST_IQ = rawToIq(Math.min(resultData.score + basicBoost, 120)) - IQ;
 
-            // Build btn group dynamically
+            // Build upgrade cards dynamically
             var btnGroupEl = document.getElementById('btnGroup');
-            var btnHtml = '<button class="btn btn-primary" onclick="shareResult()">' +
-                '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg> 炫耀我的成绩</button>';
+            var btnHtml = '';
             if (freeCount > 0) {
-                btnHtml += '<button class="btn btn-secondary" onclick="previewUpgrade()">' +
-                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> ¥0.19 补齐基础能力' +
-                    '<span class="btn-tag">预计提升智力值</span></button>';
+                btnHtml += '<button class="upgrade-card" onclick="previewUpgrade()">' +
+                    '<div class="upgrade-card-badge">推荐</div>' +
+                    '<div class="upgrade-card-icon">⚡</div>' +
+                    '<div class="upgrade-card-body">' +
+                        '<div class="upgrade-card-title">补齐基础能力 <span class="upgrade-card-price">¥0.19</span></div>' +
+                        '<div class="upgrade-card-desc">一次购买 · 预计提升智力值 +' + BOOST_IQ + '</div>' +
+                    '</div>' +
+                    '<svg class="upgrade-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>' +
+                '</button>';
             }
-            btnHtml += '<button class="btn btn-ghost" onclick="startPremiumSubscribe()">' +
-                '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg> ¥0.99/月 高级能力订阅' +
-                '<span class="btn-tag">Skill 搜索 · 自我进化 · 主动预判 · 安全审查</span></button>';
+            btnHtml += '<button class="upgrade-card upgrade-card--pro" onclick="startPremiumSubscribe()">' +
+                '<div class="upgrade-card-badge">PRO</div>' +
+                '<div class="upgrade-card-icon">🧠</div>' +
+                '<div class="upgrade-card-body">' +
+                    '<div class="upgrade-card-title">高级能力订阅 <span class="upgrade-card-price">¥99/月</span></div>' +
+                    '<div class="upgrade-card-desc">自主进化 · 实时看板 · 高阶技能全解锁</div>' +
+                '</div>' +
+                '<svg class="upgrade-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>' +
+            '</button>';
             btnGroupEl.innerHTML = btnHtml;
 
             // Build scan list dynamically
             renderScanList(detail);
         }
 
-        // Animate ring
-        setTimeout(function() {
-            setRing(SCORE_PCT);
+        // Set coin badge based on IQ
+        setCoinBadge(IQ);
 
+        // Start coin 3D after animation
+        var _coinEl = document.getElementById('rankCoin');
+        _coinEl.addEventListener('animationend', function() {
+            _coinEl.style.animation = 'none';
+            _coinEl.style.transform = 'perspective(600px) rotateX(0deg) rotateY(0deg)';
+            startCoin3D();
+        }, { once: true });
+
+        // Animate IQ number
+        setTimeout(function() {
             var el = document.getElementById('scoreNum');
             var cur = 0;
             var target = IQ;
@@ -2343,28 +2702,61 @@
             }, 35);
         }, 400);
 
-        // Animate bars
-        requestAnimationFrame(function() {
-            var bars = document.querySelectorAll('.scan-bar[data-pct]');
-            bars.forEach(function(bar) {
-                bar.style.width = bar.getAttribute('data-pct') + '%';
-            });
-        });
+        // Load leaderboard
+        loadResultLeaderboard();
+    }
+
+    // ===== Leaderboard =====
+    var BADGE_MAP = [
+      { min: 230, src: '/static/badges/最强.png', alt: '最强' },
+      { min: 170, src: '/static/badges/高级.png', alt: '高级' },
+      { min: 120, src: '/static/badges/银.png',   alt: '银' },
+      { min: 70,  src: '/static/badges/铜.png',   alt: '铜' },
+      { min: 0,   src: '/static/badges/黑铁.png', alt: '黑铁' },
+    ];
+    function badgeImg(iq) {
+      for (var i = 0; i < BADGE_MAP.length; i++) {
+        if (iq >= BADGE_MAP[i].min) return '<img src="' + BADGE_MAP[i].src + '" alt="' + BADGE_MAP[i].alt + '">';
+      }
+      return '<img src="/static/badges/黑铁.png" alt="黑铁">';
+    }
+    function escHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    function loadResultLeaderboard() {
+      var myName = (document.getElementById('lobsterName') || {}).textContent || '';
+      fetch('/api/leaderboard?limit=100').then(function(r) { return r.json(); }).then(function(d) {
+        var wrap = document.getElementById('resultLeaderboard');
+        var body = document.getElementById('resultLbBody');
+        if (!d.entries || !d.entries.length) { body.innerHTML = '<div class="lb-empty">暂无数据</div>'; wrap.style.display = ''; return; }
+        var selfIdx = -1;
+        body.innerHTML = d.entries.map(function(e, i) {
+          var rc = i === 0 ? 'rank-gold' : i === 1 ? 'rank-silver' : i === 2 ? 'rank-bronze' : 'rank-normal';
+          var isSelf = myName && e.name === myName;
+          if (isSelf) selfIdx = i;
+          var cls = 'lb-row' + (isSelf ? ' lb-row-self' : '');
+          var sc = i === 0 ? 'lb-score lb-score-highlight' : 'lb-score';
+          return '<div class="' + cls + '" data-rank="' + (i+1) + '">' +
+            '<div class="lb-rank ' + rc + '">' + (i+1) + '</div>' +
+            '<div class="lb-name"><div class="lb-avatar">' + badgeImg(e.iq) + '</div><span class="lb-name-text">' + escHtml(e.name) + '</span></div>' +
+            '<div class="' + sc + '">' + e.iq + '</div></div>';
+        }).join('');
+        wrap.style.display = '';
+        if (selfIdx >= 0) {
+          requestAnimationFrame(function() {
+            var selfRow = body.querySelector('.lb-row-self');
+            var scrollEl = document.getElementById('lbScroll');
+            if (selfRow && scrollEl) {
+              scrollEl.scrollTop = selfRow.offsetTop - scrollEl.offsetHeight / 2 + selfRow.offsetHeight / 2;
+            }
+          });
+        }
+      }).catch(function() {
+        document.getElementById('resultLbBody').innerHTML = '<div class="lb-empty">加载失败</div>';
+        document.getElementById('resultLeaderboard').style.display = '';
+      });
     }
 
     function renderScanList(detail) {
-        var icons2 = {
-            perfect: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>',
-            good:    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>',
-            free:    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
-            paid:    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>'
-        };
-        var stCls = { perfect: 'st-perfect', good: 'st-good', free: 'st-free', paid: 'st-paid' };
-        var tLbl = { perfect: '满分', good: '良好', free: '¥0.19 可修复', paid: '🔒 高级订阅' };
-        var tCls = { perfect: 't-perfect', good: 't-good', free: 't-free', paid: 't-paid' };
-        var barCls = { perfect: 'bar-perfect', good: 'bar-good', free: 'bar-free', paid: 'bar-paid' };
-        var scCls  = { perfect: '', good: '', free: 'sc-free', paid: 'sc-paid' };
-
         var html = Q_KEYS.map(function(qid, i) {
             var qd = detail[qid] || {};
             var sc = qd.score || 0;
@@ -2376,22 +2768,24 @@
             else if (ADVANCED.indexOf(qid) >= 0) tag = 'paid';
             else tag = 'free';
 
-            return '<div class="scan-card ' + (scCls[tag] || '') + '">' +
-                '<div class="scan-top">' +
-                    '<div class="scan-status ' + stCls[tag] + '">' + icons2[tag] + '</div>' +
-                    '<div class="scan-head">' +
-                        '<div class="scan-row1">' +
-                            '<div class="scan-name"><span class="qid">' + qid.toUpperCase() + '</span>' + (Q_NAMES[qid] || qid) + '</div>' +
-                            '<div class="scan-right">' +
-                                '<span class="scan-tag ' + tCls[tag] + '">' + tLbl[tag] + '</span>' +
-                                '<div class="scan-score">' + sc + '<span class="dim">/' + mx + '</span></div>' +
-                            '</div>' +
-                        '</div>' +
-                        (reason ? '<div class="scan-reason">' + reason + '</div>' : '') +
-                        '<div class="scan-bar-wrap">' +
-                            '<div class="scan-bar ' + barCls[tag] + '" data-pct="' + Math.round(sc / mx * 100) + '" style="width:0%"></div>' +
-                        '</div>' +
+            var isPass = (tag === 'perfect' || tag === 'good');
+            var cardCls = isPass ? 'sc-pass' : 'sc-fail';
+            var tagHtml;
+            if (tag === 'perfect') tagHtml = '<span class="scan-tag tag-ok">满分</span>';
+            else if (tag === 'good') tagHtml = '<span class="scan-tag tag-ok">良好</span>';
+            else if (tag === 'free') tagHtml = '<span class="scan-tag tag-fix">💰 可修复</span>';
+            else tagHtml = '<span class="scan-tag tag-fix">💰 高级</span>';
+
+            var reasonHtml = reason ? '<div class="scan-reason">' + reason + '</div>' : '';
+
+            return '<div class="scan-card ' + cardCls + '">' +
+                '<div class="scan-score-ring">' + sc + '</div>' +
+                '<div class="scan-body">' +
+                    '<div class="scan-row1">' +
+                        '<div class="scan-name"><span class="qid">' + qid.toUpperCase() + '</span>' + (Q_NAMES[qid] || qid) + '</div>' +
+                        tagHtml +
                     '</div>' +
+                    reasonHtml +
                 '</div>' +
             '</div>';
         }).join('');
@@ -2401,7 +2795,7 @@
 
     // ===== Upgrade Flow =====
     function previewUpgrade() {
-        // 用 IQ 值做动画：当前 IQ → 升级后预估 IQ
+        // 预览阶段按原始分补齐后的目标 IQ 展示
         var targetRaw = Math.min(SCORE + BOOST, 120);
         var targetIQ = rawToIq(targetRaw);
         var targetPct = Math.min(100, (targetIQ / 270) * 100);
@@ -2429,8 +2823,12 @@
 
     function showPayStep() {
         document.getElementById('upgrade-step1').classList.remove('show');
-        // 直接跳转支付宝支付，跳过支付方式选择
-        doBasicPay('alipay');
+        // 重置支付弹窗状态
+        document.getElementById('basic-channel-pick').style.display = 'flex';
+        document.getElementById('basic-qr-area').style.display = 'none';
+        document.getElementById('basic-pay-waiting').style.display = 'none';
+        document.getElementById('basic-pay-title').textContent = '📱 选择支付方式';
+        document.getElementById('upgrade-pay').classList.add('show');
     }
 
     var basicPayPoller = null;
@@ -2439,13 +2837,22 @@
         return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
     }
 
+    var isPayProcessing = false;
     function doBasicPay(provider) {
+        // 防止重复点击
+        if (isPayProcessing) return;
+        isPayProcessing = true;
+
         var channel;
         if (provider === 'alipay') {
             channel = isMobile() ? 'alipay_h5' : 'alipay_pc';
         } else {
             channel = 'wechat_native';  // 微信 H5 暂不可用，统一走扫码
         }
+
+        // 禁用按钮
+        var btn = document.getElementById('btn-basic-alipay');
+        if (btn) { btn.disabled = true; btn.textContent = '处理中...'; }
 
         document.getElementById('basic-channel-pick').style.display = 'none';
         document.getElementById('basic-pay-waiting').style.display = 'block';
@@ -2460,6 +2867,13 @@
             return r.json();
         }).then(function(data) {
             var info = data.payment_info;
+            // 保存订单信息到 localStorage，以便支付返回后继续
+            localStorage.setItem('clawschool_pending_order', JSON.stringify({
+                order_id: data.order_id,
+                plan_type: data.plan_type,
+                token: TOKEN,
+                created_at: Date.now()
+            }));
             if (channel === 'alipay_pc' || channel === 'alipay_h5') {
                 // 支付宝：跳转到支付页面
                 window.location.href = info.pay_url;
@@ -2473,6 +2887,9 @@
                 startBasicPayPolling(data.order_id);
             }
         }).catch(function(e) {
+            isPayProcessing = false;
+            var btn = document.getElementById('btn-basic-alipay');
+            if (btn) { btn.disabled = false; btn.textContent = '支付宝支付 ¥0.19'; }
             document.getElementById('basic-pay-waiting').style.display = 'none';
             document.getElementById('basic-channel-pick').style.display = 'flex';
             document.getElementById('basic-pay-title').textContent = '❌ ' + (e.message || '创建订单失败');
@@ -2493,6 +2910,8 @@
     }
 
     function onBasicPaySuccess() {
+        // 清除待支付订单记录
+        localStorage.removeItem('clawschool_pending_order');
         document.getElementById('upgrade-pay').classList.remove('show');
         document.getElementById('upgrade-step2').classList.add('show');
     }
@@ -2522,8 +2941,20 @@
 
     // ── Step 3: Upgrade waiting ──
     var upgradePoller = null;
+    var isUpgrading = false;
+
+    // 阻止用户在升级过程中离开页面
+    function warnBeforeLeave(e) {
+        if (isUpgrading) {
+            e.preventDefault();
+            e.returnValue = '升级正在进行中，离开可能导致升级失败！';
+            return e.returnValue;
+        }
+    }
 
     function startUpgradeWait() {
+        isUpgrading = true;
+        window.addEventListener('beforeunload', warnBeforeLeave);
         document.getElementById('upgrade-step2').classList.remove('show');
         document.getElementById('upgrade-step3').classList.add('show');
         simulateUpgradeProgress();
@@ -2592,6 +3023,10 @@
 
     // ── Step 4: Upgrade result ──
     function showStep4(data) {
+        // 升级完成，移除离开警告
+        isUpgrading = false;
+        window.removeEventListener('beforeunload', warnBeforeLeave);
+
         document.getElementById('upgrade-step3').classList.remove('show');
         document.getElementById('upgrade-step4').classList.add('show');
 
@@ -2616,18 +3051,28 @@
         });
         document.getElementById('upgrade-results').innerHTML = html;
 
-        var newScore = data.score;
-        var scoreDelta = newScore - ORIGINAL_SCORE;
+        var newIQ = data.iq || rawToIq(data.score || 0);
+        var iqDelta = newIQ - ORIGINAL_IQ;
         document.getElementById('rt-from').textContent = '原始智力值 ' + ORIGINAL_IQ;
         document.getElementById('rt-delta').textContent = '⬆ 智力值提升';
 
         var rtScoreEl = document.getElementById('rt-new-score');
-        var cur = ORIGINAL_SCORE;
-        var step = Math.max(1, Math.ceil(scoreDelta / 20));
+        var cur = ORIGINAL_IQ;
+        var step = Math.max(1, Math.ceil(Math.abs(iqDelta) / 20));
         var rollTimer = setInterval(function() {
-            cur += step;
-            if (cur >= newScore) {
-                cur = newScore;
+            if (cur < newIQ) {
+                cur += step;
+                if (cur >= newIQ) {
+                    cur = newIQ;
+                    clearInterval(rollTimer);
+                }
+            } else if (cur > newIQ) {
+                cur -= step;
+                if (cur <= newIQ) {
+                    cur = newIQ;
+                    clearInterval(rollTimer);
+                }
+            } else {
                 clearInterval(rollTimer);
             }
             rtScoreEl.textContent = cur;
@@ -2655,23 +3100,15 @@
     }
 
     function shareNewResult() {
-        var url = 'https://' + DOMAIN + '/s/' + TOKEN;
+        var url = window.location.origin + '/s/' + TOKEN;
         var text = '我的小龙虾「{{ data.name }}」升级后在龙虾学校获得新成绩！你的小龙虾够聪明吗？👉 ' + url;
-
-        // 微信环境下显示引导蒙层
-        if (isWechat()) {
-            showShareGuide();
-            return;
-        }
-
         if (navigator.share) {
-            navigator.share({ title: '龙虾学校新成绩', text: text, url: url }).catch(function(){});
+            navigator.share({ title: text, url: url }).catch(function(){});
         } else {
             navigator.clipboard.writeText(text).then(function() {
                 alert('已复制分享文案到剪贴板！');
             }).catch(function() {
-                fallbackCopy(text);
-                alert('已复制分享文案到剪贴板！');
+                prompt('复制以下内容分享：', text);
             });
         }
     }
@@ -2741,83 +3178,12 @@
         }).catch(function(e) { showLoginError(e.message || '登录失败'); });
     }
 
-    // ===== 微信环境检测与 JS-SDK =====
-    function isWechat() {
-        return /MicroMessenger/i.test(navigator.userAgent);
-    }
-
-    var wxReady = false;
-
-    function initWechatShare() {
-        if (!isWechat() || typeof wx === 'undefined') return;
-
-        var currentUrl = window.location.href.split('#')[0];
-        fetch('/api/wechat/signature?url=' + encodeURIComponent(currentUrl))
-            .then(function(r) { return r.json(); })
-            .then(function(config) {
-                wx.config({
-                    debug: false,
-                    appId: config.appId,
-                    timestamp: config.timestamp,
-                    nonceStr: config.nonceStr,
-                    signature: config.signature,
-                    jsApiList: ['updateAppMessageShareData', 'updateTimelineShareData']
-                });
-
-                wx.ready(function() {
-                    wxReady = true;
-                    var shareUrl = 'https://' + DOMAIN + '/s/' + TOKEN;
-                    var shareTitle = '「{{ data.name }}」智力值 ' + IQ + '，你的龙虾够聪明吗？';
-                    var shareDesc = '荣获「' + ORIGINAL_TITLE + '」称号，超过 ' + Math.floor(SCORE_PCT) + '% 的小龙虾！来龙虾学校测测你的 AI 助手';
-                    var shareImg = 'https://' + DOMAIN + '/api/og-image/' + TOKEN;
-
-                    // 分享给朋友
-                    wx.updateAppMessageShareData({
-                        title: shareTitle,
-                        desc: shareDesc,
-                        link: shareUrl,
-                        imgUrl: shareImg
-                    });
-
-                    // 分享到朋友圈
-                    wx.updateTimelineShareData({
-                        title: shareTitle + ' ' + shareDesc,
-                        link: shareUrl,
-                        imgUrl: shareImg
-                    });
-                });
-
-                wx.error(function(res) {
-                    console.error('微信 JS-SDK 配置失败:', res);
-                });
-            })
-            .catch(function(e) {
-                console.error('获取微信签名失败:', e);
-            });
-    }
-
     // ===== Share =====
-    function showShareGuide() {
-        document.getElementById('share-guide').classList.add('show');
-    }
-
-    function hideShareGuide() {
-        document.getElementById('share-guide').classList.remove('show');
-    }
-
     function shareResult() {
-        var url = 'https://' + DOMAIN + '/s/' + TOKEN;
+        var url = window.location.origin + '/s/' + TOKEN;
         var text = '我的小龙虾「{{ data.name }}」在龙虾学校智力测试中智力值 ' + IQ + '，荣获「' + ORIGINAL_TITLE + '」称号，超过 ' + Math.floor(SCORE_PCT) + '% 的小龙虾！你的小龙虾够聪明吗？👉 ' + url;
-
-        // 微信环境下显示引导蒙层
-        if (isWechat()) {
-            showShareGuide();
-            return;
-        }
-
-        // 非微信环境使用 Web Share API 或复制
         if (navigator.share) {
-            navigator.share({ title: '龙虾学校成绩', text: text, url: url }).catch(function(){});
+            navigator.share({ title: '龙虾学校成绩', url: url }).catch(function(){});
         } else {
             navigator.clipboard.writeText(text).then(function() {
                 alert('已复制分享文案到剪贴板！');
@@ -2840,7 +3206,7 @@
 
     // ===== Nav scroll blur =====
     (function() {
-        var nav = document.querySelector('.brand-nav');
+        var nav = document.querySelector('.top-nav');
         if (nav) {
             window.addEventListener('scroll', function() {
                 if (window.scrollY > 20) {
@@ -2853,16 +3219,21 @@
     })();
 
     // ===== Init =====
-    // 初始化微信分享
-    initWechatShare();
-
     if (DATA_STATUS === 'done') {
         // Already done — show Phase 3 directly with server-rendered content
         document.getElementById('stickyBottom').classList.add('active');
-        // Animate ring + IQ number
-        setTimeout(function() {
-            setRing(SCORE_PCT);
 
+        // Set coin badge
+        setCoinBadge(IQ);
+        var _coinEl = document.getElementById('rankCoin');
+        _coinEl.addEventListener('animationend', function() {
+            _coinEl.style.animation = 'none';
+            _coinEl.style.transform = 'perspective(600px) rotateX(0deg) rotateY(0deg)';
+            startCoin3D();
+        }, { once: true });
+
+        // Animate IQ number
+        setTimeout(function() {
             var el = document.getElementById('scoreNum');
             var cur = 0;
             var target = IQ;
@@ -2874,27 +3245,72 @@
             }, 35);
         }, 400);
 
-        // Animate bars
-        requestAnimationFrame(function() {
-            var bars = document.querySelectorAll('.scan-bar[data-pct]');
-            bars.forEach(function(bar) {
-                bar.style.width = bar.getAttribute('data-pct') + '%';
-            });
-        });
+        // Load leaderboard
+        loadResultLeaderboard();
+
         // 支付宝 return 带 ?paid=basic 时，自动弹出 Step 2（复制命令）
         var urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('paid') === 'basic') {
             // 清除 URL 参数，避免刷新后重复触发
             history.replaceState(null, '', window.location.pathname);
+            // 清除待支付订单记录
+            localStorage.removeItem('clawschool_pending_order');
             // 延迟弹出，等动画完成
             setTimeout(function() {
                 document.getElementById('upgrade-step2').classList.add('show');
             }, 1200);
+        } else {
+            // 检查是否有未完成的支付订单
+            (function checkPendingOrder() {
+                var pending = localStorage.getItem('clawschool_pending_order');
+                if (!pending) return;
+                try {
+                    var order = JSON.parse(pending);
+                    // 检查是否超过 10 分钟（订单已过期）
+                    if (Date.now() - order.created_at > 10 * 60 * 1000) {
+                        localStorage.removeItem('clawschool_pending_order');
+                        return;
+                    }
+                    // 检查订单状态
+                    fetch('/api/payment/status/' + order.order_id).then(function(r) {
+                        return r.json();
+                    }).then(function(data) {
+                        if (data.status === 'paid') {
+                            localStorage.removeItem('clawschool_pending_order');
+                            // 支付已完成，显示命令弹窗
+                            setTimeout(function() {
+                                document.getElementById('upgrade-step2').classList.add('show');
+                            }, 1000);
+                        } else if (data.status === 'expired') {
+                            localStorage.removeItem('clawschool_pending_order');
+                        }
+                        // pending 状态不做处理，用户可重新发起支付
+                    }).catch(function() {});
+                } catch(e) {
+                    localStorage.removeItem('clawschool_pending_order');
+                }
+            })();
         }
     } else {
         // Waiting — start Phase 1 with real polling
         startWaitPhase();
     }
+    </script>
+
+    <!-- 禁止双指缩放 + 双击缩放 -->
+    <script>
+    document.addEventListener('touchstart', function(e) {
+        if (e.touches.length > 1) e.preventDefault();
+    }, { passive: false });
+    document.addEventListener('gesturestart', function(e) {
+        e.preventDefault();
+    }, { passive: false });
+    var lastTouchEnd = 0;
+    document.addEventListener('touchend', function(e) {
+        var now = Date.now();
+        if (now - lastTouchEnd < 300) e.preventDefault();
+        lastTouchEnd = now;
+    }, { passive: false });
     </script>
 </body>
 </html>

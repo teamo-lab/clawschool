@@ -19,7 +19,6 @@ from .og_image import generate_og_image
 from .questions import QUESTIONS
 from .repair import generate_repair_skill, ADVANCED_QIDS, BASIC_QIDS
 from .payment import PaymentConfig, WechatPayClient, AlipayClient
-from . import wechat_jssdk
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SKILL_TEMPLATE = BASE_DIR / "public" / "SKILL.md"
@@ -49,6 +48,27 @@ def _gen_token(length: int = 8) -> str:
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+def _public_base_url() -> str:
+    """对外公开 URL 前缀：线上默认 https，本地开发域名默认 http。"""
+    raw_domain = (DOMAIN or "").strip().rstrip("/")
+    if not raw_domain:
+        return ""
+    if raw_domain.startswith("http://") or raw_domain.startswith("https://"):
+        return raw_domain
+
+    host = raw_domain.split(":", 1)[0].lower()
+    scheme = "http" if host in {"127.0.0.1", "localhost", "0.0.0.0"} else "https"
+    return f"{scheme}://{raw_domain}"
+
+def _render_public_skill(path: Path) -> str:
+    content = path.read_text(encoding="utf-8")
+    base_url = _public_base_url()
+    # 兼容历史模板中的硬编码域名，也支持后续引入占位符。
+    content = content.replace("https://clawschool.teamolab.com", base_url)
+    content = content.replace("http://clawschool.teamolab.com", base_url)
+    content = content.replace("{{BASE_URL}}", base_url)
+    return content
 
 def _get_rank(score: int, token: str):
     """获取指定 token 在排行榜中的排名"""
@@ -87,7 +107,7 @@ async def create_token(request: Request):
         db.close()
 
     from urllib.parse import quote
-    skill_url = f"https://{DOMAIN}/skill.md?token={token}&name={quote(name)}"
+    skill_url = f"{_public_base_url()}/skill.md?token={token}&name={quote(name)}"
     return {"token": token, "name": name, "skill_url": skill_url, "created_at": now}
 
 
@@ -95,7 +115,7 @@ async def create_token(request: Request):
 async def get_skill(token: str = "", name: str = ""):
     if not SKILL_TEMPLATE.exists():
         raise HTTPException(404, "SKILL.md 未配置")
-    content = SKILL_TEMPLATE.read_text(encoding="utf-8")
+    content = _render_public_skill(SKILL_TEMPLATE)
     return PlainTextResponse(content, media_type="text/markdown; charset=utf-8")
 
 
@@ -103,7 +123,7 @@ async def get_skill(token: str = "", name: str = ""):
 async def get_diagnose_skill():
     if not DIAGNOSE_SKILL_TEMPLATE.exists():
         raise HTTPException(404, "DIAGNOSE-SKILL.md 未配置")
-    content = DIAGNOSE_SKILL_TEMPLATE.read_text(encoding="utf-8")
+    content = _render_public_skill(DIAGNOSE_SKILL_TEMPLATE)
     return PlainTextResponse(content, media_type="text/markdown; charset=utf-8")
 
 
@@ -123,7 +143,7 @@ async def test_start(token: str = ""):
     return {
         "questionCount": len(questions_out),
         "questions": questions_out,
-        "submitUrl": f"https://{DOMAIN}/api/test/submit",
+        "submitUrl": f"{_public_base_url()}/api/test/submit",
     }
 
 
@@ -165,13 +185,30 @@ async def test_submit(request: Request):
     db = get_db()
     try:
         if token:
-            existing = db.execute("SELECT token FROM tests WHERE token=?", (token,)).fetchone()
+            existing = db.execute("SELECT token, status, score, title FROM tests WHERE token=?", (token,)).fetchone()
             if existing:
+                # 防止重复提交：如果已经完成，直接返回现有结果
+                if existing["status"] == "done":
+                    db.close()
+                    return {
+                        "success": True,
+                        "token": token,
+                        "lobsterName": lobster_name,
+                        "score": existing["score"],
+                        "iq": raw_to_iq(existing["score"]),
+                        "title": existing["title"],
+                        "rank": _get_rank(existing["score"], token),
+                        "detail": result["detail"],
+                        "report_url": f"https://{DOMAIN}/r/{token}",
+                        "diagnoseUrl": f"/api/test/diagnose?token={token}",
+                        "repairSkillUrl": f"https://{DOMAIN}/api/repair-skill/{token}",
+                        "duplicate": True,  # 标记为重复提交
+                    }
                 db.execute("""
                     UPDATE tests SET
                         status='done', model=?, score=?, title=?, test_time=?,
                         detail=?, submission=?, updated_at=?
-                    WHERE token=?
+                    WHERE token=? AND status='waiting'
                 """, (model, score, title, submission["test_time"],
                       detail_json, submission_json, now, token))
             else:
@@ -204,9 +241,9 @@ async def test_submit(request: Request):
         "title": title,
         "rank": rank,
         "detail": result["detail"],
-        "report_url": f"https://{DOMAIN}/r/{token}",
+        "report_url": f"{_public_base_url()}/r/{token}",
         "diagnoseUrl": f"/api/test/diagnose?token={token}",
-        "repairSkillUrl": f"https://{DOMAIN}/api/repair-skill/{token}",
+        "repairSkillUrl": f"{_public_base_url()}/api/repair-skill/{token}",
     }
 
 
@@ -221,7 +258,18 @@ async def get_result(token: str):
         raise HTTPException(404, "Token 不存在")
 
     data = dict(row)
-    resp = {"status": data["status"], "name": data["name"], "created_at": data["created_at"]}
+
+    # 检查 waiting 状态的 token 是否过期（30 分钟）
+    if data["status"] == "waiting" and data.get("created_at"):
+        from datetime import datetime, timedelta, timezone
+        try:
+            created = datetime.fromisoformat(data["created_at"].replace("Z", "+00:00"))
+            if datetime.now(timezone.utc) - created > timedelta(minutes=30):
+                return {"status": "expired", "name": data["name"], "message": "测试已过期，请重新开始"}
+        except Exception:
+            pass
+
+    resp = {"status": data["status"], "name": data["name"], "created_at": data.get("created_at")}
 
     if data["status"] == "done":
         resp.update({
@@ -240,8 +288,10 @@ async def get_result(token: str):
 
 
 @app.get("/api/test/diagnose")
-async def test_diagnose(token: str):
-    """诊断：返回答卷详情，供 agent 端分析弱项和推荐 skills"""
+async def test_diagnose(token: str, scope: str = "full"):
+    """诊断：返回答卷详情，供 agent 端分析弱项和推荐 skills。
+    scope=basic 只分析基础 8 题（BASIC_QIDS），scope=full 分析全部 12 题。
+    """
     db = get_db()
     try:
         row = db.execute("SELECT * FROM tests WHERE token=? AND status='done'", (token,)).fetchone()
@@ -253,11 +303,20 @@ async def test_diagnose(token: str):
     detail = json.loads(row["detail"]) if row["detail"] else {}
     submission = json.loads(row["submission"]) if row["submission"] else {}
 
+    if scope not in {"basic", "full"}:
+        raise HTTPException(400, "scope 仅支持 basic 或 full")
+
+    # 根据 scope 筛选题目范围
+    if scope == "basic":
+        target_qids = BASIC_QIDS
+    else:
+        target_qids = QUESTION_IDS
+
     # 构建题目索引
     q_index = {q["id"]: q for q in QUESTIONS}
 
     question_details = []
-    for qid in QUESTION_IDS:
+    for qid in target_qids:
         q = q_index.get(qid, {})
         d = detail.get(qid, {})
         s = submission.get(qid, {})
@@ -281,6 +340,7 @@ async def test_diagnose(token: str):
         "iq": raw_to_iq(row["score"]),
         "title": row["title"],
         "rank": _get_rank(row["score"], token),
+        "scope": scope,
         "questionDetails": question_details,
     }
 
@@ -560,12 +620,17 @@ async def login(request: Request):
         now_iso = _now_iso()
         db = get_db()
         try:
+            # 先检查验证码是否存在
             row = db.execute(
-                "SELECT code FROM verification_codes WHERE phone=? AND code=? AND expires_at>? AND used=0",
-                (phone, code, now_iso)
+                "SELECT code, expires_at, used FROM verification_codes WHERE phone=? AND code=?",
+                (phone, code)
             ).fetchone()
             if not row:
-                raise HTTPException(400, "验证码不正确或已过期")
+                raise HTTPException(400, "验证码不正确")
+            if row["used"] == 1:
+                raise HTTPException(400, "验证码已使用，请重新获取")
+            if row["expires_at"] <= now_iso:
+                raise HTTPException(400, "验证码已过期，请重新获取")
             db.execute(
                 "UPDATE verification_codes SET used=1 WHERE phone=? AND code=?",
                 (phone, code)
@@ -608,6 +673,8 @@ async def payment_create(request: Request):
 
     if not token:
         raise HTTPException(400, "缺少 token")
+    if plan_type not in {"basic", "premium"}:
+        raise HTTPException(400, "plan_type 仅支持 basic 或 premium")
     if channel not in VALID_CHANNELS:
         raise HTTPException(400, f"不支持的支付渠道，可选: {', '.join(sorted(VALID_CHANNELS))}")
 
@@ -615,13 +682,39 @@ async def payment_create(request: Request):
     if channel == "wechat_h5":
         raise HTTPException(400, "微信 H5 支付域名审核中，请使用支付宝 H5 或微信扫码支付")
 
+    # token 必须存在，避免脏订单写入
+    db = get_db()
+    try:
+        token_row = db.execute("SELECT 1 FROM tests WHERE token=?", (token,)).fetchone()
+    finally:
+        db.close()
+    if not token_row:
+        raise HTTPException(404, "token 不存在，请先创建测试记录")
+
     # TODO: 测试期间使用小额，正式上线改回 1990 / 9900
     amount = 19 if plan_type == "basic" else 99
     description = "龙虾学校 - 基础能力升级" if plan_type == "basic" else "龙虾学校 - 高级能力订阅"
     order_id = "PAY" + _gen_token(12)
     now = _now_iso()
 
-    # 写入数据库
+    # 调用支付渠道
+    try:
+        if channel == "wechat_native":
+            payment_info = wechat_pay.create_native_order(order_id, amount, description)
+        elif channel == "wechat_h5":
+            client_ip = request.client.host if request.client else "127.0.0.1"
+            payment_info = wechat_pay.create_h5_order(order_id, amount, description, client_ip)
+        elif channel == "alipay_pc":
+            # 构造带 token 和 paid 参数的 return_url
+            alipay_return_url = f"{_public_base_url()}/me/{token}?paid=premium" if plan_type == "premium" else f"{_public_base_url()}/wait/{token}?paid=basic"
+            payment_info = alipay_pay.create_pc_order(order_id, amount, description, alipay_return_url)
+        elif channel == "alipay_h5":
+            alipay_return_url = f"{_public_base_url()}/me/{token}?paid=premium" if plan_type == "premium" else f"{_public_base_url()}/wait/{token}?paid=basic"
+            payment_info = alipay_pay.create_h5_order(order_id, amount, description, alipay_return_url)
+    except RuntimeError as e:
+        raise HTTPException(500, str(e))
+
+    # 支付渠道返回成功后再写库，避免失败时留下 pending 脏数据
     db = get_db()
     try:
         db.execute(
@@ -632,26 +725,6 @@ async def payment_create(request: Request):
         db.commit()
     finally:
         db.close()
-
-    # 构建支付宝 return_url（根据 plan_type 跳转不同页面）
-    if plan_type == "premium":
-        alipay_return_url = f"https://{DOMAIN}/me/{token}?paid=premium"
-    else:
-        alipay_return_url = f"https://{DOMAIN}/wait/{token}?paid=basic"
-
-    # 调用支付渠道
-    try:
-        if channel == "wechat_native":
-            payment_info = wechat_pay.create_native_order(order_id, amount, description)
-        elif channel == "wechat_h5":
-            client_ip = request.client.host if request.client else "127.0.0.1"
-            payment_info = wechat_pay.create_h5_order(order_id, amount, description, client_ip)
-        elif channel == "alipay_pc":
-            payment_info = alipay_pay.create_pc_order(order_id, amount, description, alipay_return_url)
-        elif channel == "alipay_h5":
-            payment_info = alipay_pay.create_h5_order(order_id, amount, description, alipay_return_url)
-    except RuntimeError as e:
-        raise HTTPException(500, str(e))
 
     return {
         "success": True,
@@ -740,17 +813,31 @@ async def alipay_return(request: Request):
 
 @app.get("/api/payment/status/{order_id}")
 async def payment_status(order_id: str):
-    """前端轮询支付状态"""
+    """前端轮询支付状态，超过 10 分钟未支付自动过期"""
     db = get_db()
     try:
         row = db.execute(
-            "SELECT order_id, token, amount, plan_type, channel, status, paid_at FROM payments WHERE order_id=?",
+            "SELECT order_id, token, amount, plan_type, channel, status, paid_at, created_at FROM payments WHERE order_id=?",
             (order_id,),
         ).fetchone()
+        if not row:
+            raise HTTPException(404, "订单不存在")
+
+        # 检查是否过期：pending 状态且超过 10 分钟
+        if row["status"] == "pending" and row["created_at"]:
+            from datetime import datetime, timedelta, timezone
+            try:
+                created = datetime.fromisoformat(row["created_at"].replace("Z", "+00:00"))
+                if datetime.now(timezone.utc) - created > timedelta(minutes=10):
+                    db.execute("UPDATE payments SET status='expired' WHERE order_id=? AND status='pending'", (order_id,))
+                    db.commit()
+                    result = dict(row)
+                    result["status"] = "expired"
+                    return result
+            except Exception:
+                pass
     finally:
         db.close()
-    if not row:
-        raise HTTPException(404, "订单不存在")
     return dict(row)
 
 
@@ -760,9 +847,12 @@ async def payment_confirm(request: Request):
     body = await request.json()
     order_id = (body.get("order_id") or "").strip()
     token = (body.get("token") or "").strip()
+    plan_type = (body.get("plan_type") or "").strip()
 
     if not order_id and not token:
         raise HTTPException(400, "缺少订单号或 token")
+    if plan_type and plan_type not in {"basic", "premium"}:
+        raise HTTPException(400, "plan_type 仅支持 basic 或 premium")
 
     # 查询是否已真实支付
     db = get_db()
@@ -770,10 +860,16 @@ async def payment_confirm(request: Request):
         if order_id:
             row = db.execute("SELECT status FROM payments WHERE order_id=?", (order_id,)).fetchone()
         else:
-            row = db.execute(
-                "SELECT status FROM payments WHERE token=? ORDER BY created_at DESC LIMIT 1",
-                (token,),
-            ).fetchone()
+            if plan_type:
+                row = db.execute(
+                    "SELECT status FROM payments WHERE token=? AND plan_type=? ORDER BY datetime(created_at) DESC LIMIT 1",
+                    (token, plan_type),
+                ).fetchone()
+            else:
+                row = db.execute(
+                    "SELECT status FROM payments WHERE token=? ORDER BY datetime(created_at) DESC LIMIT 1",
+                    (token,),
+                ).fetchone()
     finally:
         db.close()
 
@@ -781,33 +877,15 @@ async def payment_confirm(request: Request):
     return {"success": True, "paid": paid}
 
 
-# ─── 微信 JS-SDK ───
-
-@app.get("/api/wechat/signature")
-async def wechat_signature(request: Request, url: str = ""):
-    """获取微信 JS-SDK 签名配置"""
-    if not url:
-        # 如果没有传 url，从 referer 获取
-        url = request.headers.get("referer", f"https://{DOMAIN}/")
-
-    app_id = pay_config.WECHAT_MP_APP_ID
-    app_secret = pay_config.WECHAT_MP_APP_SECRET
-
-    if not app_secret:
-        raise HTTPException(500, "微信公众号 AppSecret 未配置")
-
-    result = wechat_jssdk.generate_signature(app_id, app_secret, url)
-    if not result:
-        raise HTTPException(500, "生成签名失败，请检查微信公众号配置")
-
-    return result
-
-
 # ─── SSR 页面路由 ───
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "domain": DOMAIN})
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "domain": DOMAIN,
+        "public_base_url": _public_base_url(),
+    })
 
 
 @app.get("/r/{token}")
@@ -833,7 +911,11 @@ async def share_page(request: Request, token: str):
     data["iq"] = raw_to_iq(data["score"]) if data["status"] == "done" else 0
 
     return templates.TemplateResponse("share.html", {
-        "request": request, "domain": DOMAIN, "data": data, "token": token,
+        "request": request,
+        "domain": DOMAIN,
+        "public_base_url": _public_base_url(),
+        "data": data,
+        "token": token,
     })
 
 
@@ -855,8 +937,12 @@ async def wait_page(request: Request, token: str):
     data["iq"] = raw_to_iq(data["score"]) if data["status"] == "done" else 0
 
     return templates.TemplateResponse("detail.html", {
-        "request": request, "domain": DOMAIN, "data": data, "token": token,
-        "advanced_qids": ADVANCED_QIDS, "basic_qids": BASIC_QIDS,
+        "request": request,
+        "domain": DOMAIN,
+        "public_base_url": _public_base_url(),
+        "data": data,
+        "token": token,
+        "advanced_qids": ADVANCED_QIDS, "basic_qids": BASIC_QIDS, "raw_to_iq": raw_to_iq,
     })
 
 
@@ -876,26 +962,20 @@ async def me_page(request: Request, token: str):
     data["rank"] = _get_rank(data["score"], token) if data["status"] == "done" else None
     data["iq"] = raw_to_iq(data["score"]) if data["status"] == "done" else 0
 
-    # 查看是否有付费订单和已绑定的手机号
+    # 查看是否有付费订单
     db = get_db()
     try:
         payment = db.execute(
-            "SELECT status, confirmed_at FROM payments WHERE token=? ORDER BY created_at DESC LIMIT 1",
+            "SELECT status, confirmed_at FROM payments WHERE token=? AND plan_type='premium' ORDER BY datetime(created_at) DESC LIMIT 1",
             (token,)
         ).fetchone()
         total_done = db.execute(
             "SELECT COUNT(*) as cnt FROM tests WHERE status='done'"
         ).fetchone()["cnt"]
-        # 查询已绑定的手机号
-        bound_user = db.execute(
-            "SELECT phone FROM user_tokens WHERE token=? LIMIT 1",
-            (token,)
-        ).fetchone()
     finally:
         db.close()
 
     payment_status = payment["status"] if payment else None
-    bound_phone = bound_user["phone"] if bound_user else ""
     expire_date = ""
     if payment and payment["confirmed_at"]:
         from datetime import datetime, timedelta
@@ -907,11 +987,14 @@ async def me_page(request: Request, token: str):
             expire_date = ""
 
     return templates.TemplateResponse("me.html", {
-        "request": request, "domain": DOMAIN, "data": data, "token": token,
+        "request": request,
+        "domain": DOMAIN,
+        "public_base_url": _public_base_url(),
+        "data": data,
+        "token": token,
         "payment_status": payment_status, "total_done": total_done,
         "advanced_qids": ADVANCED_QIDS, "basic_qids": BASIC_QIDS,
         "expire_date": expire_date,
-        "bound_phone": bound_phone,
     })
 
 

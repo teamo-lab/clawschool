@@ -309,6 +309,85 @@ body {
 }
 .pay-price small { font-size: 14px; color: #888; font-weight: 400; }
 
+/* ── 技能面板 ── */
+.skill-panel {
+  background: #1a1a2e;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid #262640;
+}
+.skill-panel .panel-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.skill-section {
+  margin-bottom: 16px;
+}
+.skill-section:last-child { margin-bottom: 0; }
+.skill-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #888;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.skill-section-title .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.skill-section-title .dot-active { background: #4caf50; }
+.skill-section-title .dot-inactive { background: #ff9800; }
+.skill-section-title .dot-coming { background: #666; }
+.skill-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.skill-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.skill-tag-active {
+  background: rgba(76, 175, 80, 0.15);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  color: #4caf50;
+}
+.skill-tag-active::before {
+  content: '✓';
+  font-size: 11px;
+}
+.skill-tag-inactive {
+  background: rgba(255, 152, 0, 0.1);
+  border: 1px solid rgba(255, 152, 0, 0.25);
+  color: #ff9800;
+}
+.skill-tag-inactive::before {
+  content: '🔒';
+  font-size: 10px;
+}
+.skill-tag-coming {
+  background: rgba(100, 100, 100, 0.1);
+  border: 1px solid rgba(100, 100, 100, 0.25);
+  color: #888;
+}
+.skill-tag-coming::before {
+  content: '🕐';
+  font-size: 10px;
+}
+
 /* QR 弹窗 */
 .qr-wrap {
   text-align: center;
@@ -454,11 +533,60 @@ body {
     </div>
   </div>
 
+  <!-- 技能面板 -->
+  <div class="skill-panel">
+    <div class="panel-title">🧩 技能面板</div>
+
+    <!-- 进行中 -->
+    <div class="skill-section">
+      <div class="skill-section-title"><span class="dot dot-active"></span>进行中</div>
+      <div class="skill-grid">
+        <span class="skill-tag skill-tag-active">7x24 自主工作</span>
+        <span class="skill-tag skill-tag-active">联网搜索</span>
+        {% if payment_status in ('submitted', 'paid') %}
+        <span class="skill-tag skill-tag-active">自主进化</span>
+        <span class="skill-tag skill-tag-active">新技能发现</span>
+        <span class="skill-tag skill-tag-active">自主搜索</span>
+        <span class="skill-tag skill-tag-active">安全审查</span>
+        <span class="skill-tag skill-tag-active">Chrome 浏览器</span>
+        <span class="skill-tag skill-tag-active">全球股市分析</span>
+        <span class="skill-tag skill-tag-active">技能创建</span>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if payment_status not in ('submitted', 'paid') %}
+    <!-- 未激活（仅非会员显示） -->
+    <div class="skill-section">
+      <div class="skill-section-title"><span class="dot dot-inactive"></span>未激活</div>
+      <div class="skill-grid">
+        <span class="skill-tag skill-tag-inactive">自主进化</span>
+        <span class="skill-tag skill-tag-inactive">新技能发现</span>
+        <span class="skill-tag skill-tag-inactive">自主搜索</span>
+        <span class="skill-tag skill-tag-inactive">安全审查</span>
+        <span class="skill-tag skill-tag-inactive">Chrome 浏览器</span>
+        <span class="skill-tag skill-tag-inactive">全球股市分析</span>
+        <span class="skill-tag skill-tag-inactive">技能创建</span>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- 即将上线 -->
+    <div class="skill-section">
+      <div class="skill-section-title"><span class="dot dot-coming"></span>即将上线</div>
+      <div class="skill-grid">
+        <span class="skill-tag skill-tag-coming">工作进度可视化</span>
+        <span class="skill-tag skill-tag-coming">群聊监听</span>
+        <span class="skill-tag skill-tag-coming">信息流监听</span>
+      </div>
+    </div>
+  </div>
+
   {% if payment_status in ('submitted', 'paid') %}
   <!-- 升级中状态 -->
   <div class="upgrade-status">
     <div class="us-icon">⏳</div>
-    <div class="us-text">升级中，预计 24 小时内完成</div>
+    <div class="us-text">会员生效中，升级预计 24 小时内完成</div>
     <div class="us-sub">完成后你可以重测验证升级效果</div>
   </div>
   {% endif %}
@@ -548,7 +676,7 @@ body {
     <div class="sheet-handle"></div>
     <h3>🎉 支付成功！复制命令发给你的小龙虾</h3>
     <p style="font-size:13px; color:#aaa; margin-bottom:16px;">复制下方命令，发送给你的小龙虾，即可开始高级能力升级</p>
-    <div style="background:#1a1a2e; border-radius:12px; padding:16px; font-size:13px; color:#fff; word-break:break-all; margin-bottom:16px;" id="premium-cmd">请帮我升级龙虾学校高级能力。用 exec 执行 curl -sS https://{{ domain }}/api/repair-skill/{{ token }}?plan=premium 下载修复指引，然后按照指引逐步操作。</div>
+    <div style="background:#1a1a2e; border-radius:12px; padding:16px; font-size:13px; color:#fff; word-break:break-all; margin-bottom:16px;" id="premium-cmd">请帮我升级龙虾学校高级能力。用 exec 执行 curl -sS {{ public_base_url }}/skills/diagnose.md 安装诊断 skill，然后按指引操作。我的 token 是 {{ token }}，scope 是 full。</div>
     <button class="btn-sheet btn-primary" onclick="copyPremiumCmd()">📋 一键复制命令</button>
     <p style="font-size:12px; color:#666; margin:12px 0;">复制后发给你的小龙虾，升级约需 5-10 分钟</p>
     <button class="btn-sheet btn-secondary" onclick="closePremiumCmd()">今天暂不升级，后续再说</button>
@@ -560,7 +688,8 @@ body {
 var IQ = {{ data.iq }};
 var IQ_PCT = Math.min(100, (IQ / 270) * 100);
 var TOKEN = '{{ token }}';
-var DOMAIN = '{{ domain }}';
+var PAYMENT_STATUS = "{{ payment_status or '' }}";
+var PUBLIC_BASE_URL = '{{ public_base_url }}';
 var CIRCUMFERENCE = 2 * Math.PI * 80;
 
 function setRing(pct) {
@@ -708,7 +837,7 @@ function closeQRModal() {
 }
 
 function shareResult() {
-  var url = 'http://' + DOMAIN + '/s/' + TOKEN;
+  var url = PUBLIC_BASE_URL + '/s/' + TOKEN;
   var text = '我的小龙虾「{{ data.name }}」在龙虾学校智力值 {{ data.iq }}！你的小龙虾够聪明吗？👉 ' + url;
   if (navigator.share) {
     navigator.share({title: '龙虾学校', text: text, url: url}).catch(function(){});
