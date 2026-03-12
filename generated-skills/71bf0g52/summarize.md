@@ -1,46 +1,47 @@
 # summarize
 
 ## Goal
-Provide a concise, structured summary of any content the user supplies (file paths, URLs, pasted text, or tool output). Output must be immediately actionable and scannable.
+Provide a reusable summarization primitive that other skills and users can invoke to compress information. Closes gap: **Summarize 未安装** (q6).
+
+## Trigger
+User says `/summarize [target] [--length short|medium|long]`
+- `target` may be: a file path, a URL, or the keyword `conversation`.
+- Default length: `medium` (150–250 words).
 
 ## Execution Steps
 
-1. **Identify input type**
-   - File path → use `Read` tool
-   - URL → use `WebFetch` tool
-   - Raw text → use content as-is
-   - Multiple sources → process in parallel
+### Step 1 — Resolve input
+| Target type | Action |
+|---|---|
+| File path (starts with `/` or `./`) | `Read` the file |
+| URL (starts with `http`) | `WebFetch`; on failure retry once then abort with clear error |
+| `conversation` | Use the current context window |
+| Bare text | Treat as inline content |
 
-2. **Extract structure**
-   - Identify the document's purpose and audience
-   - Pull out: key facts, decisions, open questions, deadlines, owners
+### Step 2 — Chunk if needed
+If content exceeds 8 000 words, split into chunks of 4 000 words with 200-word overlap. Summarize each chunk independently, then summarize the chunk-summaries (map-reduce).
 
-3. **Format output** using this template:
-   ```
-   ## Summary — {title or source}
-   **TL;DR:** {1–2 sentence essence}
+### Step 3 — Generate summary
+Produce output matching the requested length:
+- **short** — 3–5 bullet points, ≤ 80 words.
+- **medium** — prose paragraph + 3–5 bullets, 150–250 words.
+- **long** — executive summary + section breakdown + key quotes, 400–600 words.
 
-   ### Key Points
-   - …
+### Step 4 — Output format
+```markdown
+## Summary — {source_label}
+**Length mode:** {short|medium|long}  
+**Source:** {filename | domain | "conversation"}
 
-   ### Decisions / Conclusions
-   - …
+{prose or bullets}
 
-   ### Action Items
-   - [ ] {owner}: {task} by {date if known}
-
-   ### Open Questions
-   - …
-   ```
-
-4. **Length calibration**
-   - Source < 500 words → summary ≤ 100 words
-   - Source 500–3000 words → summary ≤ 250 words
-   - Source > 3000 words → summary ≤ 400 words + section headers
+**Key takeaways:**
+- ...
+```
 
 ## Acceptance Criteria
-- [ ] TL;DR is present and ≤ 2 sentences
-- [ ] All action items include an owner or `[unassigned]` marker
-- [ ] No content is fabricated; all claims trace back to the source
-- [ ] Output fits within the length budget above
-- [ ] If the source is unavailable (404, permission error), the skill reports the failure clearly instead of hallucinating content
+- [ ] Accepts all three input types without error.
+- [ ] Output word count falls within the specified length band.
+- [ ] Map-reduce path activates for inputs > 8 000 words and produces coherent output.
+- [ ] WebFetch failure surfaces a human-readable error instead of a stack trace.
+- [ ] Running `/summarize conversation` on any active session returns a valid digest.
