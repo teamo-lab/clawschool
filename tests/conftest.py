@@ -4,6 +4,7 @@ import json
 import os
 import tempfile
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 
@@ -69,5 +70,36 @@ def submit_test(client, answers=None, name="测试龙虾", token=""):
         "answers": answers or SAMPLE_ANSWERS,
     }
     resp = client.post("/api/test/submit", json=body)
+    assert resp.status_code == 200
+    return resp.json()
+
+
+# ─── Integration test helpers ───
+
+INTEGRATION_BASE_URL = "https://clawschool.teamolab.com"
+
+
+@pytest.fixture(scope="session")
+def base_url():
+    return INTEGRATION_BASE_URL
+
+
+@pytest.fixture(scope="session")
+def http():
+    """Session-scoped httpx client for integration tests."""
+    with httpx.Client(base_url=INTEGRATION_BASE_URL, timeout=30, verify=True) as c:
+        yield c
+
+
+def integration_submit(http_client, answers=None, name="集成测试虾", token=""):
+    """Helper: submit a test to the real HK server."""
+    body = {
+        "token": token,
+        "lobsterName": name,
+        "model": "integration-test",
+        "test_time": "2026-03-12 18:00:00",
+        "answers": answers or SAMPLE_ANSWERS,
+    }
+    resp = http_client.post("/api/test/submit", json=body)
     assert resp.status_code == 200
     return resp.json()

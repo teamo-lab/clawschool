@@ -1,10 +1,10 @@
-"""注册登录模块 — 验证码生成/过期/复用 + 手机号登录 + token 绑定。"""
+"""注册登录模块 — 验证码生成/过期/复用 + 手机号登录 + token 绑定（mock + 集成测试）。"""
 
 import time
 from unittest.mock import patch
 
 import pytest
-from tests.conftest import submit_test
+from tests.conftest import submit_test, integration_submit
 
 
 class TestSendCode:
@@ -159,4 +159,67 @@ class TestTokenBinding:
 
     def test_login_without_token_ok(self, client):
         r = client.post("/api/login", json={"phone": "13800138000", "code": "888888"})
+        assert r.status_code == 200
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 集成测试 — 命中 HK 真实服务器
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+@pytest.mark.integration
+class TestSendCodeIntegration:
+    """发送验证码 — 真实服务器。"""
+
+    def test_send_code_success(self, http):
+        r = http.post("/api/login/send-code", json={"phone": "13800138000"})
+        assert r.status_code == 200
+        data = r.json()
+        assert data["success"] is True
+        assert data["expires_in"] == 300
+
+    def test_send_code_invalid_phone(self, http):
+        r = http.post("/api/login/send-code", json={"phone": "123"})
+        assert r.status_code == 400
+
+    def test_send_code_empty_phone(self, http):
+        r = http.post("/api/login/send-code", json={"phone": ""})
+        assert r.status_code == 400
+
+
+@pytest.mark.integration
+class TestLoginIntegration:
+    """手机号登录 — 真实服务器。"""
+
+    def test_mvp_code_888888(self, http):
+        r = http.post("/api/login", json={"phone": "13800138000", "code": "888888"})
+        assert r.status_code == 200
+        data = r.json()
+        assert data["success"] is True
+
+    def test_wrong_code_rejected(self, http):
+        http.post("/api/login/send-code", json={"phone": "13900000001"})
+        r = http.post("/api/login", json={"phone": "13900000001", "code": "000000"})
+        assert r.status_code == 400
+
+    def test_invalid_phone_rejected(self, http):
+        r = http.post("/api/login", json={"phone": "123", "code": "888888"})
+        assert r.status_code == 400
+
+
+@pytest.mark.integration
+class TestTokenBindingIntegration:
+    """登录绑定 token — 真实服务器。"""
+
+    def test_login_with_token(self, http):
+        d = integration_submit(http, name="绑定测试虾")
+        r = http.post("/api/login", json={
+            "phone": "13800138000",
+            "code": "888888",
+            "token": d["token"],
+        })
+        assert r.status_code == 200
+        assert r.json()["success"] is True
+
+    def test_login_without_token(self, http):
+        r = http.post("/api/login", json={"phone": "13800138000", "code": "888888"})
         assert r.status_code == 200

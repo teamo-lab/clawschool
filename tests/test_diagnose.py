@@ -1,11 +1,11 @@
-"""基础诊断模块 — scope 过滤 + US Claude Code API 调用 + skills 生成容错。"""
+"""基础诊断模块 — scope 过滤 + US Claude Code API 调用 + skills 生成容错（mock + 集成测试）。"""
 
 import json
 from unittest.mock import patch, MagicMock
 
 import pytest
 from app.repair import BASIC_QIDS, ADVANCED_QIDS
-from tests.conftest import submit_test, SAMPLE_ANSWERS
+from tests.conftest import submit_test, integration_submit, SAMPLE_ANSWERS
 
 
 class TestDiagnoseScope:
@@ -207,3 +207,97 @@ class TestClaudeCodeAPICall:
         assert len(qids) == 8
         for adv in ADVANCED_QIDS:
             assert adv not in qids
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 集成测试 — 命中 HK 真实服务器 + US Claude Code API
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+@pytest.mark.integration
+class TestDiagnoseScopeIntegration:
+    """scope 过滤 — 真实服务器。"""
+
+    def test_scope_full_returns_12(self, http):
+        d = integration_submit(http)
+        r = http.get(f"/api/test/diagnose?token={d['token']}")
+        assert r.status_code == 200
+        data = r.json()
+        assert data["scope"] == "full"
+        assert len(data["questionDetails"]) == 12
+
+    def test_scope_basic_returns_8(self, http):
+        d = integration_submit(http)
+        r = http.get(f"/api/test/diagnose?token={d['token']}&scope=basic")
+        assert r.status_code == 200
+        data = r.json()
+        assert data["scope"] == "basic"
+        assert len(data["questionDetails"]) == 8
+
+    def test_scope_basic_excludes_advanced(self, http):
+        d = integration_submit(http)
+        r = http.get(f"/api/test/diagnose?token={d['token']}&scope=basic")
+        data = r.json()
+        returned_qids = {q["questionId"] for q in data["questionDetails"]}
+        for adv_qid in ADVANCED_QIDS:
+            assert adv_qid not in returned_qids
+
+    def test_default_scope_is_full(self, http):
+        d = integration_submit(http)
+        r = http.get(f"/api/test/diagnose?token={d['token']}")
+        data = r.json()
+        assert data["scope"] == "full"
+
+
+@pytest.mark.integration
+class TestDiagnoseResponseIntegration:
+    """诊断响应结构 — 真实服务器。"""
+
+    def test_contains_required_fields(self, http):
+        d = integration_submit(http)
+        r = http.get(f"/api/test/diagnose?token={d['token']}")
+        data = r.json()
+        for field in ["token", "lobsterName", "model", "score", "iq", "title", "rank", "scope", "questionDetails"]:
+            assert field in data, f"缺少字段: {field}"
+
+    def test_question_detail_structure(self, http):
+        d = integration_submit(http)
+        r = http.get(f"/api/test/diagnose?token={d['token']}")
+        data = r.json()
+        q = data["questionDetails"][0]
+        for field in ["questionId", "title", "category", "instructions", "evidenceFormat", "agentEvidence", "score", "maxScore", "reason"]:
+            assert field in q, f"questionDetail 缺少字段: {field}"
+
+    def test_scores_match_submit(self, http):
+        d = integration_submit(http)
+        r = http.get(f"/api/test/diagnose?token={d['token']}")
+        data = r.json()
+        assert data["score"] == d["score"]
+        assert data["iq"] == d["iq"]
+        assert data["title"] == d["title"]
+
+
+@pytest.mark.integration
+class TestDiagnoseErrorsIntegration:
+    """诊断错误场景 — 真实服务器。"""
+
+    def test_token_not_found(self, http):
+        r = http.get("/api/test/diagnose?token=nonexist9")
+        assert r.status_code == 404
+
+
+@pytest.mark.integration
+class TestClaudeCodeAPIIntegration:
+    """US Claude Code API 真实调用 — 生成 skills（慢，约 30-120 秒）。"""
+
+    @pytest.mark.timeout(180)
+    def test_diagnose_generates_skills(self, http):
+        d = integration_submit(http)
+        r = http.get(f"/api/test/diagnose?token={d['token']}&scope=basic", timeout=180)
+        assert r.status_code == 200
+        data = r.json()
+        # generatedSkills 可能为空（US API 降级）或有数据
+        assert "generatedSkills" in data
+        if data["generatedSkills"]:
+            skill = data["generatedSkills"][0]
+            assert "name" in skill
+            assert "url" in skill

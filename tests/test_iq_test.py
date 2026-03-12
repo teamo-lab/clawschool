@@ -1,11 +1,11 @@
-"""IQ 测试模块 — 评分引擎 + 答卷提交。"""
+"""IQ 测试模块 — 评分引擎 + 答卷提交（mock + 集成测试）。"""
 
 import pytest
 from app.scorer import (
     raw_to_iq, get_title, score_submission, merge_retest,
     SCORERS, TOTAL_SCORE, _truthy, _bool_or_none,
 )
-from tests.conftest import submit_test, SAMPLE_ANSWERS, PERFECT_ANSWERS
+from tests.conftest import submit_test, integration_submit, SAMPLE_ANSWERS, PERFECT_ANSWERS
 
 
 # ━━━ raw_to_iq 映射 ━━━
@@ -247,3 +247,88 @@ class TestSubmitAPI:
         d = submit_test(client)
         assert d["rank"] is not None
         assert d["rank"] >= 1
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 集成测试 — 命中 HK 真实服务器
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+@pytest.mark.integration
+class TestSubmitIntegration:
+    """提交答卷 → 真实服务器评分 + 存储。"""
+
+    def test_submit_returns_result(self, http):
+        data = integration_submit(http)
+        assert data["success"] is True
+        assert "token" in data
+        assert len(data["token"]) == 8
+        assert data["score"] > 0
+        assert data["iq"] > 30
+        assert data["title"]
+        assert data["report_url"].startswith("https://")
+
+    def test_submit_perfect_score(self, http):
+        data = integration_submit(http, answers=PERFECT_ANSWERS, name="满分集成虾")
+        assert data["score"] == 120
+        assert data["iq"] == 270
+        assert data["title"] == "波士顿龙虾"
+
+    def test_submit_empty_answers(self, http):
+        data = integration_submit(http, answers={}, name="空答卷虾")
+        assert data["score"] == 0
+        assert data["iq"] == 30
+        assert data["title"] == "虾皮"
+
+    def test_submit_with_existing_token(self, http):
+        d1 = integration_submit(http, name="复提虾第一次")
+        token = d1["token"]
+        d2 = integration_submit(http, answers=PERFECT_ANSWERS, token=token, name="复提虾第二次")
+        assert d2["token"] == token
+        assert d2["score"] >= d1["score"]
+
+    def test_rank_present(self, http):
+        data = integration_submit(http, name="排名测试虾")
+        assert data["rank"] is not None
+        assert data["rank"] >= 1
+
+
+@pytest.mark.integration
+class TestResultIntegration:
+    """结果查询 API — 真实服务器。"""
+
+    def test_result_api_returns_done(self, http):
+        d = integration_submit(http)
+        r = http.get(f"/api/result/{d['token']}")
+        assert r.status_code == 200
+        result = r.json()
+        assert result["status"] == "done"
+        assert result["iq"] == d["iq"]
+        assert result["score"] == d["score"]
+
+    def test_result_not_found(self, http):
+        r = http.get("/api/result/nonexist9")
+        assert r.status_code == 404
+
+
+@pytest.mark.integration
+class TestLeaderboardIntegration:
+    """排行榜 API — 真实服务器。"""
+
+    def test_leaderboard_returns_data(self, http):
+        r = http.get("/api/leaderboard")
+        assert r.status_code == 200
+        data = r.json()
+        assert data["total"] >= 1
+        assert "leaderboard" in data
+
+
+@pytest.mark.integration
+class TestTokenIntegration:
+    """Token 创建 API — 真实服务器。"""
+
+    def test_create_token(self, http):
+        r = http.post("/api/token", json={"name": "集成测试虾"})
+        assert r.status_code == 200
+        data = r.json()
+        assert "token" in data
+        assert len(data["token"]) == 8

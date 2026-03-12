@@ -1,7 +1,7 @@
-"""前端用户动线 — 页面渲染 + 重定向 + OG 标签 + 模板变量。"""
+"""前端用户动线 — 页面渲染 + 重定向 + OG 标签 + 模板变量（mock + 集成测试）。"""
 
 import pytest
-from tests.conftest import submit_test
+from tests.conftest import submit_test, integration_submit
 
 
 class TestHomePage:
@@ -170,6 +170,182 @@ class TestStats:
     def test_returns_stats(self, client):
         submit_test(client)
         r = client.get("/api/stats")
+        assert r.status_code == 200
+        data = r.json()
+        assert data["total_tests"] >= 1
+        assert data["avg_iq"] > 0
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 集成测试 — 命中 HK 真实服务器
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+@pytest.mark.integration
+class TestHomePageIntegration:
+    """首页 — 真实服务器。"""
+
+    def test_renders_200(self, http):
+        r = http.get("/")
+        assert r.status_code == 200
+        assert "龙虾学校" in r.text
+
+    def test_no_gfw_blocked_cdn(self, http):
+        r = http.get("/")
+        assert "fonts.googleapis.com" not in r.text
+        assert "unpkg.com" not in r.text
+
+
+@pytest.mark.integration
+class TestDetailPageIntegration:
+    """详情页 /wait/{token} — 真实服务器。"""
+
+    def test_renders_with_token(self, http):
+        d = integration_submit(http)
+        r = http.get(f"/wait/{d['token']}")
+        assert r.status_code == 200
+        assert d["token"] in r.text
+
+    def test_not_found(self, http):
+        r = http.get("/wait/nonexist9")
+        assert r.status_code == 404
+
+    def test_og_tags_present(self, http):
+        d = integration_submit(http)
+        r = http.get(f"/wait/{d['token']}")
+        assert "og:title" in r.text
+        assert "og:image" in r.text
+        assert "og:url" in r.text
+
+    def test_og_urls_use_https(self, http):
+        d = integration_submit(http)
+        r = http.get(f"/wait/{d['token']}")
+        assert 'content="http://' not in r.text
+
+    def test_no_gfw_blocked_cdn(self, http):
+        d = integration_submit(http)
+        r = http.get(f"/wait/{d['token']}")
+        assert "fonts.googleapis.com" not in r.text
+        assert "unpkg.com" not in r.text
+
+    def test_iq_displayed(self, http):
+        d = integration_submit(http)
+        r = http.get(f"/wait/{d['token']}")
+        assert str(d["iq"]) in r.text
+
+    def test_upgrade_command_uses_diagnose_skill(self, http):
+        d = integration_submit(http)
+        r = http.get(f"/wait/{d['token']}")
+        assert "skills/diagnose.md" in r.text
+        assert "scope" in r.text
+        assert "basic" in r.text
+        assert "repair-skill" not in r.text
+
+
+@pytest.mark.integration
+class TestSharePageIntegration:
+    """分享页 /s/{token} — 真实服务器。"""
+
+    def test_renders(self, http):
+        d = integration_submit(http)
+        r = http.get(f"/s/{d['token']}")
+        assert r.status_code == 200
+
+    def test_not_found(self, http):
+        r = http.get("/s/nonexist9")
+        assert r.status_code == 404
+
+    def test_og_title_contains_iq(self, http):
+        d = integration_submit(http)
+        r = http.get(f"/s/{d['token']}")
+        assert str(d["iq"]) in r.text
+
+    def test_og_urls_https(self, http):
+        d = integration_submit(http)
+        r = http.get(f"/s/{d['token']}")
+        assert 'content="http://' not in r.text
+
+
+@pytest.mark.integration
+class TestMePageIntegration:
+    """个人主页 /me/{token} — 真实服务器。"""
+
+    def test_renders(self, http):
+        d = integration_submit(http)
+        r = http.get(f"/me/{d['token']}")
+        assert r.status_code == 200
+
+    def test_not_found(self, http):
+        r = http.get("/me/nonexist9")
+        assert r.status_code == 404
+
+    def test_no_gfw_blocked_cdn(self, http):
+        d = integration_submit(http)
+        r = http.get(f"/me/{d['token']}")
+        assert "fonts.googleapis.com" not in r.text
+        assert "unpkg.com" not in r.text
+
+    def test_contains_iq(self, http):
+        d = integration_submit(http)
+        r = http.get(f"/me/{d['token']}")
+        assert str(d["iq"]) in r.text
+
+
+@pytest.mark.integration
+class TestRedirectsIntegration:
+    """重定向 — 真实服务器。"""
+
+    def test_r_redirects_to_wait(self, http):
+        d = integration_submit(http)
+        r = http.get(f"/r/{d['token']}", follow_redirects=False)
+        assert r.status_code in (301, 302, 307)
+        assert f"/wait/{d['token']}" in r.headers["location"]
+
+    def test_leaderboard_redirects(self, http):
+        r = http.get("/leaderboard", follow_redirects=False)
+        assert r.status_code in (301, 302, 307)
+        assert "/#leaderboard" in r.headers["location"]
+
+
+@pytest.mark.integration
+class TestSkillFilesIntegration:
+    """Skill 文件下载 — 真实服务器。"""
+
+    def test_skill_md(self, http):
+        r = http.get("/skill.md")
+        assert r.status_code == 200
+        assert "龙虾学校" in r.text
+
+    def test_diagnose_skill_md(self, http):
+        r = http.get("/skills/diagnose.md")
+        assert r.status_code == 200
+        assert "诊断" in r.text or "diagnose" in r.text.lower()
+
+
+@pytest.mark.integration
+class TestActiveCountIntegration:
+    """计数器 API — 真实服务器。"""
+
+    def test_returns_counts(self, http):
+        r = http.get("/api/active-count")
+        assert r.status_code == 200
+        data = r.json()
+        assert "active" in data
+        assert "total_done" in data
+
+    def test_total_done_increments(self, http):
+        r1 = http.get("/api/active-count")
+        before = r1.json()["total_done"]
+        integration_submit(http)
+        r2 = http.get("/api/active-count")
+        assert r2.json()["total_done"] >= before + 1
+
+
+@pytest.mark.integration
+class TestStatsIntegration:
+    """统计 API — 真实服务器。"""
+
+    def test_returns_stats(self, http):
+        r = http.get("/api/stats")
         assert r.status_code == 200
         data = r.json()
         assert data["total_tests"] >= 1

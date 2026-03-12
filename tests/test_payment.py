@@ -1,10 +1,10 @@
-"""支付模块 — 订单创建 + 回调通知 + 状态查询 + confirm 兼容。"""
+"""支付模块 — 订单创建 + 回调通知 + 状态查询 + confirm 兼容（mock + 集成测试）。"""
 
 import json
 from unittest.mock import patch, MagicMock
 
 import pytest
-from tests.conftest import submit_test
+from tests.conftest import submit_test, integration_submit
 
 
 class TestPaymentCreate:
@@ -199,3 +199,62 @@ class TestAlipayCallback:
                 "trade_no": "fake",
             })
         assert r.text == "fail"
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 集成测试 — 命中 HK 真实服务器
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+@pytest.mark.integration
+class TestPaymentCreateIntegration:
+    """创建支付订单 — 真实服务器（不触发真实支付渠道）。"""
+
+    def test_missing_token_returns_400(self, http):
+        r = http.post("/api/payment/create", json={"plan_type": "basic", "channel": "alipay_h5"})
+        assert r.status_code == 400
+
+    def test_invalid_channel_returns_400(self, http):
+        d = integration_submit(http)
+        r = http.post("/api/payment/create", json={
+            "token": d["token"], "plan_type": "basic", "channel": "invalid_channel"
+        })
+        assert r.status_code == 400
+
+    def test_wechat_h5_blocked(self, http):
+        d = integration_submit(http)
+        r = http.post("/api/payment/create", json={
+            "token": d["token"], "plan_type": "basic", "channel": "wechat_h5"
+        })
+        assert r.status_code == 400
+        assert "审核" in r.json()["detail"]
+
+    def test_nonexistent_token_returns_error(self, http):
+        r = http.post("/api/payment/create", json={
+            "token": "nonexist9", "plan_type": "basic", "channel": "alipay_h5"
+        })
+        # 不存在的 token 应报错
+        assert r.status_code in (400, 404)
+
+
+@pytest.mark.integration
+class TestPaymentStatusIntegration:
+    """支付状态查询 — 真实服务器。"""
+
+    def test_nonexistent_order_returns_404(self, http):
+        r = http.get("/api/payment/status/PAYnonexistent999")
+        assert r.status_code == 404
+
+
+@pytest.mark.integration
+class TestPaymentConfirmIntegration:
+    """confirm 兼容 — 真实服务器。"""
+
+    def test_confirm_missing_both_returns_400(self, http):
+        r = http.post("/api/payment/confirm", json={})
+        assert r.status_code == 400
+
+    def test_confirm_by_token_no_order(self, http):
+        d = integration_submit(http)
+        r = http.post("/api/payment/confirm", json={"token": d["token"]})
+        assert r.status_code == 200
+        assert r.json()["paid"] is False
