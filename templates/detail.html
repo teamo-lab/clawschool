@@ -33,8 +33,10 @@
             --ease-fluid: cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; touch-action: manipulation; }
-        img { pointer-events: none; user-select: none; -webkit-user-select: none; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; touch-action: manipulation; -webkit-touch-callout: none; }
+        img { -webkit-user-select: none; user-select: none; pointer-events: none; -webkit-touch-callout: none; }
+
+        html, body { overflow-x: hidden; }
 
         body {
             font-family: var(--font-ui);
@@ -53,6 +55,7 @@
             position: relative;
             display: flex;
             flex-direction: column;
+            overflow-x: hidden;
         }
 
         .noise-overlay {
@@ -488,6 +491,82 @@
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* ===== Coin Badge System ===== */
+        .score-coin-wrap {
+            position: relative;
+            z-index: 2;
+            width: 320px;
+            height: 320px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 1.2s var(--ease-fluid) 0.1s both;
+        }
+        .coin-grid {
+            position: absolute;
+            width: 320%;
+            height: 320%;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) perspective(300px) rotateX(55deg);
+            background-image:
+                linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 24px 24px;
+            mask-image: radial-gradient(ellipse 35% 45% at 50% 45%, black 10%, transparent 65%);
+            -webkit-mask-image: radial-gradient(ellipse 35% 45% at 50% 45%, black 10%, transparent 65%);
+            pointer-events: none;
+            animation: gridFade 1.5s var(--ease-fluid) 0.2s both;
+        }
+        @keyframes gridFade { from { opacity: 0; } to { opacity: 1; } }
+        .coin-glow {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 200%;
+            height: 200%;
+            border-radius: 50%;
+            pointer-events: none;
+            filter: blur(50px);
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.6);
+            animation: glowPulse 2s var(--ease-fluid) 0.5s forwards;
+        }
+        .coin-glow--iron    { background: radial-gradient(circle, rgba(80, 80, 100, 0.3) 0%, transparent 60%); }
+        .coin-glow--bronze  { background: radial-gradient(circle, rgba(205, 127, 50, 0.25) 0%, transparent 60%); }
+        .coin-glow--silver  { background: radial-gradient(circle, rgba(180, 190, 220, 0.25) 0%, transparent 60%); }
+        .coin-glow--adv     { background: radial-gradient(circle, rgba(220, 40, 40, 0.2) 0%, transparent 60%); }
+        .coin-glow--legend  { background: radial-gradient(circle, rgba(255, 200, 50, 0.3) 0%, transparent 60%); }
+        @keyframes glowPulse {
+            0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        .rank-coin {
+            position: relative;
+            z-index: 2;
+            width: 80%;
+            height: 80%;
+            object-fit: contain;
+            will-change: transform;
+            filter: drop-shadow(0 8px 28px rgba(0, 0, 0, 0.5));
+            animation: coinReveal 0.8s var(--ease-fluid) 0.3s both;
+        }
+        @keyframes coinReveal {
+            from { opacity: 0; transform: perspective(600px) scale(0.4) rotateY(80deg); }
+            to   { opacity: 1; transform: perspective(600px) scale(1) rotateY(0deg); }
+        }
+        .coin-specular {
+            position: absolute;
+            width: 80%;
+            height: 80%;
+            z-index: 3;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            background: radial-gradient(ellipse 50% 50% at 50% 40%, rgba(255,255,255,0.2) 0%, transparent 70%);
+        }
+        .coin-specular.active { opacity: 1; }
+
         /* =============================================
            PHASE 3 — Report
            ============================================= */
@@ -496,20 +575,82 @@
             align-items: center;
             padding: 60px 24px 0;
             position: relative;
+            --stage-r: 255;
+            --stage-g: 255;
+            --stage-b: 255;
         }
 
         .phase-result::before {
             content: '';
             position: absolute;
-            top: 32%;
+            top: 0;
             left: 50%;
-            transform: translate(-50%, -50%);
-            width: 420px;
-            height: 420px;
-            background: radial-gradient(circle, rgba(204, 15, 20, 0.08) 0%, rgba(255, 150, 22, 0.04) 40%, transparent 70%);
-            border-radius: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            height: 500px;
+            background: radial-gradient(ellipse 70% 40% at 50% 0%, rgba(var(--stage-r), var(--stage-g), var(--stage-b), 0.06) 0%, transparent 100%);
             pointer-events: none;
             z-index: 0;
+        }
+
+        .top-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: calc(env(safe-area-inset-top, 20px) + 10px) 20px 10px;
+            background: rgba(11, 1, 2, 0.65);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            animation: fadeIn 1s var(--ease-fluid) both;
+        }
+        .top-nav .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .top-nav .brand-logo {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+        }
+        .top-nav .brand-name {
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-h1);
+            letter-spacing: 1px;
+        }
+        .nav-share-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 20px;
+            border-radius: 100px;
+            border: none;
+            background: linear-gradient(135deg, #CC0F14, #ff6b3d);
+            color: #fff;
+            font-family: var(--font-ui);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+        .nav-share-btn:active { transform: scale(0.95); }
+        .nav-share-btn svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
         .brand-nav {
@@ -562,7 +703,7 @@
         }
 
         /* Score Unit */
-        .score-unit {
+        .score-coin-wrap {
             position: relative;
             z-index: 2;
             width: 220px;
@@ -672,6 +813,43 @@
             animation: slideUp 0.8s var(--ease-fluid) 0.45s both;
         }
 
+        .stat-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin-bottom: 28px;
+            animation: slideUp 0.8s var(--ease-fluid) 0.5s both;
+        }
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 7px 14px;
+            border-radius: 100px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .stat-value, .stat-num {
+            font-family: var(--font-display);
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-h1);
+        }
+        .stat-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.4);
+        }
+        .stat-sep { display: none; }
+        .stat-rank { border-color: rgba(255, 150, 22, 0.12); }
+        .stat-rank .stat-value { color: var(--brand-orange); }
+        .di-ok { border-color: rgba(16, 185, 129, 0.1); }
+        .di-ok .stat-num { color: var(--color-perfect); }
+        .di-fix { border-color: rgba(255, 150, 22, 0.1); }
+        .di-fix .stat-num { color: var(--brand-orange); }
+        .di-pro .stat-num { color: rgba(255, 255, 255, 0.35); }
+
         .meta-row {
             display: flex;
             align-items: center;
@@ -737,6 +915,70 @@
         .btn-secondary { background: rgba(255, 255, 255, 0.06); color: var(--text-body); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); }
         .btn-ghost { background: none; color: var(--text-muted); padding: 14px 24px; font-size: 14px; font-weight: 500; }
         .btn-tag { margin-left: auto; font-size: 12px; font-weight: 600; opacity: 0.6; }
+
+        /* --- Upgrade Cards --- */
+        .upgrade-cards {
+            width: 100%; display: flex; flex-direction: column; gap: 10px;
+            padding-bottom: 28px;
+            margin-bottom: 28px;
+            animation: slideUp 0.8s var(--ease-fluid) 0.6s both;
+        }
+        .upgrade-card {
+            position: relative;
+            display: flex; align-items: center; gap: 14px;
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.03);
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+            overflow: hidden;
+        }
+        .upgrade-card:active { transform: scale(0.98); }
+        .upgrade-card-icon {
+            flex-shrink: 0;
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+            background: rgba(255, 255, 255, 0.04);
+        }
+        .upgrade-card-body { flex: 1; min-width: 0; }
+        .upgrade-card-title {
+            font-size: 14px; font-weight: 600;
+            color: var(--text-h1);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .upgrade-card-price {
+            font-size: 14px; font-weight: 700;
+            color: var(--brand-orange);
+        }
+        .upgrade-card-desc {
+            font-size: 12px; font-weight: 400;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 2px;
+        }
+        .upgrade-card-arrow {
+            flex-shrink: 0;
+            width: 16px; height: 16px;
+            color: rgba(255, 255, 255, 0.3);
+        }
+        .upgrade-card-badge {
+            position: absolute; top: 0; right: 14px;
+            padding: 2px 8px 3px;
+            font-size: 10px; font-weight: 700; letter-spacing: 0.03em;
+            color: #000;
+            background: var(--brand-orange);
+            border-radius: 0 0 6px 6px;
+        }
+        .upgrade-card--pro .upgrade-card-price { color: rgba(255, 255, 255, 0.45); }
+        .upgrade-card--pro .upgrade-card-badge {
+            background: rgba(255, 255, 255, 0.15);
+            color: rgba(255, 255, 255, 0.6);
+        }
 
         .report-section {
             position: relative; z-index: 3; width: 100%;
@@ -894,6 +1136,28 @@
         .bar-good    { background: rgba(16, 185, 129, 0.6); }
         .bar-free    { background: var(--brand-orange); box-shadow: 0 0 6px rgba(255, 150, 22, 0.3); }
         .bar-paid    { background: rgba(255, 255, 255, 0.12); }
+
+        .scan-score-ring {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-family: var(--font-display);
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--text-h1);
+            border: 2px solid rgba(255, 255, 255, 0.06);
+        }
+        .scan-card.sc-pass .scan-score-ring {
+            border-color: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .scan-card.sc-fail .scan-score-ring {
+            border-color: var(--brand-orange);
+            color: var(--brand-orange);
+        }
 
         .footer-space { height: calc(80px + env(safe-area-inset-bottom)); }
 
@@ -1230,7 +1494,7 @@
             .wait-title { font-size: 20px; }
             .wait-subtitle { font-size: 13px; }
 
-            .score-unit { width: 180px; height: 180px; }
+            .score-coin-wrap { width: 180px; height: 180px; }
             .score-num { font-size: 52px; }
             .score-max { font-size: 16px; }
             .hero-title { font-size: 20px; }
@@ -1268,7 +1532,7 @@
             .phase-result { padding: 72px 32px 0; }
 
             .wait-lobster { width: 220px; height: 220px; }
-            .score-unit { width: 240px; height: 240px; }
+            .score-coin-wrap { width: 240px; height: 240px; }
             .score-num { font-size: 72px; }
             .hero-title { font-size: 28px; }
             .hero-subtitle { font-size: 15px; max-width: 380px; }
@@ -1323,7 +1587,7 @@
             .back-btn svg { width: 16px; height: 16px; }
             .back-btn:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.15); }
 
-            .score-unit { width: 180px; height: 180px; margin-bottom: 0; }
+            .score-coin-wrap { width: 180px; height: 180px; margin-bottom: 0; }
 
             .hero-content { max-width: 720px; margin: 0 auto; }
             .score-display { margin-bottom: 8px; }
@@ -1414,7 +1678,7 @@
 
             .brand-nav { max-width: 800px; }
 
-            .score-unit { width: 200px; height: 200px; }
+            .score-coin-wrap { width: 200px; height: 200px; }
             .hero-content { max-width: 800px; }
             .hero-title { font-size: 26px; }
             .hero-subtitle { font-size: 14px; max-width: 400px; }
@@ -1457,7 +1721,7 @@
 
             .brand-nav { max-width: 900px; }
 
-            .score-unit { width: 220px; height: 220px; }
+            .score-coin-wrap { width: 220px; height: 220px; }
             .hero-content { max-width: 900px; }
             .hero-title { font-size: 28px; }
             .hero-subtitle { font-size: 15px; max-width: 440px; }
@@ -1587,86 +1851,78 @@
 
         <!-- ===== PHASE 3: Report ===== -->
         <section class="phase phase-result {% if data.status == 'done' %}active{% endif %}" id="phaseResult">
-            <div class="brand-nav">
-                <a class="back-btn" href="/">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                </a>
-                <span class="brand-name">龙虾学校</span>
-            </div>
-
-            <div class="score-unit">
-                <svg class="ring-svg" viewBox="0 0 220 220">
-                    <defs>
-                        <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#ff2d55"/>
-                            <stop offset="100%" stop-color="#FF9616"/>
-                        </linearGradient>
-                    </defs>
-                    <circle class="ring-bg" cx="110" cy="110" r="104"/>
-                    <circle class="ring-progress" id="ringProgress" cx="110" cy="110" r="104"
-                        stroke-dasharray="653" stroke-dashoffset="653"/>
-                </svg>
-                <div class="ring-lobster">
-                    <div class="ring-lobster-glow"></div>
-                    <img src="/static/3d_cyber_lobster.png" class="ring-lobster-img" alt="3D Lobster">
+            <nav class="top-nav">
+                <div class="brand">
+                    <img class="brand-logo" src="/static/badges/logo.png" alt="Claw School">
+                    <span class="brand-name">龙虾学校</span>
                 </div>
+                <button class="nav-share-btn" onclick="shareResult()">
+                    <svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                    分享
+                </button>
+            </nav>
+
+            <div class="score-coin-wrap">
+                <div class="coin-grid"></div>
+                <div class="coin-glow" id="coinGlow"></div>
+                <img id="rankCoin" class="rank-coin" src="/static/badges/黑铁.png" alt="等级徽章">
+                <div class="coin-specular" id="coinSpecular"></div>
             </div>
 
             <div class="hero-content">
                 <div class="score-display">
-                    <span class="score-num" id="scoreNum">{% if data.status == 'done' %}0{% else %}0{% endif %}</span>
-                    <span class="score-max">智力值</span>
+                    <span class="score-num" id="scoreNum">0</span>
+                    <span class="score-max">/ 270</span>
                 </div>
 
-                <div class="hero-title" id="heroTitle">能力扫描完成，你的潜力无限</div>
-                <div class="hero-subtitle" id="heroSubtitle">已完成 12 项 AI 实战能力检测<br>超过 <strong style="color:var(--brand-orange)" id="percentText">{{ score_pct }}%</strong> 的小龙虾</div>
+                <div class="hero-title" id="heroTitle"><span id="lobsterName">{{ data.name }}</span></div>
+                <div class="hero-subtitle" id="heroSubtitle">超过 <strong style="color:rgba(255,255,255,0.7)" id="percentText">{{ score_pct }}%</strong> 的小龙虾</div>
 
-                <div class="meta-row">
-                    <div class="meta-item">
-                        <div class="meta-value" id="lobsterName">{{ data.name }}</div>
-                        <div class="meta-label">龙虾名称</div>
+                <div class="stat-bar">
+                    <div class="stat-item stat-rank">
+                        <span class="stat-value accent" id="rankNum">{% if data.rank %}#{{ data.rank }}{% else %}-{% endif %}</span>
                     </div>
-                    <div class="meta-item">
-                        <div class="meta-value" id="titleBadge">{{ data.title }}</div>
-                        <div class="meta-label">称号</div>
+                    <div class="stat-item di-ok">
+                        <span class="stat-num" id="diagOk">{{ ns.ok_count }}</span>
+                        <span class="stat-label">通过</span>
                     </div>
-                    <div class="meta-item">
-                        <div class="meta-value accent" id="rankNum">{% if data.rank %}#{{ data.rank }}{% else %}-{% endif %}</div>
-                        <div class="meta-label">排行榜</div>
+                    <div class="stat-item di-fix">
+                        <span class="stat-num" id="diagFree">{{ ns.basic_fixable }}</span>
+                        <span class="stat-label">可修复</span>
+                    </div>
+                    <div class="stat-item di-pro">
+                        <span class="stat-num" id="diagPaid">{{ ns.advanced_count }}</span>
+                        <span class="stat-label">高级</span>
                     </div>
                 </div>
+                <span id="titleBadge" style="display:none">{{ data.title }}</span>
 
-                <div class="diagnosis">
-                    <div class="diag-card diag-ok">
-                        <div class="diag-num" id="diagOk">{{ ns.ok_count }}</div>
-                        <div class="diag-label">无问题</div>
-                    </div>
-                    <div class="diag-card diag-free">
-                        <div class="diag-num" id="diagFree">{{ ns.basic_fixable }}</div>
-                        <div class="diag-label">¥0.19 可修复</div>
-                    </div>
-                    <div class="diag-card diag-paid">
-                        <div class="diag-num" id="diagPaid">{{ ns.advanced_count }}</div>
-                        <div class="diag-label">高级订阅</div>
-                    </div>
-                </div>
-
-                <div class="btn-group" id="btnGroup">
-                    <button class="btn btn-primary" onclick="shareResult()">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>
-                        炫耀我的成绩
-                    </button>
+                <div class="upgrade-cards" id="btnGroup">
                     {% if ns.basic_fixable > 0 %}
-                    <button class="btn btn-secondary" onclick="previewUpgrade()">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-                        ¥0.19 补齐基础能力
-                        <span class="btn-tag">预计提升智力值</span>
+                    <button class="upgrade-card" onclick="previewUpgrade()">
+                        <div class="upgrade-card-badge">推荐</div>
+                        <div class="upgrade-card-icon">⚡</div>
+                        <div class="upgrade-card-body">
+                            <div class="upgrade-card-title">
+                                补齐基础能力
+                                <span class="upgrade-card-price">¥0.19</span>
+                            </div>
+                            <div class="upgrade-card-desc">一次购买 · 预计提升智力值 +{{ ns.basic_boost }}</div>
+                        </div>
+                        <svg class="upgrade-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                     </button>
                     {% endif %}
-                    <button class="btn btn-ghost" onclick="startPremiumSubscribe()">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
-                        ¥0.99/月 高级能力订阅
-                        <span class="btn-tag">Skill 搜索 · 自我进化 · 主动预判 · 安全审查</span>
+                    <button class="upgrade-card upgrade-card--pro" onclick="startPremiumSubscribe()">
+                        <div class="upgrade-card-badge">PRO</div>
+                        <div class="upgrade-card-icon">🧠</div>
+                        <div class="upgrade-card-body">
+                            <div class="upgrade-card-title">
+                                高级能力订阅
+                                <span class="upgrade-card-price">¥99/月</span>
+                            </div>
+                            <div class="upgrade-card-desc">自主进化 · 实时看板 · 高阶技能全解锁</div>
+                        </div>
+                        <svg class="upgrade-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                     </button>
                 </div>
 
@@ -2164,6 +2420,64 @@
     }
 
     // ===== PHASE 3: Result =====
+    // ===== Coin badge mapping =====
+    var COIN_MAP = [
+        { min: 230, src: '/static/badges/最强.png', glow: 'coin-glow--legend', stage: [255, 200, 50]  },
+        { min: 170, src: '/static/badges/高级.png', glow: 'coin-glow--adv',    stage: [220, 40, 40]   },
+        { min: 120, src: '/static/badges/银.png',   glow: 'coin-glow--silver', stage: [180, 190, 220] },
+        { min: 70,  src: '/static/badges/铜.png',   glow: 'coin-glow--bronze', stage: [205, 127, 50]  },
+        { min: 0,   src: '/static/badges/黑铁.png', glow: 'coin-glow--iron',   stage: [80, 80, 100]   },
+    ];
+
+    function setCoinBadge(iq) {
+        var coin = COIN_MAP.find(function(c) { return iq >= c.min; }) || COIN_MAP[COIN_MAP.length - 1];
+        document.getElementById('rankCoin').src = coin.src;
+        document.getElementById('coinGlow').className = 'coin-glow ' + coin.glow;
+        var phaseResult = document.getElementById('phaseResult');
+        phaseResult.style.setProperty('--stage-r', coin.stage[0]);
+        phaseResult.style.setProperty('--stage-g', coin.stage[1]);
+        phaseResult.style.setProperty('--stage-b', coin.stage[2]);
+    }
+
+    // ===== Coin 3D parallax =====
+    var _coin3dOn = false;
+    function startCoin3D() {
+        if (_coin3dOn) return;
+        _coin3dOn = true;
+        var coinEl = document.getElementById('rankCoin');
+        var specEl = document.getElementById('coinSpecular');
+        var wrapEl = document.querySelector('.score-coin-wrap');
+        if (!coinEl || !wrapEl) return;
+        var MAX = 20, tX = 0, tY = 0, cX = 0, cY = 0, sX = 50, sY = 50;
+        function tick() {
+            cX += (tX - cX) * 0.1;
+            cY += (tY - cY) * 0.1;
+            coinEl.style.transform = 'perspective(600px) rotateX(' + cX.toFixed(1) + 'deg) rotateY(' + cY.toFixed(1) + 'deg)';
+            specEl.style.background = 'radial-gradient(ellipse 50% 50% at ' + sX.toFixed(0) + '% ' + sY.toFixed(0) + '%, rgba(255,255,255,0.25) 0%, transparent 65%)';
+            requestAnimationFrame(tick);
+        }
+        var isMobileDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        if (!isMobileDevice) {
+            document.addEventListener('mousemove', function(e) {
+                var r = wrapEl.getBoundingClientRect();
+                var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+                var dx = e.clientX - cx, dy = e.clientY - cy;
+                var d = Math.sqrt(dx * dx + dy * dy);
+                var zone = Math.max(r.width * 1.5, 400);
+                if (d < zone) {
+                    specEl.classList.add('active');
+                    var nx = dx / zone, ny = dy / zone;
+                    tX = -ny * MAX; tY = nx * MAX;
+                    sX = 50 + nx * 40; sY = 50 + ny * 40;
+                } else {
+                    tX = 0; tY = 0; sX = 50; sY = 50;
+                    specEl.classList.remove('active');
+                }
+            });
+        }
+        tick();
+    }
+
     function startResultPhase(resultData) {
         showPhase('phaseResult');
         document.getElementById('stickyBottom').classList.add('active');
@@ -2197,28 +2511,48 @@
             document.getElementById('diagPaid').textContent = paidCount;
             BOOST = basicBoost;
 
-            // Build btn group dynamically
+            // Build upgrade cards dynamically
             var btnGroupEl = document.getElementById('btnGroup');
-            var btnHtml = '<button class="btn btn-primary" onclick="shareResult()">' +
-                '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg> 炫耀我的成绩</button>';
+            var btnHtml = '';
             if (freeCount > 0) {
-                btnHtml += '<button class="btn btn-secondary" onclick="previewUpgrade()">' +
-                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> ¥0.19 补齐基础能力' +
-                    '<span class="btn-tag">预计提升智力值</span></button>';
+                btnHtml += '<button class="upgrade-card" onclick="previewUpgrade()">' +
+                    '<div class="upgrade-card-badge">推荐</div>' +
+                    '<div class="upgrade-card-icon">⚡</div>' +
+                    '<div class="upgrade-card-body">' +
+                        '<div class="upgrade-card-title">补齐基础能力 <span class="upgrade-card-price">¥0.19</span></div>' +
+                        '<div class="upgrade-card-desc">一次购买 · 预计提升智力值 +' + basicBoost + '</div>' +
+                    '</div>' +
+                    '<svg class="upgrade-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>' +
+                '</button>';
             }
-            btnHtml += '<button class="btn btn-ghost" onclick="startPremiumSubscribe()">' +
-                '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg> ¥0.99/月 高级能力订阅' +
-                '<span class="btn-tag">Skill 搜索 · 自我进化 · 主动预判 · 安全审查</span></button>';
+            btnHtml += '<button class="upgrade-card upgrade-card--pro" onclick="startPremiumSubscribe()">' +
+                '<div class="upgrade-card-badge">PRO</div>' +
+                '<div class="upgrade-card-icon">🧠</div>' +
+                '<div class="upgrade-card-body">' +
+                    '<div class="upgrade-card-title">高级能力订阅 <span class="upgrade-card-price">¥99/月</span></div>' +
+                    '<div class="upgrade-card-desc">自主进化 · 实时看板 · 高阶技能全解锁</div>' +
+                '</div>' +
+                '<svg class="upgrade-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>' +
+            '</button>';
             btnGroupEl.innerHTML = btnHtml;
 
             // Build scan list dynamically
             renderScanList(detail);
         }
 
-        // Animate ring
-        setTimeout(function() {
-            setRing(SCORE_PCT);
+        // Set coin badge based on IQ
+        setCoinBadge(IQ);
 
+        // Start coin 3D after animation
+        var _coinEl = document.getElementById('rankCoin');
+        _coinEl.addEventListener('animationend', function() {
+            _coinEl.style.animation = 'none';
+            _coinEl.style.transform = 'perspective(600px) rotateX(0deg) rotateY(0deg)';
+            startCoin3D();
+        }, { once: true });
+
+        // Animate IQ number
+        setTimeout(function() {
             var el = document.getElementById('scoreNum');
             var cur = 0;
             var target = IQ;
@@ -2662,7 +2996,7 @@
 
     // ===== Nav scroll blur =====
     (function() {
-        var nav = document.querySelector('.brand-nav');
+        var nav = document.querySelector('.top-nav');
         if (nav) {
             window.addEventListener('scroll', function() {
                 if (window.scrollY > 20) {
@@ -2678,10 +3012,18 @@
     if (DATA_STATUS === 'done') {
         // Already done — show Phase 3 directly with server-rendered content
         document.getElementById('stickyBottom').classList.add('active');
-        // Animate ring + IQ number
-        setTimeout(function() {
-            setRing(SCORE_PCT);
 
+        // Set coin badge
+        setCoinBadge(IQ);
+        var _coinEl = document.getElementById('rankCoin');
+        _coinEl.addEventListener('animationend', function() {
+            _coinEl.style.animation = 'none';
+            _coinEl.style.transform = 'perspective(600px) rotateX(0deg) rotateY(0deg)';
+            startCoin3D();
+        }, { once: true });
+
+        // Animate IQ number
+        setTimeout(function() {
             var el = document.getElementById('scoreNum');
             var cur = 0;
             var target = IQ;
@@ -2714,6 +3056,22 @@
         // Waiting — start Phase 1 with real polling
         startWaitPhase();
     }
+    </script>
+
+    <!-- 禁止双指缩放 + 双击缩放 -->
+    <script>
+    document.addEventListener('touchstart', function(e) {
+        if (e.touches.length > 1) e.preventDefault();
+    }, { passive: false });
+    document.addEventListener('gesturestart', function(e) {
+        e.preventDefault();
+    }, { passive: false });
+    var lastTouchEnd = 0;
+    document.addEventListener('touchend', function(e) {
+        var now = Date.now();
+        if (now - lastTouchEnd < 300) e.preventDefault();
+        lastTouchEnd = now;
+    }, { passive: false });
     </script>
 </body>
 </html>
