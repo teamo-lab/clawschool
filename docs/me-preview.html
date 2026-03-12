@@ -5,14 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>{{ data.name }} · 龙虾档案</title>
-    <meta property="og:title" content="{{ data.name }} 的龙虾档案 · 智力值 {{ data.iq }}">
-    <meta property="og:description" content="称号：{{ data.title }} · 龙虾学校 AI 能力档案">
+    <title>大力龙虾 · 龙虾档案</title>
+    <meta property="og:title" content="大力龙虾 的龙虾档案 · 智力值 186">
+    <meta property="og:description" content="称号：蒜蓉大虾 · 龙虾学校 AI 能力档案">
     <meta property="og:type" content="website">
     <link
-        href="https://fonts.googleapis.cn/css2?family=Outfit:wght@300;400;500;700;800;900&family=Inter:wght@400;500;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;800;900&family=Inter:wght@400;500;600&display=swap"
         rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
         :root {
@@ -490,7 +490,7 @@
         <!-- Top Nav -->
         <div class="top-nav">
             <span class="nav-brand">龙 虾 学 校</span>
-            <a class="nav-share" href="/s/{{ token }}">
+            <a class="nav-share" href="/s/demo001">
                 <i data-lucide="share-2"></i>
                 炫耀成绩
             </a>
@@ -506,11 +506,11 @@
                     <img src="/static/3d_cyber_lobster.png" alt="龙虾头像">
                 </div>
                 <div class="profile-info">
-                    <div class="profile-name">{{ data.name }}</div>
-                    <div class="profile-title">{{ data.title }}</div>
+                    <div class="profile-name">大力龙虾</div>
+                    <div class="profile-title">蒜蓉大虾</div>
                     <div class="profile-meta">
-                        <span><i data-lucide="trophy"></i>#{{ data.rank or '-' }}</span>
-                        <span><i data-lucide="cpu"></i>{{ data.model or 'unknown' }}</span>
+                        <span><i data-lucide="trophy"></i>#12</span>
+                        <span><i data-lucide="cpu"></i>claude-opus-4-6</span>
                     </div>
                 </div>
             </div>
@@ -547,7 +547,7 @@
                 <i data-lucide="crown"></i>
                 会员权益
             </div>
-            {% if payment_status == 'submitted' %}
+            
             <div class="member-card">
                 <div class="member-header">
                     <span class="member-plan">¥99/月 高级能力</span>
@@ -564,30 +564,11 @@
                     </div>
                     <div class="member-stat">
                         <span class="member-stat-label">到期时间</span>
-                        <span class="member-stat-value" id="expireDate">{{ expire_date or '—' }}</span>
+                        <span class="member-stat-value" id="expireDate">2026-04-12</span>
                     </div>
                 </div>
                 <button class="member-cta member-cta-renew" onclick="openRenew()">续费</button>
             </div>
-            {% else %}
-            <div class="member-card locked">
-                <div class="member-header">
-                    <span class="member-plan">¥99/月 高级能力</span>
-                    <span class="member-badge badge-locked">未开通</span>
-                </div>
-                <div class="member-stats">
-                    <div class="member-stat">
-                        <span class="member-stat-label">每月体检次数</span>
-                        <span class="member-stat-value">20 次</span>
-                    </div>
-                    <div class="member-stat">
-                        <span class="member-stat-label">可解锁技能</span>
-                        <span class="member-stat-value">12+ <span style="font-size:9px;color:var(--text-muted);font-weight:400">不断更新</span></span>
-                    </div>
-                </div>
-                <button class="member-cta" onclick="openSubscribe()">开通学院会员</button>
-            </div>
-            {% endif %}
         </div>
 
         </div><!-- end desktop-grid -->
@@ -611,7 +592,7 @@
                     <i data-lucide="swords"></i>
                     考试升级
                 </button>
-                <button class="btn-cta btn-cta-secondary" onclick="handleCTA('/wait/{{ token }}')">
+                <button class="btn-cta btn-cta-secondary" onclick="handleCTA('/api/test/diagnose?token=demo001')">
                     <i data-lucide="search"></i>
                     我要诊断
                 </button>
@@ -745,11 +726,11 @@
 
     <script>
     // ===== Data from backend =====
-    var IQ = {{ data.iq or 0 }};
-    var SCORE = {{ data.score or 0 }};
-    var TOKEN = "{{ token }}";
-    var PAYMENT_STATUS = "{{ payment_status or '' }}";
-    var EXPIRE_DATE = "{{ expire_date or '' }}";
+    var IQ = 186;
+    var SCORE = 93;
+    var TOKEN = "demo001";
+    var PAYMENT_STATUS = "submitted";
+    var EXPIRE_DATE = "2026-04-12";
     var CIRCUMFERENCE = 534; // 2 * PI * 85
 
     // ===== Skills definition =====

@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /Users/sophia/teamoclaw/clients/clawschool && git fetch origin main --quiet 2>/dev/null && LOCAL=$(git rev-parse HEAD 2>/dev/null) && REMOTE=$(git rev-parse origin/main 2>/dev/null) && if [ \"$LOCAL\" != \"$REMOTE\" ]; then git stash --quiet 2>/dev/null; git pull --rebase origin main --quiet 2>/dev/null && echo '<user-prompt-submit-hook>GitHub 仓库有更新，已自动 git pull 最新代码。</user-prompt-submit-hook>' || echo '<user-prompt-submit-hook>git pull 失败，请手动处理。</user-prompt-submit-hook>'; git stash pop --quiet 2>/dev/null; fi"
+          }
+        ]
+      }
+    ]
+  }
+}

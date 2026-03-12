@@ -723,7 +723,7 @@ async def me_page(request: Request, token: str):
     db = get_db()
     try:
         payment = db.execute(
-            "SELECT status FROM payments WHERE token=? ORDER BY created_at DESC LIMIT 1",
+            "SELECT status, confirmed_at FROM payments WHERE token=? ORDER BY created_at DESC LIMIT 1",
             (token,)
         ).fetchone()
         total_done = db.execute(
@@ -733,11 +733,21 @@ async def me_page(request: Request, token: str):
         db.close()
 
     payment_status = payment["status"] if payment else None
+    expire_date = ""
+    if payment and payment["confirmed_at"]:
+        from datetime import datetime, timedelta
+        try:
+            confirmed = datetime.fromisoformat(payment["confirmed_at"].replace("Z", "+00:00"))
+            expire = confirmed + timedelta(days=30)
+            expire_date = expire.strftime("%Y-%m-%d")
+        except Exception:
+            expire_date = ""
 
     return templates.TemplateResponse("me.html", {
         "request": request, "domain": DOMAIN, "data": data, "token": token,
         "payment_status": payment_status, "total_done": total_done,
         "advanced_qids": ADVANCED_QIDS, "basic_qids": BASIC_QIDS,
+        "expire_date": expire_date,
     })
 
 
