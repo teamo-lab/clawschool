@@ -333,6 +333,7 @@ body {
   color: #333;
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 </head>
 <body>
 <div class="container">
@@ -450,7 +451,7 @@ body {
     </div>
   </div>
 
-  {% if payment_status == 'submitted' %}
+  {% if payment_status in ('submitted', 'paid') %}
   <!-- 升级中状态 -->
   <div class="upgrade-status">
     <div class="us-icon">⏳</div>
@@ -524,31 +525,27 @@ body {
   </div>
 </div>
 
-<!-- P8 Step 3: 支付确认弹窗 -->
+<!-- P8 Step 3: 支付弹窗 -->
 <div class="overlay" id="qr-modal" onclick="if(event.target===this)this.classList.remove('show')">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <h3>📱 扫码支付 ¥99</h3>
-    <div class="qr-wrap">
-      <div class="qr-placeholder">微信收款二维码<br>(即将配置)</div>
+    <h3 id="premium-pay-title">📱 选择支付方式</h3>
+    <!-- 支付渠道选择 -->
+    <div id="premium-channel-pick" style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
+      <button class="btn-sheet btn-primary" onclick="doPremiumPay('alipay')">支付宝支付 ¥99</button>
+      <button class="btn-sheet btn-primary" style="background:#07c160;" onclick="doPremiumPay('wechat')">微信扫码支付 ¥99</button>
     </div>
-    <p style="text-align:center;">支付完成后，添加客服微信发送转账截图确认</p>
-    <button class="btn-sheet btn-primary" style="background:#07c160; margin-top:12px;" onclick="showKefuQR()">💬 添加客服微信确认</button>
-    <button class="btn-sheet btn-primary" style="margin-top:8px;" onclick="confirmPayment()">我已支付并联系客服</button>
+    <!-- 微信扫码区域 -->
+    <div id="premium-qr-area" style="display:none; text-align:center;">
+      <canvas id="premium-qr-canvas" style="margin:0 auto 12px; border-radius:12px; background:#fff; padding:12px;"></canvas>
+      <p style="font-size:13px; color:#aaa;">请使用微信扫码支付</p>
+    </div>
+    <!-- 等待状态 -->
+    <div id="premium-pay-waiting" style="display:none; text-align:center; padding:16px 0;">
+      <div style="font-size:24px; margin-bottom:8px;">⏳</div>
+      <p style="color:#aaa;">等待支付结果...</p>
+    </div>
     <button class="btn-sheet btn-secondary" onclick="closeQRModal()">取消</button>
-  </div>
-</div>
-
-<!-- 客服二维码弹窗 -->
-<div class="overlay" id="kefu-modal" onclick="if(event.target===this)this.classList.remove('show')">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <h3>💬 客服微信</h3>
-    <div class="qr-wrap">
-      <div class="qr-placeholder">客服微信二维码<br>(即将配置)</div>
-    </div>
-    <p style="text-align:center;">扫码添加客服，发送转账截图确认</p>
-    <button class="btn-sheet btn-secondary" onclick="document.getElementById('kefu-modal').classList.remove('show')">关闭</button>
   </div>
 </div>
 {% endif %}
@@ -634,16 +631,79 @@ function doLogin() {
 }
 
 function showPayQR() {
-  // 创建支付订单
+  document.getElementById('pay-modal').classList.remove('show');
+  // 重置弹窗状态
+  document.getElementById('premium-channel-pick').style.display = 'flex';
+  document.getElementById('premium-qr-area').style.display = 'none';
+  document.getElementById('premium-pay-waiting').style.display = 'none';
+  document.getElementById('premium-pay-title').textContent = '📱 选择支付方式';
+  document.getElementById('qr-modal').classList.add('show');
+}
+
+function isMobile() {
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+}
+
+function renderQR(canvasId, text) {
+  var canvas = document.getElementById(canvasId);
+  if (typeof QRCode !== 'undefined') {
+    QRCode.toCanvas(canvas, text, {width: 200, margin: 2}, function(err) {
+      if (err) console.error('QR render error:', err);
+    });
+  }
+}
+
+var premiumPayPoller = null;
+
+function doPremiumPay(provider) {
+  var channel;
+  if (provider === 'alipay') {
+    channel = isMobile() ? 'alipay_h5' : 'alipay_pc';
+  } else {
+    channel = 'wechat_native';
+  }
+
+  document.getElementById('premium-channel-pick').style.display = 'none';
+  document.getElementById('premium-pay-waiting').style.display = 'block';
+  document.getElementById('premium-pay-title').textContent = '⏳ 正在创建订单...';
+
   fetch('/api/payment/create', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({phone: userPhone, token: TOKEN})
-  }).then(function(r) { return r.json(); }).then(function(data) {
+    body: JSON.stringify({phone: userPhone, token: TOKEN, plan_type: 'premium', channel: channel})
+  }).then(function(r) {
+    if (!r.ok) return r.json().then(function(d) { throw new Error(d.detail); });
+    return r.json();
+  }).then(function(data) {
     currentOrderId = data.order_id;
-    document.getElementById('pay-modal').classList.remove('show');
-    document.getElementById('qr-modal').classList.add('show');
+    var info = data.payment_info;
+    if (channel === 'alipay_pc' || channel === 'alipay_h5') {
+      window.location.href = info.pay_url;
+    } else if (channel === 'wechat_native') {
+      document.getElementById('premium-pay-waiting').style.display = 'none';
+      document.getElementById('premium-qr-area').style.display = 'block';
+      document.getElementById('premium-pay-title').textContent = '📱 微信扫码支付 ¥99';
+      renderQR('premium-qr-canvas', info.code_url);
+      startPremiumPayPolling(data.order_id);
+    }
+  }).catch(function(e) {
+    document.getElementById('premium-pay-waiting').style.display = 'none';
+    document.getElementById('premium-channel-pick').style.display = 'flex';
+    document.getElementById('premium-pay-title').textContent = '❌ ' + (e.message || '创建订单失败');
   });
+}
+
+function startPremiumPayPolling(orderId) {
+  if (premiumPayPoller) clearInterval(premiumPayPoller);
+  premiumPayPoller = setInterval(function() {
+    fetch('/api/payment/status/' + orderId).then(function(r) { return r.json(); }).then(function(data) {
+      if (data.status === 'paid') {
+        clearInterval(premiumPayPoller);
+        premiumPayPoller = null;
+        window.location.reload();
+      }
+    }).catch(function(){});
+  }, 2000);
 }
 
 function closePayModal() {
@@ -651,23 +711,8 @@ function closePayModal() {
 }
 
 function closeQRModal() {
+  if (premiumPayPoller) { clearInterval(premiumPayPoller); premiumPayPoller = null; }
   document.getElementById('qr-modal').classList.remove('show');
-}
-
-function showKefuQR() {
-  document.getElementById('kefu-modal').classList.add('show');
-}
-
-function confirmPayment() {
-  fetch('/api/payment/confirm', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({order_id: currentOrderId, token: TOKEN})
-  }).then(function(r) { return r.json(); }).then(function() {
-    document.getElementById('qr-modal').classList.remove('show');
-    // 跳转到个人主页刷新状态
-    window.location.reload();
-  });
 }
 
 function shareResult() {
