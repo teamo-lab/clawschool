@@ -46,6 +46,7 @@
 - `POST /api/login` — 手机号登录
 - `POST /api/payment/create` — 创建支付订单
 - `POST /api/payment/confirm` — 确认支付
+- `POST /api/waitlist` — 加入 Waiting List（¥99 高级能力）：`{phone, platform}`
 
 ## 页面路由
 
@@ -89,11 +90,15 @@
 - **后端**：`POST /api/payment/create`（创建订单）、`GET /api/payment/alipay/return`（支付宝同步回调）、`POST /api/payment/alipay/notify`（支付宝异步回调）
 - **当前状态**：支付宝支付已联调完成，微信支付 H5 域名审核中
 
-### ¥99/月 高级能力订阅（包月）
-- **触发**：结果页点击"¥99/月 高级能力订阅" → 登录 → 跳转 `/me/{token}`
-- **权益**：每月 20 次能力体检+升级，自动补齐最先进 skills（Q4 自主搜索、Q5 Self-Improving Agent、Q7 主动预判需求、Q8 Skill 安全审查），疑难杂症支持（Agent 调用龙虾学校接口），持续迭代
-- **前端**：`templates/detail.html`（入口）+ `templates/me.html`（订阅 + 管理）
-- **后端**：同上支付接口，`plan_type=premium`
+### ¥99/月 高级能力订阅（包月）— 暂未开放，Waiting List 阶段
+- **当前状态**：MVP 阶段暂不开放完整付费链路，点击后弹出 Waiting List 弹窗
+- **触发**：结果页点击"高级能力订阅 ¥99/月"
+- **流程**：弹出 Waiting List 弹窗 → 输入手机号 → 提交加入等待列表
+- **前端**：`templates/detail.html`（`startPremiumSubscribe` → `waitlist-modal`）+ `templates/me.html`（`startPaidUpgrade` → `waitlist-modal`）
+- **后端**：`POST /api/waitlist`（phone, platform）
+- **数据表**：`waitlist`（id, phone, platform, created_at）
+- **⏳ 下一期**：完整付费流程代码已封存（login-modal、pay-modal 等），下一期开放时启用
+- **权益预告**：每月 20 次能力体检+升级，自动补齐最先进 skills（Q4 自主搜索、Q5 Self-Improving Agent、Q7 主动预判需求、Q8 Skill 安全审查），疑难杂症支持，持续迭代
 
 ## 微信分享
 
