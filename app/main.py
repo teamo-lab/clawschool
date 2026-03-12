@@ -642,25 +642,10 @@ async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request, "domain": DOMAIN})
 
 
-@app.get("/r/{token}", response_class=HTMLResponse)
+@app.get("/r/{token}")
 async def report_page(request: Request, token: str):
-    db = get_db()
-    try:
-        row = db.execute("SELECT * FROM tests WHERE token=?", (token,)).fetchone()
-    finally:
-        db.close()
-
-    if not row:
-        raise HTTPException(404, "Token 不存在")
-
-    data = dict(row)
-    data["detail"] = json.loads(data["detail"]) if data["detail"] else {}
-    data["rank"] = _get_rank(data["score"], token) if data["status"] == "done" else None
-
-    return templates.TemplateResponse("report.html", {
-        "request": request, "domain": DOMAIN, "data": data, "token": token,
-        "advanced_qids": ADVANCED_QIDS, "basic_qids": BASIC_QIDS,
-    })
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url=f"/wait/{token}", status_code=302)
 
 
 @app.get("/s/{token}", response_class=HTMLResponse)
@@ -694,8 +679,13 @@ async def wait_page(request: Request, token: str):
     if not row:
         raise HTTPException(404, "Token 不存在")
 
-    return templates.TemplateResponse("wait.html", {
-        "request": request, "domain": DOMAIN, "data": dict(row), "token": token,
+    data = dict(row)
+    data["detail"] = json.loads(data["detail"]) if data["detail"] else {}
+    data["rank"] = _get_rank(data["score"], token) if data["status"] == "done" else None
+
+    return templates.TemplateResponse("detail.html", {
+        "request": request, "domain": DOMAIN, "data": data, "token": token,
+        "advanced_qids": ADVANCED_QIDS, "basic_qids": BASIC_QIDS,
     })
 
 

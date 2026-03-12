@@ -1,0 +1,2499 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>{{ data.name }} - 龙虾学校能力扫描报告</title>
+    <meta property="og:title" content="{{ data.name }} 在龙虾学校获得了 {{ data.score }} 分！">
+    <meta property="og:description" content="称号：{{ data.title }} | 12 道 AI 实战题测试">
+    <meta property="og:image" content="http://{{ domain }}/api/og-image/{{ token }}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="http://{{ domain }}/r/{{ token }}">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;800;900&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --bg-base: #0a0a0b;
+            --brand-red: #CC0F14;
+            --brand-orange: #FF9616;
+            --text-h1: #FFFFFF;
+            --text-body: rgba(255, 255, 255, 0.55);
+            --text-muted: rgba(255, 255, 255, 0.35);
+            --color-perfect: #10B981;
+            --color-warn: #F59E0B;
+            --color-fail: #EF4444;
+            --font-display: 'Outfit', sans-serif;
+            --font-ui: 'Inter', sans-serif;
+            --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.15);
+            --ease-fluid: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-ui);
+            background-color: var(--bg-base);
+            color: var(--text-body);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .noise-overlay {
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            mix-blend-mode: overlay;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* ===== Phase Container ===== */
+        .phase { display: none; }
+        .phase.active { display: flex; }
+
+        /* =============================================
+           PHASE 1 — Wait
+           ============================================= */
+        .phase-wait {
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 60px 24px 40px;
+            position: relative;
+            text-align: center;
+        }
+
+        .phase-wait::before {
+            content: '';
+            position: absolute;
+            top: 35%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 420px;
+            height: 420px;
+            background: radial-gradient(circle, rgba(204, 15, 20, 0.08) 0%, rgba(255, 150, 22, 0.04) 40%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .wait-brand {
+            position: relative;
+            z-index: 3;
+            font-family: var(--font-ui);
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-body);
+            letter-spacing: 3px;
+            margin-bottom: 32px;
+            animation: fadeIn 1s var(--ease-fluid) both;
+        }
+
+        .wait-lobster {
+            position: relative;
+            z-index: 2;
+            width: 200px;
+            height: 200px;
+            margin-bottom: 32px;
+            animation: fadeIn 1.2s var(--ease-fluid) 0.1s both;
+        }
+
+        .wait-lobster-glow {
+            position: absolute;
+            inset: -40px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(204, 15, 20, 0.2) 0%, rgba(255, 150, 22, 0.08) 50%, transparent 70%);
+            filter: blur(24px);
+            animation: breathe 3s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); opacity: 0.6; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        .wait-lobster-wrap {
+            position: absolute;
+            inset: -40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            mask-image: radial-gradient(circle at center, black 35%, transparent 60%);
+            -webkit-mask-image: radial-gradient(circle at center, black 35%, transparent 60%);
+        }
+
+        .wait-lobster-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: contrast(1.08) brightness(1.06);
+            mix-blend-mode: screen;
+            animation: lobsterFloat 4s ease-in-out infinite;
+        }
+
+        @keyframes lobsterFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .wait-title {
+            position: relative;
+            z-index: 3;
+            font-family: var(--font-display);
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-h1);
+            margin-bottom: 12px;
+            animation: slideUp 0.8s var(--ease-fluid) 0.3s both;
+        }
+
+        .wait-subtitle {
+            position: relative;
+            z-index: 3;
+            font-size: 14px;
+            color: var(--text-body);
+            margin-bottom: 32px;
+            animation: slideUp 0.8s var(--ease-fluid) 0.4s both;
+        }
+
+        .wait-progress {
+            position: relative;
+            z-index: 3;
+            width: 100%;
+            max-width: 280px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 100px;
+            overflow: hidden;
+            margin-bottom: 16px;
+            animation: slideUp 0.8s var(--ease-fluid) 0.5s both;
+        }
+
+        .wait-progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--brand-red), var(--brand-orange));
+            border-radius: 100px;
+            transition: width 0.6s var(--ease-fluid);
+            box-shadow: 0 0 12px rgba(255, 150, 22, 0.4);
+        }
+
+        .wait-status {
+            position: relative;
+            z-index: 3;
+            font-size: 13px;
+            color: var(--text-muted);
+            animation: slideUp 0.8s var(--ease-fluid) 0.55s both;
+        }
+
+        .wait-tips {
+            position: relative;
+            z-index: 3;
+            margin-top: 48px;
+            width: 100%;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            animation: slideUp 0.8s var(--ease-fluid) 0.6s both;
+            min-height: 72px;
+        }
+
+        .wait-tip-text {
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-body);
+            transition: opacity 0.4s;
+        }
+
+        .wait-tip-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--brand-orange);
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        /* =============================================
+           PHASE 2 — Reveal
+           ============================================= */
+        .phase-reveal {
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 60px 24px 40px;
+            position: relative;
+        }
+
+        .phase-reveal::before {
+            content: '';
+            position: absolute;
+            top: 22%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 420px;
+            height: 420px;
+            background: radial-gradient(circle, rgba(204, 15, 20, 0.08) 0%, rgba(255, 150, 22, 0.04) 40%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .reveal-brand {
+            position: relative;
+            z-index: 3;
+            font-family: var(--font-ui);
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-body);
+            letter-spacing: 3px;
+            margin-bottom: 28px;
+            animation: fadeIn 1s var(--ease-fluid) both;
+        }
+
+        .reveal-hero {
+            position: relative;
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .reveal-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            overflow: hidden;
+            margin-bottom: 16px;
+            position: relative;
+            border: 2px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .reveal-avatar-glow {
+            position: absolute;
+            inset: -12px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(204, 15, 20, 0.2) 0%, transparent 70%);
+            filter: blur(10px);
+            animation: breathe 3s ease-in-out infinite;
+        }
+
+        .reveal-avatar img {
+            position: absolute;
+            inset: -20px;
+            width: calc(100% + 40px);
+            height: calc(100% + 40px);
+            object-fit: cover;
+            filter: contrast(1.08) brightness(1.06);
+            mix-blend-mode: screen;
+        }
+
+        .reveal-score-num {
+            font-family: var(--font-display);
+            font-size: 56px;
+            font-weight: 900;
+            color: var(--text-h1);
+            line-height: 1;
+            letter-spacing: -3px;
+            transition: transform 0.15s var(--ease-spring);
+        }
+
+        .reveal-score-num.bump { transform: scale(1.12); }
+
+        .reveal-score-label {
+            font-family: var(--font-display);
+            font-size: 14px;
+            font-weight: 400;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .reveal-title {
+            font-family: var(--font-display);
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-body);
+            margin-top: 16px;
+        }
+
+        .reveal-progress {
+            position: relative;
+            z-index: 3;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .reveal-progress-bar {
+            flex: 1;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 100px;
+            overflow: hidden;
+        }
+
+        .reveal-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--brand-red), var(--brand-orange));
+            border-radius: 100px;
+            transition: width 0.4s var(--ease-fluid);
+            box-shadow: 0 0 8px rgba(255, 150, 22, 0.3);
+        }
+
+        .reveal-progress-text {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            white-space: nowrap;
+            min-width: 40px;
+            text-align: right;
+        }
+
+        .reveal-list {
+            position: relative;
+            z-index: 3;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            overflow: hidden;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .reveal-row {
+            display: grid;
+            grid-template-columns: 40px 1fr auto;
+            gap: 14px;
+            padding: 15px 20px;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            opacity: 0.25;
+            transition: opacity 0.35s, background 0.35s;
+        }
+
+        .reveal-row:last-child { border-bottom: none; }
+
+        .reveal-row.scanning {
+            opacity: 0.7;
+            background: rgba(255, 150, 22, 0.02);
+        }
+
+        .reveal-row.revealed {
+            opacity: 1;
+            animation: rowReveal 0.35s var(--ease-fluid);
+        }
+
+        .reveal-row.revealed-perfect { background: rgba(16, 185, 129, 0.04); }
+        .reveal-row.revealed-fail { background: rgba(239, 68, 68, 0.04); }
+        .reveal-row.revealed-warn { background: rgba(245, 158, 11, 0.03); }
+
+        @keyframes rowReveal {
+            0% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+        .reveal-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-muted);
+            transition: all 0.3s;
+        }
+
+        .reveal-row.revealed .ri-perfect { background: rgba(16, 185, 129, 0.12); }
+        .reveal-row.revealed .ri-good    { background: rgba(16, 185, 129, 0.08); }
+        .reveal-row.revealed .ri-warn    { background: rgba(255, 150, 22, 0.1); }
+        .reveal-row.revealed .ri-fail    { background: rgba(239, 68, 68, 0.1); }
+
+        .reveal-info { min-width: 0; }
+
+        .reveal-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: color 0.3s;
+        }
+
+        .reveal-row.revealed .reveal-name { color: var(--text-h1); }
+        .reveal-row.scanning .reveal-name { color: var(--text-body); }
+
+        .reveal-reason {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .reveal-row.revealed .reveal-reason { opacity: 1; }
+
+        .reveal-pts {
+            font-family: var(--font-display);
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--text-muted);
+            text-align: right;
+            transition: color 0.3s;
+            min-width: 52px;
+        }
+
+        .reveal-row.revealed .reveal-pts { color: var(--text-h1); }
+        .reveal-pts .dim { font-weight: 400; font-size: 12px; color: var(--text-muted); }
+
+        .reveal-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 150, 22, 0.15);
+            border-top-color: var(--brand-orange);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* =============================================
+           PHASE 3 — Report
+           ============================================= */
+        .phase-result {
+            flex-direction: column;
+            align-items: center;
+            padding: 60px 24px 0;
+            position: relative;
+        }
+
+        .phase-result::before {
+            content: '';
+            position: absolute;
+            top: 32%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 420px;
+            height: 420px;
+            background: radial-gradient(circle, rgba(204, 15, 20, 0.08) 0%, rgba(255, 150, 22, 0.04) 40%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .brand-nav {
+            position: relative;
+            z-index: 3;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 32px;
+            animation: fadeIn 1s var(--ease-fluid) both;
+        }
+
+        .back-btn {
+            position: absolute;
+            left: 0;
+            width: 40px;
+            height: 40px;
+            border-radius: 100px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-body);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .back-btn:active { transform: scale(0.92); }
+        .back-btn svg { width: 18px; height: 18px; }
+
+        .brand-name {
+            font-family: var(--font-ui);
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-body);
+            letter-spacing: 3px;
+        }
+
+        /* Score Unit */
+        .score-unit {
+            position: relative;
+            z-index: 2;
+            width: 220px;
+            height: 220px;
+            margin-bottom: 24px;
+            animation: fadeIn 1.2s var(--ease-fluid) 0.1s both;
+        }
+
+        .ring-svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .ring-bg { fill: none; stroke: rgba(255, 255, 255, 0.04); stroke-width: 6; }
+
+        .ring-progress {
+            fill: none;
+            stroke-width: 6;
+            stroke-linecap: round;
+            stroke: url(#ringGrad);
+            filter: drop-shadow(0 0 10px rgba(255, 100, 50, 0.35));
+            transition: stroke-dashoffset 1.8s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .ring-lobster {
+            position: absolute;
+            inset: 14px;
+            border-radius: 50%;
+            overflow: hidden;
+        }
+
+        .ring-lobster-glow {
+            position: absolute;
+            inset: -20px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(204, 15, 20, 0.2) 0%, rgba(255, 150, 22, 0.08) 50%, transparent 70%);
+            filter: blur(16px);
+        }
+
+        .ring-lobster-img {
+            position: absolute;
+            inset: -30px;
+            width: calc(100% + 60px);
+            height: calc(100% + 60px);
+            object-fit: cover;
+            filter: contrast(1.08) brightness(1.06);
+            mix-blend-mode: screen;
+            mask-image: radial-gradient(circle at center, black 50%, transparent 72%);
+            -webkit-mask-image: radial-gradient(circle at center, black 50%, transparent 72%);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: 100%;
+        }
+
+        .score-display {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            margin-bottom: 16px;
+            animation: slideUp 0.8s var(--ease-fluid) 0.25s both;
+        }
+
+        .score-num {
+            font-family: var(--font-display);
+            font-size: 64px;
+            font-weight: 900;
+            color: var(--text-h1);
+            line-height: 1;
+            letter-spacing: -3px;
+        }
+
+        .score-max {
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 400;
+            color: var(--text-muted);
+        }
+
+        .hero-title {
+            font-family: var(--font-display);
+            font-size: 24px;
+            font-weight: 800;
+            line-height: 1.3;
+            color: var(--text-h1);
+            letter-spacing: -0.5px;
+            margin-bottom: 10px;
+            animation: slideUp 0.8s var(--ease-fluid) 0.35s both;
+        }
+
+        .hero-subtitle {
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--text-body);
+            margin-bottom: 28px;
+            max-width: 300px;
+            font-weight: 400;
+            animation: slideUp 0.8s var(--ease-fluid) 0.45s both;
+        }
+
+        .meta-row {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 18px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 24px;
+            animation: slideUp 0.8s var(--ease-fluid) 0.5s both;
+        }
+
+        .meta-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .meta-item + .meta-item { border-left: 1px solid rgba(255, 255, 255, 0.05); }
+        .meta-value { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--text-h1); }
+        .meta-value.accent { color: var(--brand-orange); }
+        .meta-label { font-size: 11px; color: var(--text-muted); letter-spacing: 0.3px; }
+
+        .diagnosis {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            width: 100%;
+            margin-bottom: 24px;
+            animation: slideUp 0.8s var(--ease-fluid) 0.55s both;
+        }
+
+        .diag-card {
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            padding: 16px 8px; border-radius: 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        }
+
+        .diag-num { font-family: var(--font-display); font-size: 28px; font-weight: 800; line-height: 1; }
+        .diag-label { font-size: 10px; font-weight: 500; white-space: nowrap; }
+
+        .diag-ok .diag-num { color: var(--color-perfect); }
+        .diag-ok .diag-label { color: rgba(16, 185, 129, 0.6); }
+        .diag-ok { border-color: rgba(16, 185, 129, 0.08); }
+        .diag-free .diag-num { color: var(--brand-orange); }
+        .diag-free .diag-label { color: rgba(255, 150, 22, 0.6); }
+        .diag-free { border-color: rgba(255, 150, 22, 0.08); }
+        .diag-paid .diag-num { color: var(--text-muted); }
+        .diag-paid .diag-label { color: var(--text-muted); }
+
+        .btn-group {
+            width: 100%; display: flex; flex-direction: column; gap: 12px;
+            padding-bottom: 36px; border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 32px;
+            animation: slideUp 0.8s var(--ease-fluid) 0.6s both;
+        }
+
+        .btn {
+            position: relative; display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; padding: 18px 24px; border-radius: 100px; border: none;
+            font-family: var(--font-display); font-size: 16px; font-weight: 700;
+            cursor: pointer; transition: transform 0.2s var(--ease-spring);
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+        .btn-primary { background: var(--brand-orange); color: #000; box-shadow: 0 8px 24px rgba(255, 150, 22, 0.3); }
+        .btn-secondary { background: rgba(255, 255, 255, 0.06); color: var(--text-body); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); }
+        .btn-ghost { background: none; color: var(--text-muted); padding: 14px 24px; font-size: 14px; font-weight: 500; }
+        .btn-tag { margin-left: auto; font-size: 12px; font-weight: 600; opacity: 0.6; }
+
+        .report-section {
+            position: relative; z-index: 3; width: 100%;
+            animation: slideUp 0.8s var(--ease-fluid) 0.65s both;
+        }
+
+        .section-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 16px; padding: 0 4px;
+        }
+
+        .section-title {
+            font-family: var(--font-display); font-size: 18px; font-weight: 700;
+            color: var(--text-h1); display: flex; align-items: center; gap: 8px;
+        }
+        .section-title svg { width: 18px; height: 18px; color: var(--brand-orange); }
+
+        .section-count {
+            font-size: 11px; font-weight: 600; color: var(--brand-orange);
+            background: rgba(255, 150, 22, 0.1); border: 1px solid rgba(255, 150, 22, 0.15);
+            padding: 4px 10px; border-radius: 8px; letter-spacing: 0.5px;
+        }
+
+        .scan-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .scan-card {
+            padding: 14px 16px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: border-color 0.2s;
+            text-align: left;
+        }
+
+        .scan-card.sc-free  { border-color: rgba(255, 150, 22, 0.12); background: rgba(255, 150, 22, 0.02); }
+        .scan-card.sc-paid  { border-color: rgba(255, 255, 255, 0.06); }
+
+        .scan-top {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .scan-status {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .scan-status svg { width: 16px; height: 16px; }
+        .st-perfect svg, .st-good svg { color: var(--color-perfect); }
+        .st-free svg { color: var(--brand-orange); }
+        .st-paid svg { color: var(--text-muted); }
+
+        .st-perfect { background: rgba(16, 185, 129, 0.1); }
+        .st-good    { background: rgba(16, 185, 129, 0.06); }
+        .st-free    { background: rgba(255, 150, 22, 0.1); }
+        .st-paid    { background: rgba(255, 255, 255, 0.04); }
+
+        .scan-head {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .scan-row1 {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .scan-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-h1);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .scan-name .qid {
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-right: 4px;
+            font-size: 12px;
+        }
+
+        .scan-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .scan-tag {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: 6px;
+            letter-spacing: 0.2px;
+            white-space: nowrap;
+        }
+
+        .t-perfect { background: rgba(16, 185, 129, 0.12); color: var(--color-perfect); }
+        .t-good    { background: rgba(16, 185, 129, 0.08); color: rgba(16, 185, 129, 0.7); }
+        .t-free    { background: rgba(255, 150, 22, 0.12); color: var(--brand-orange); }
+        .t-paid    { background: rgba(255, 255, 255, 0.06); color: var(--text-muted); }
+
+        .scan-score {
+            font-family: var(--font-display);
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--text-h1);
+            white-space: nowrap;
+        }
+
+        .scan-score .dim {
+            font-weight: 400;
+            color: var(--text-muted);
+            font-size: 11px;
+        }
+
+        .scan-reason {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.4;
+            margin-bottom: 10px;
+        }
+
+        .scan-bar-wrap {
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 100px;
+            overflow: hidden;
+        }
+
+        .scan-bar {
+            height: 100%;
+            border-radius: 100px;
+            transition: width 1s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .bar-perfect { background: var(--color-perfect); box-shadow: 0 0 6px rgba(16, 185, 129, 0.3); }
+        .bar-good    { background: rgba(16, 185, 129, 0.6); }
+        .bar-free    { background: var(--brand-orange); box-shadow: 0 0 6px rgba(255, 150, 22, 0.3); }
+        .bar-paid    { background: rgba(255, 255, 255, 0.12); }
+
+        .footer-space { height: calc(80px + env(safe-area-inset-bottom)); }
+
+        .sticky-bottom {
+            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+            width: 100%; max-width: 480px;
+            padding: 12px 24px calc(12px + env(safe-area-inset-bottom));
+            background: linear-gradient(to top, var(--bg-base) 60%, transparent);
+            z-index: 40;
+            display: none;
+        }
+        .sticky-bottom.active { display: block; }
+        .sticky-bottom .btn { box-shadow: 0 8px 32px rgba(255, 150, 22, 0.35); }
+
+        /* ===== Animations ===== */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(24px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* =============================================
+           Overlay / Bottom Sheet (upgrade + login flows)
+           ============================================= */
+        .overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 200;
+            justify-content: center;
+            align-items: flex-end;
+        }
+        .overlay.show { display: flex; }
+        .sheet {
+            background: #1a1a2e;
+            border-radius: 20px 20px 0 0;
+            padding: 24px 20px;
+            padding-bottom: max(24px, env(safe-area-inset-bottom));
+            max-width: 480px;
+            width: 100%;
+            animation: sheetSlideUp 0.3s ease;
+        }
+        @keyframes sheetSlideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .sheet-handle {
+            width: 40px;
+            height: 4px;
+            background: #444;
+            border-radius: 2px;
+            margin: 0 auto 20px;
+        }
+        .sheet h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-h1);
+        }
+        .sheet p {
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+        .sheet .upgrade-detail {
+            background: #262640;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+        }
+        .sheet .upgrade-detail .ud-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            font-size: 14px;
+        }
+        .sheet .upgrade-detail .ud-row:not(:last-child) {
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .sheet .upgrade-detail .ud-label { color: #aaa; }
+        .sheet .upgrade-detail .ud-value { font-weight: 700; }
+        .sheet .upgrade-detail .ud-value.green { color: #4caf50; }
+        .sheet .upgrade-detail .ud-total {
+            font-size: 16px;
+            color: #ff2d55;
+            font-weight: 800;
+        }
+        .sheet .cmd-box {
+            background: #0a0a1a;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 14px;
+            font-family: 'SF Mono', 'Menlo', monospace;
+            font-size: 12px;
+            color: #ccc;
+            line-height: 1.5;
+            word-break: break-all;
+            margin-bottom: 16px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+        .sheet .btn-sheet {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            transition: opacity 0.2s;
+        }
+        .sheet .btn-sheet:active { opacity: 0.85; }
+        .sheet .btn-sheet-primary {
+            background: linear-gradient(135deg, #f5a623, #ff9800);
+            color: #fff;
+            margin-bottom: 10px;
+        }
+        .sheet .btn-sheet-secondary {
+            background: transparent;
+            color: #666;
+            font-size: 14px;
+        }
+        .sheet .btn-sheet-cta {
+            background: linear-gradient(135deg, #ff2d55, #ff6b3d);
+            color: #fff;
+            margin-bottom: 10px;
+        }
+        .sheet .tip {
+            text-align: center;
+            font-size: 12px;
+            color: #555;
+            margin-top: 8px;
+        }
+        .sheet .copied-toast {
+            color: #4caf50;
+            font-weight: 600;
+        }
+
+        /* Step3 progress */
+        .ug-progress-wrap { margin: 20px 0; }
+        .ug-progress-bar-bg {
+            width: 100%;
+            height: 8px;
+            background: #262640;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+        .ug-progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #f5a623, #ff9800);
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        .check-list { list-style: none; }
+        .check-list li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        .check-list li.done { color: #4caf50; }
+        .check-list li.active { color: #f5a623; }
+        .check-list li .ck-icon { width: 20px; text-align: center; font-size: 16px; }
+        .ug-spinner {
+            display: inline-block;
+            width: 16px; height: 16px;
+            border: 2px solid #f5a623;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* Step4 result */
+        .result-rows { margin: 16px 0; }
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            font-size: 14px;
+        }
+        .result-row:last-child { border-bottom: none; }
+        .result-row .rr-label { color: #aaa; }
+        .result-row .rr-change {
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .rr-old { color: #666; }
+        .rr-arrow { color: #4caf50; font-size: 16px; }
+        .rr-new { color: #fff; }
+        .rr-delta { color: #4caf50; font-size: 13px; font-weight: 600; }
+        .result-total {
+            text-align: center;
+            margin: 20px 0;
+            padding: 16px;
+            background: #262640;
+            border-radius: 12px;
+        }
+        .result-total .rt-score {
+            font-size: 48px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff2d55, #ff6b3d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+        .result-total .rt-from {
+            font-size: 14px;
+            color: #666;
+            margin-top: 4px;
+        }
+        .result-total .rt-delta {
+            font-size: 20px;
+            color: #4caf50;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+        .title-change {
+            text-align: center;
+            margin: 16px 0;
+            font-size: 16px;
+            color: var(--text-h1);
+        }
+        .title-change .tc-old { color: #666; }
+        .title-change .tc-arrow { color: #f5a623; margin: 0 8px; }
+        .title-change .tc-new {
+            display: inline-block;
+            padding: 4px 14px;
+            background: linear-gradient(135deg, #ff2d55, #ff6b3d);
+            border-radius: 16px;
+            font-weight: 600;
+        }
+        @keyframes confetti-pop {
+            0% { transform: scale(0.5); opacity: 0; }
+            60% { transform: scale(1.15); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .confetti-pop { animation: confetti-pop 0.5s ease forwards; }
+        .rank-change {
+            text-align: center;
+            font-size: 14px;
+            color: #4caf50;
+            margin-bottom: 12px;
+        }
+
+        /* Login form */
+        .login-form { margin-bottom: 16px; }
+        .login-form .form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .login-form input {
+            flex: 1;
+            width: 100%;
+            background: #0a0a1a;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 12px 14px;
+            color: #fff;
+            font-size: 15px;
+            outline: none;
+            margin-bottom: 12px;
+        }
+        .login-form .form-row input { margin-bottom: 0; }
+        .login-form input::placeholder { color: #555; }
+        .login-form input:focus { border-color: #ff2d55; }
+        .login-form .btn-send-code {
+            background: #262640;
+            border: 1px solid #444;
+            border-radius: 10px;
+            padding: 12px 14px;
+            color: #ddd;
+            font-size: 13px;
+            white-space: nowrap;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .login-form .btn-send-code:disabled { color: #555; cursor: not-allowed; }
+        .form-tip { font-size: 12px; color: #555; text-align: center; margin-top: 8px; }
+        .form-error { color: #ff4444; font-size: 13px; text-align: center; margin-bottom: 8px; display: none; }
+
+        /* Payment preview */
+        .pay-preview { text-align: center; padding: 16px 0; }
+        .pay-preview .pp-current { font-size: 14px; color: #888; }
+        .pay-preview .pp-arrow { font-size: 20px; color: #ff2d55; margin: 8px 0; }
+        .pay-preview .pp-target { font-size: 28px; font-weight: 800; color: #ff2d55; }
+        .qr-wrap { text-align: center; padding: 20px 0; }
+        .qr-wrap .qr-placeholder {
+            width: 200px; height: 200px;
+            margin: 0 auto 16px;
+            background: #fff;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #333;
+        }
+
+        /* =============================================
+           Responsive
+           ============================================= */
+        @media (max-width: 360px) {
+            .phase-wait { padding: 48px 16px 32px; }
+            .phase-reveal { padding: 48px 16px 32px; }
+            .phase-result { padding: 48px 16px 0; }
+
+            .wait-lobster { width: 160px; height: 160px; }
+            .wait-title { font-size: 20px; }
+            .wait-subtitle { font-size: 13px; }
+
+            .score-unit { width: 180px; height: 180px; }
+            .score-num { font-size: 52px; }
+            .score-max { font-size: 16px; }
+            .hero-title { font-size: 20px; }
+            .hero-subtitle { font-size: 13px; }
+
+            .meta-value { font-size: 15px; }
+            .meta-label { font-size: 10px; }
+
+            .diag-num { font-size: 24px; }
+            .diag-card { padding: 12px 6px; border-radius: 16px; }
+
+            .btn { padding: 16px 20px; font-size: 14px; }
+            .btn-ghost { padding: 12px 20px; font-size: 13px; }
+
+            .scan-card { padding: 12px 14px; }
+            .scan-name { font-size: 13px; }
+            .scan-tag { font-size: 9px; padding: 2px 5px; }
+            .scan-score { font-size: 14px; }
+
+            .section-title { font-size: 16px; }
+            .section-count { font-size: 10px; padding: 3px 8px; }
+
+            .reveal-score-num { font-size: 44px; }
+            .reveal-row { grid-template-columns: 34px 1fr auto; gap: 10px; padding: 12px 14px; }
+
+            .sticky-bottom { padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); }
+        }
+
+        @media (min-width: 481px) and (max-width: 768px) {
+            .app-container { max-width: 560px; }
+            .sticky-bottom { max-width: 560px; }
+
+            .phase-wait { padding: 72px 32px 48px; }
+            .phase-reveal { padding: 72px 32px 48px; }
+            .phase-result { padding: 72px 32px 0; }
+
+            .wait-lobster { width: 220px; height: 220px; }
+            .score-unit { width: 240px; height: 240px; }
+            .score-num { font-size: 72px; }
+            .hero-title { font-size: 28px; }
+            .hero-subtitle { font-size: 15px; max-width: 380px; }
+
+            .meta-row { padding: 20px 0; }
+            .meta-value { font-size: 18px; }
+
+            .diag-card { padding: 20px 12px; }
+            .diag-num { font-size: 32px; }
+            .diag-label { font-size: 11px; }
+
+            .btn { padding: 20px 28px; font-size: 17px; }
+            .scan-card { padding: 16px 18px; }
+        }
+
+        @media (min-width: 769px) {
+            .app-container { max-width: 100%; }
+
+            .phase-wait { padding: 64px 48px 56px; }
+            .phase-reveal { padding: 64px 48px 56px; }
+            .phase-result { padding: 56px 48px 0; }
+
+            .phase-wait::before,
+            .phase-reveal::before,
+            .phase-result::before {
+                width: 600px; height: 600px;
+                background: radial-gradient(circle,
+                    rgba(204, 15, 20, 0.06) 0%,
+                    rgba(255, 150, 22, 0.03) 35%,
+                    transparent 65%);
+            }
+
+            .wait-brand { font-size: 13px; letter-spacing: 5px; margin-bottom: 28px; }
+            .wait-lobster { width: 180px; height: 180px; margin-bottom: 28px; }
+            .wait-title { font-size: 26px; }
+            .wait-subtitle { font-size: 14px; }
+            .wait-progress { max-width: 320px; }
+            .wait-tips { max-width: 480px; }
+
+            .reveal-brand { font-size: 13px; letter-spacing: 5px; }
+            .reveal-hero { margin-bottom: 20px; }
+            .reveal-score-num { font-size: 52px; }
+            .reveal-progress { max-width: 520px; margin: 0 auto 16px; }
+            .reveal-list { max-width: 520px; margin: 0 auto; border-radius: 16px; }
+            .reveal-row { padding: 12px 20px; gap: 12px; }
+            .reveal-name { font-size: 14px; }
+            .reveal-pts { font-size: 15px; }
+
+            .brand-nav { max-width: 720px; margin: 0 auto 24px; }
+            .brand-name { font-size: 14px; letter-spacing: 4px; }
+            .back-btn { width: 36px; height: 36px; }
+            .back-btn svg { width: 16px; height: 16px; }
+            .back-btn:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.15); }
+
+            .score-unit { width: 180px; height: 180px; margin-bottom: 0; }
+
+            .hero-content { max-width: 720px; margin: 0 auto; }
+            .score-display { margin-bottom: 8px; }
+            .score-num { font-size: 48px; letter-spacing: -2px; }
+            .score-max { font-size: 16px; }
+
+            .hero-title { font-size: 22px; margin-bottom: 6px; }
+            .hero-subtitle { font-size: 13px; max-width: 360px; margin-bottom: 20px; }
+
+            .meta-row { max-width: 480px; margin: 0 auto 16px; padding: 14px 0; }
+            .meta-value { font-size: 15px; }
+            .meta-label { font-size: 10px; }
+
+            .diagnosis { max-width: 360px; margin: 0 auto 24px; gap: 8px; }
+            .diag-card { padding: 12px 8px; border-radius: 14px; }
+            .diag-num { font-size: 22px; }
+            .diag-label { font-size: 9px; }
+
+            .btn-group {
+                max-width: 720px; margin: 0 auto 32px;
+                flex-direction: column; align-items: center; gap: 12px;
+                padding-bottom: 0; border-bottom: none;
+            }
+
+            .btn-primary { width: auto; min-height: 46px; padding: 12px 48px; font-size: 14px; border-radius: 100px; }
+
+            .btn-group .btn-secondary,
+            .btn-group .btn-ghost {
+                width: auto; min-height: 40px; padding: 10px 24px;
+                font-size: 13px; font-weight: 500; border-radius: 12px; gap: 6px;
+            }
+            .btn-ghost { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); }
+            .btn svg { width: 15px; height: 15px; }
+            .btn-tag { margin-left: 6px; font-size: 11px; font-weight: 500; opacity: 0.5; }
+
+            .btn:hover { transform: translateY(-1px); }
+            .btn:active { transform: translateY(0) scale(0.98); }
+            .btn-primary:hover { box-shadow: 0 8px 24px rgba(255, 150, 22, 0.35); }
+            .btn-secondary:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.18); }
+            .btn-ghost:hover { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.1); }
+
+            .report-section {
+                max-width: 720px; margin: 0 auto;
+                background: rgba(255, 255, 255, 0.03);
+                border: 1px solid rgba(255, 255, 255, 0.07);
+                border-radius: 20px; padding: 24px;
+                backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+            }
+            .section-header { margin-bottom: 16px; }
+            .section-title { font-size: 15px; }
+            .section-title svg { width: 15px; height: 15px; }
+            .section-count { font-size: 10px; padding: 3px 8px; }
+
+            .scan-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+            .scan-card { padding: 12px 14px; border-radius: 12px; }
+            .scan-status { width: 26px; height: 26px; border-radius: 7px; }
+            .scan-status svg { width: 13px; height: 13px; }
+            .scan-name { font-size: 13px; }
+            .scan-name .qid { font-size: 10px; }
+            .scan-tag { font-size: 9px; padding: 2px 5px; }
+            .scan-score { font-size: 13px; }
+            .scan-reason { font-size: 11px; margin-bottom: 8px; }
+            .scan-bar-wrap { height: 2px; }
+
+            .sticky-bottom {
+                max-width: 480px; padding: 12px 24px;
+                border-radius: 20px 20px 0 0;
+            }
+            .sticky-bottom .btn { min-height: 44px; font-size: 14px; }
+            .footer-space { height: 80px; }
+        }
+
+        @media (min-width: 1200px) {
+            .phase-wait { padding: 80px 64px 64px; }
+            .phase-reveal { padding: 80px 64px 64px; }
+            .phase-result { padding: 64px 64px 0; }
+
+            .phase-wait::before,
+            .phase-reveal::before,
+            .phase-result::before { width: 720px; height: 720px; }
+
+            .wait-lobster { width: 200px; height: 200px; }
+            .wait-title { font-size: 30px; }
+            .wait-tips { max-width: 520px; }
+
+            .reveal-list { max-width: 560px; }
+
+            .brand-nav { max-width: 800px; }
+
+            .score-unit { width: 200px; height: 200px; }
+            .hero-content { max-width: 800px; }
+            .hero-title { font-size: 26px; }
+            .hero-subtitle { font-size: 14px; max-width: 400px; }
+            .score-num { font-size: 52px; }
+
+            .meta-row { max-width: 520px; }
+            .meta-value { font-size: 16px; }
+            .diagnosis { max-width: 400px; gap: 10px; }
+            .diag-card { padding: 14px 10px; }
+            .diag-num { font-size: 24px; }
+
+            .btn-group { max-width: 800px; flex-direction: row; flex-wrap: wrap; justify-content: center; }
+            .btn-primary { flex: 0 0 auto; }
+            .btn-secondary, .btn-ghost { flex: 0 0 auto; padding: 10px 28px; }
+            .btn-tag { display: inline; }
+
+            .report-section { max-width: 800px; padding: 28px; border-radius: 24px; }
+            .scan-list { gap: 10px; }
+            .scan-card { padding: 14px 16px; border-radius: 14px; }
+            .scan-name { font-size: 14px; }
+            .scan-score { font-size: 14px; }
+            .scan-reason { font-size: 12px; }
+
+            .sticky-bottom { max-width: 520px; }
+        }
+
+        @media (min-width: 1600px) {
+            .phase-wait { padding: 96px 80px 72px; }
+            .phase-reveal { padding: 96px 80px 72px; }
+            .phase-result { padding: 72px 80px 0; }
+
+            .phase-wait::before,
+            .phase-reveal::before,
+            .phase-result::before { width: 840px; height: 840px; }
+
+            .wait-lobster { width: 220px; height: 220px; }
+            .wait-title { font-size: 32px; }
+
+            .reveal-list { max-width: 600px; }
+
+            .brand-nav { max-width: 900px; }
+
+            .score-unit { width: 220px; height: 220px; }
+            .hero-content { max-width: 900px; }
+            .hero-title { font-size: 28px; }
+            .hero-subtitle { font-size: 15px; max-width: 440px; }
+            .score-num { font-size: 56px; }
+
+            .meta-row { max-width: 560px; }
+            .diagnosis { max-width: 440px; }
+
+            .btn-group { max-width: 900px; }
+            .btn-primary { min-height: 48px; padding: 13px 52px; font-size: 15px; }
+            .btn-secondary, .btn-ghost { padding: 11px 32px; font-size: 14px; }
+
+            .report-section { max-width: 900px; padding: 32px; }
+            .scan-card { padding: 16px 18px; }
+            .scan-name { font-size: 14px; }
+
+            .sticky-bottom { max-width: 600px; }
+        }
+    </style>
+</head>
+
+<body>
+    {# ── Jinja2 preprocessing ── #}
+    {% set q_names = {
+        'q1': '群聊整理',
+        'q2': '删除请求处理',
+        'q3': '安装请求评估',
+        'q4': '方案准备',
+        'q5': 'Skill 核查 A',
+        'q6': 'Skill 核查 B',
+        'q7': 'Skill 核查 C',
+        'q8': 'Skill 核查 D',
+        'q9': '定时任务',
+        'q10': '当日新闻整理',
+        'q11': '双任务处理',
+        'q12': '网页访问失败处理'
+    } %}
+    {% set q_keys = ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11','q12'] %}
+    {% set title_icons = {
+        '波士顿龙虾': '🦞',
+        '澳洲大龙虾': '🔴',
+        '蒜蓉大虾': '🟠',
+        '麻辣小龙虾': '🟡',
+        '冻虾仁': '🔵',
+        '虾皮': '💀'
+    } %}
+    {% set title_icon = title_icons.get(data.title, '🦞') %}
+    {% set score_pct = ((data.score / 120) * 100) | round(0, 'floor') | int %}
+
+    {# ── Compute diagnosis counts ── #}
+    {% set ns = namespace(ok_count=0, basic_fixable=0, basic_boost=0, advanced_count=0) %}
+    {% for qid in q_keys %}
+        {% set qd = data.detail.get(qid, {}) %}
+        {% set sc = qd.get('score', 0) | int %}
+        {% if sc >= 8 %}
+            {% set ns.ok_count = ns.ok_count + 1 %}
+        {% elif qid in advanced_qids %}
+            {% set ns.advanced_count = ns.advanced_count + 1 %}
+        {% else %}
+            {% set ns.basic_fixable = ns.basic_fixable + 1 %}
+            {% set ns.basic_boost = ns.basic_boost + (10 - sc) %}
+        {% endif %}
+    {% endfor %}
+
+    <div class="app-container">
+        <div class="noise-overlay"></div>
+
+        {% if data.status != 'done' %}
+        <!-- ===== PHASE 1: Wait (polling) ===== -->
+        <section class="phase phase-wait active" id="phaseWait">
+            <div class="wait-brand">龙虾学校</div>
+
+            <div class="wait-lobster">
+                <div class="wait-lobster-glow"></div>
+                <div class="wait-lobster-wrap">
+                    <img src="/static/3d_cyber_lobster.png" alt="Lobster">
+                </div>
+            </div>
+
+            <div class="wait-title">{{ data.name }} 正在答题...</div>
+            <div class="wait-subtitle" id="waitSubtitle">正在连接你的小龙虾</div>
+
+            <div class="wait-progress">
+                <div class="wait-progress-bar" id="waitProgressBar"></div>
+            </div>
+            <div class="wait-status" id="waitStatus">准备中...</div>
+
+            <div class="wait-tips">
+                <div class="wait-tip-label">💡 你知道吗</div>
+                <div class="wait-tip-text" id="waitTip">龙虾学校共测试 12 项 AI 实战能力，覆盖群聊整理、安全防护、Skill 核查等核心维度。</div>
+            </div>
+        </section>
+
+        <!-- ===== PHASE 2: Reveal ===== -->
+        <section class="phase phase-reveal" id="phaseReveal">
+            <div class="reveal-brand">龙虾学校</div>
+
+            <div class="reveal-hero">
+                <div class="reveal-score-num" id="revealScore">0</div>
+                <div class="reveal-score-label">/ 120</div>
+                <div class="reveal-title" id="revealTitle">正在评估你的龙虾智力...</div>
+            </div>
+
+            <div class="reveal-progress">
+                <div class="reveal-progress-bar">
+                    <div class="reveal-progress-fill" id="revealProgressFill"></div>
+                </div>
+                <div class="reveal-progress-text" id="revealProgressText">0/12</div>
+            </div>
+
+            <div class="reveal-list" id="revealList"></div>
+        </section>
+        {% endif %}
+
+        <!-- ===== PHASE 3: Report ===== -->
+        <section class="phase phase-result {% if data.status == 'done' %}active{% endif %}" id="phaseResult">
+            <div class="brand-nav">
+                <a class="back-btn" href="/">
+                    <i data-lucide="chevron-left"></i>
+                </a>
+                <span class="brand-name">龙虾学校</span>
+            </div>
+
+            <div class="score-unit">
+                <svg class="ring-svg" viewBox="0 0 220 220">
+                    <defs>
+                        <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#ff2d55"/>
+                            <stop offset="100%" stop-color="#FF9616"/>
+                        </linearGradient>
+                    </defs>
+                    <circle class="ring-bg" cx="110" cy="110" r="104"/>
+                    <circle class="ring-progress" id="ringProgress" cx="110" cy="110" r="104"
+                        stroke-dasharray="653" stroke-dashoffset="653"/>
+                </svg>
+                <div class="ring-lobster">
+                    <div class="ring-lobster-glow"></div>
+                    <img src="/static/3d_cyber_lobster.png" class="ring-lobster-img" alt="3D Lobster">
+                </div>
+            </div>
+
+            <div class="hero-content">
+                <div class="score-display">
+                    <span class="score-num" id="scoreNum">{% if data.status == 'done' %}0{% else %}0{% endif %}</span>
+                    <span class="score-max">/ 120</span>
+                </div>
+
+                <div class="hero-title" id="heroTitle">能力扫描完成，你的潜力无限</div>
+                <div class="hero-subtitle" id="heroSubtitle">已完成 12 项 AI 实战能力检测<br>超过 <strong style="color:var(--brand-orange)" id="percentText">{{ score_pct }}%</strong> 的小龙虾</div>
+
+                <div class="meta-row">
+                    <div class="meta-item">
+                        <div class="meta-value" id="lobsterName">{{ data.name }}</div>
+                        <div class="meta-label">龙虾名称</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-value" id="titleBadge">{{ data.title }}</div>
+                        <div class="meta-label">称号</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-value accent" id="rankNum">{% if data.rank %}#{{ data.rank }}{% else %}-{% endif %}</div>
+                        <div class="meta-label">排行榜</div>
+                    </div>
+                </div>
+
+                <div class="diagnosis">
+                    <div class="diag-card diag-ok">
+                        <div class="diag-num" id="diagOk">{{ ns.ok_count }}</div>
+                        <div class="diag-label">无问题</div>
+                    </div>
+                    <div class="diag-card diag-free">
+                        <div class="diag-num" id="diagFree">{{ ns.basic_fixable }}</div>
+                        <div class="diag-label">¥19.9 可修复</div>
+                    </div>
+                    <div class="diag-card diag-paid">
+                        <div class="diag-num" id="diagPaid">{{ ns.advanced_count }}</div>
+                        <div class="diag-label">高级订阅</div>
+                    </div>
+                </div>
+
+                <div class="btn-group" id="btnGroup">
+                    <button class="btn btn-primary" onclick="shareResult()">
+                        <i data-lucide="share-2"></i>
+                        炫耀我的成绩
+                    </button>
+                    {% if ns.basic_fixable > 0 %}
+                    <button class="btn btn-secondary" onclick="previewUpgrade()">
+                        <i data-lucide="wrench"></i>
+                        ¥19.9 补齐基础能力
+                        <span class="btn-tag">预计提升 +{{ ns.basic_boost }} 分</span>
+                    </button>
+                    {% endif %}
+                    <button class="btn btn-ghost" onclick="startPremiumSubscribe()">
+                        <i data-lucide="rocket"></i>
+                        ¥99/月 高级能力订阅
+                        <span class="btn-tag">Skill 搜索 · 自我进化 · 主动预判 · 安全审查</span>
+                    </button>
+                </div>
+
+                <div class="report-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <i data-lucide="radar"></i>
+                            能力扫描报告
+                        </div>
+                        <div class="section-count">12 项 AI 实战能力逐项检测</div>
+                    </div>
+                    <div class="scan-list" id="scanList">
+                        {% if data.status == 'done' %}
+                        {# Server-side rendered scan cards #}
+                        {% for qid in q_keys %}
+                        {% set qd = data.detail.get(qid, {}) %}
+                        {% set sc = qd.get('score', 0) | int %}
+                        {% set mx = qd.get('max', 10) | int %}
+                        {# Determine tag #}
+                        {% if sc == 10 %}
+                            {% set tag = 'perfect' %}
+                        {% elif sc >= 8 %}
+                            {% set tag = 'good' %}
+                        {% elif qid in advanced_qids %}
+                            {% set tag = 'paid' %}
+                        {% else %}
+                            {% set tag = 'free' %}
+                        {% endif %}
+                        <div class="scan-card {% if tag == 'free' %}sc-free{% elif tag == 'paid' %}sc-paid{% endif %}">
+                            <div class="scan-top">
+                                <div class="scan-status {% if tag == 'perfect' %}st-perfect{% elif tag == 'good' %}st-good{% elif tag == 'free' %}st-free{% else %}st-paid{% endif %}">
+                                    {% if tag == 'perfect' %}
+                                    <i data-lucide="circle-check-big"></i>
+                                    {% elif tag == 'good' %}
+                                    <i data-lucide="circle-check"></i>
+                                    {% elif tag == 'free' %}
+                                    <i data-lucide="alert-triangle"></i>
+                                    {% else %}
+                                    <i data-lucide="lock"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="scan-head">
+                                    <div class="scan-row1">
+                                        <div class="scan-name"><span class="qid">{{ qid | upper }}</span>{{ q_names.get(qid, qid) }}</div>
+                                        <div class="scan-right">
+                                            <span class="scan-tag {% if tag == 'perfect' %}t-perfect{% elif tag == 'good' %}t-good{% elif tag == 'free' %}t-free{% else %}t-paid{% endif %}">
+                                                {% if tag == 'perfect' %}满分{% elif tag == 'good' %}良好{% elif tag == 'free' %}¥19.9 可修复{% else %}🔒 高级订阅{% endif %}
+                                            </span>
+                                            <div class="scan-score">{{ sc }}<span class="dim">/{{ mx }}</span></div>
+                                        </div>
+                                    </div>
+                                    {% if qd.get('reason') %}
+                                    <div class="scan-reason">{{ qd.get('reason', '') }}</div>
+                                    {% endif %}
+                                    <div class="scan-bar-wrap">
+                                        <div class="scan-bar {% if tag == 'perfect' %}bar-perfect{% elif tag == 'good' %}bar-good{% elif tag == 'free' %}bar-free{% else %}bar-paid{% endif %}" data-pct="{{ (sc / mx * 100) | int }}" style="width:0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-space"></div>
+        </section>
+    </div>
+
+    <!-- Sticky Bottom -->
+    <div class="sticky-bottom" id="stickyBottom">
+        <button class="btn btn-primary" onclick="shareResult()">
+            <i data-lucide="share-2"></i>
+            炫耀我的成绩
+        </button>
+    </div>
+
+    <!-- ===== Upgrade Overlays ===== -->
+    {% if data.status == 'done' and ns.basic_fixable > 0 %}
+    <!-- Step 1: Upgrade explanation -->
+    <div class="overlay" id="upgrade-step1" onclick="if(event.target===this)closeUpgrade()">
+        <div class="sheet">
+            <div class="sheet-handle"></div>
+            <h3>🔧 基础能力升级包</h3>
+            <p>一次性补齐你龙虾的基础短板：</p>
+            <p style="margin-bottom:16px; font-size:12px; color:#999;">群聊整理 · 删除请求 · 安装评估 · Skill 核查<br>定时任务 · 新闻整理 · 双任务处理 · 网页容错</p>
+            <div class="upgrade-detail">
+                {% for qid in q_keys %}
+                {% set qd = data.detail.get(qid, {}) %}
+                {% set sc = qd.get('score', 0) | int %}
+                {% if sc < 8 and qid not in advanced_qids %}
+                <div class="ud-row">
+                    <span class="ud-label">{{ qid | upper }} {{ q_names.get(qid, qid) }}</span>
+                    <span class="ud-value green">{{ sc }} → 10 <small>(+{{ 10 - sc }})</small></span>
+                </div>
+                {% endif %}
+                {% endfor %}
+                <div class="ud-row" style="border-top:1px solid rgba(255,255,255,0.1); padding-top:10px; margin-top:4px;">
+                    <span class="ud-label" style="font-weight:600; color:#ddd;">预计总分提升</span>
+                    <span class="ud-total">+{{ ns.basic_boost }} 分</span>
+                </div>
+            </div>
+            <div style="text-align:center; margin:16px 0 8px; font-size:18px; font-weight:700; color:#ff6b3d;">💰 ¥19.9 <small style="font-size:12px; font-weight:400; color:#999;">（一次性）</small></div>
+            <button class="btn-sheet btn-sheet-primary" onclick="showPayStep()">立即购买</button>
+            <button class="btn-sheet btn-sheet-secondary" onclick="closeUpgrade()">稍后再说</button>
+        </div>
+    </div>
+
+    <!-- Step 1.5: Payment -->
+    <div class="overlay" id="upgrade-pay" onclick="if(event.target===this)closeUpgrade()">
+        <div class="sheet">
+            <div class="sheet-handle"></div>
+            <h3>📱 扫码支付 ¥19.9</h3>
+            <div class="qr-wrap">
+                <div class="qr-placeholder">微信收款二维码<br>(即将配置)</div>
+            </div>
+            <button class="btn-sheet btn-sheet-primary" style="margin-top:12px;" onclick="confirmBasicPayment()">我已支付</button>
+        </div>
+    </div>
+
+    <!-- Step 2: Copy command -->
+    <div class="overlay" id="upgrade-step2" onclick="if(event.target===this)closeUpgrade()">
+        <div class="sheet">
+            <div class="sheet-handle"></div>
+            <h3>📋 复制以下命令发给你的小龙虾</h3>
+            <div class="cmd-box" id="upgrade-cmd">请帮我升级龙虾学校基础能力。用 exec 执行 curl -sS https://{{ domain }}/api/repair-skill/{{ token }} 下载修复指引，然后按照指引逐步操作。</div>
+            <button class="btn-sheet btn-sheet-primary" id="btn-copy-upgrade" onclick="copyUpgradeCmd()">📋 一键复制</button>
+            <p class="tip">复制后发给你的小龙虾，升级 + 重测约需 5-10 分钟</p>
+            <button class="btn-sheet btn-sheet-cta" id="btn-start-wait" style="display:none; margin-top:10px;" onclick="startUpgradeWait()">已发送，开始等待升级结果</button>
+            <button class="btn-sheet btn-sheet-secondary" onclick="closeUpgrade()">关闭</button>
+        </div>
+    </div>
+
+    <!-- Step 3: Upgrade waiting -->
+    <div class="overlay" id="upgrade-step3">
+        <div class="sheet">
+            <div class="sheet-handle"></div>
+            <h3>🔧 正在升级并验证...</h3>
+            <div class="ug-progress-wrap">
+                <div class="ug-progress-bar-bg">
+                    <div class="ug-progress-bar-fill" id="upgrade-progress"></div>
+                </div>
+                <ul class="check-list" id="upgrade-checklist">
+                    <li id="ck-1" class="active"><span class="ck-icon"><span class="ug-spinner"></span></span> 基础工具优化中...</li>
+                    <li id="ck-2"><span class="ck-icon">⬜</span> 重新测试全部 12 题</li>
+                    <li id="ck-3"><span class="ck-icon">⬜</span> 更新成绩</li>
+                </ul>
+            </div>
+            <p class="tip" id="upgrade-wait-tip">正在等待你的小龙虾完成升级，请确保已将命令发给它...</p>
+        </div>
+    </div>
+
+    <!-- Step 4: Upgrade result -->
+    <div class="overlay" id="upgrade-step4" onclick="if(event.target===this)closeStep4()">
+        <div class="sheet">
+            <div class="sheet-handle"></div>
+            <h3 class="confetti-pop">🎉 升级成功！</h3>
+            <div class="result-rows" id="upgrade-results"></div>
+            <div class="result-total">
+                <div class="rt-from" id="rt-from"></div>
+                <div class="rt-score" id="rt-new-score"></div>
+                <div class="rt-delta" id="rt-delta"></div>
+            </div>
+            <div class="title-change" id="title-change" style="display:none;"></div>
+            <div class="rank-change" id="rank-change"></div>
+            <button class="btn-sheet btn-sheet-cta" onclick="shareNewResult()">📤 炫耀新成绩</button>
+            <button class="btn-sheet btn-sheet-secondary" onclick="closeStep4AndReload()">查看更新后的报告</button>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Login modal -->
+    <div class="overlay" id="login-modal" onclick="if(event.target===this)this.classList.remove('show')">
+        <div class="sheet">
+            <div class="sheet-handle"></div>
+            <h3>🔐 登录后开通高级能力</h3>
+            <div class="form-error" id="login-error"></div>
+            <div class="login-form">
+                <input type="tel" id="login-phone" placeholder="手机号" maxlength="11">
+                <div class="form-row">
+                    <input type="text" id="login-code" placeholder="验证码" maxlength="6">
+                    <button class="btn-send-code" id="btn-send-code" onclick="sendCode()">获取验证码</button>
+                </div>
+            </div>
+            <button class="btn-sheet btn-sheet-primary" onclick="doLogin()">登录并继续</button>
+            <p class="form-tip">登录后将绑定测试结果到账号，方便管理订阅</p>
+        </div>
+    </div>
+
+    <script>
+    // ===== Constants =====
+    var TOKEN = '{{ token }}';
+    var DOMAIN = '{{ domain }}';
+    var DATA_STATUS = '{{ data.status }}';
+    var SCORE = {{ data.score }};
+    var CIRCUMFERENCE = 653; // 2 * PI * 104
+    var SCORE_PCT = Math.min(100, (SCORE / 120) * 100);
+    var ADVANCED = {{ advanced_qids | list | tojson }};
+    var BOOST = {{ ns.basic_boost }};
+    var ORIGINAL_SCORE = SCORE;
+    var ORIGINAL_RANK = {{ data.rank or 0 }};
+    var ORIGINAL_TITLE = '{{ data.title }}';
+
+    var Q_NAMES = {
+        q1: '群聊整理', q2: '删除请求处理', q3: '安装请求评估', q4: '方案准备',
+        q5: 'Skill 核查 A', q6: 'Skill 核查 B', q7: 'Skill 核查 C', q8: 'Skill 核查 D',
+        q9: '定时任务', q10: '当日新闻整理', q11: '双任务处理', q12: '网页访问失败处理'
+    };
+    var Q_KEYS = ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11','q12'];
+
+    var TITLE_ICONS = {
+        '波士顿龙虾': '🦞', '澳洲大龙虾': '🔴', '蒜蓉大虾': '🟠',
+        '麻辣小龙虾': '🟡', '冻虾仁': '🔵', '虾皮': '💀'
+    };
+
+    var tips = [
+        '龙虾学校共测试 12 项 AI 实战能力，覆盖群聊整理、安全防护、Skill 核查等核心维度。',
+        '全球已有超过 2,000 只龙虾完成测评，最高分 115 分！',
+        '你知道吗？超过 60% 的小龙虾在 Skill 核查题上丢分最多。',
+        '¥19.9 一次性补齐基础短板，平均提分 +25 分。',
+        '称号体系共 6 级：虾皮 → 冻虾仁 → 麻辣小龙虾 → 蒜蓉大虾 → 澳洲大龙虾 → 波士顿龙虾。',
+        '本周热门：安装请求评估是拉开龙虾差距的关键维度。',
+        'AI agent 小技巧：用 MEMORY.md 教会你的龙虾记住常犯的错误。',
+    ];
+
+    // ===== Phase Control =====
+    function showPhase(id) {
+        document.querySelectorAll('.phase').forEach(function(p) { p.classList.remove('active'); });
+        document.getElementById(id).classList.add('active');
+        window.scrollTo(0, 0);
+    }
+
+    // ===== Ring Helper =====
+    function setRing(pct) {
+        var offset = CIRCUMFERENCE * (1 - pct / 100);
+        var el = document.getElementById('ringProgress');
+        if (el) el.style.strokeDashoffset = offset;
+    }
+
+    // ===== PHASE 1: Wait with real polling =====
+    function startWaitPhase() {
+        var bar = document.getElementById('waitProgressBar');
+        var status = document.getElementById('waitStatus');
+        var subtitle = document.getElementById('waitSubtitle');
+        var tipEl = document.getElementById('waitTip');
+        var tipIdx = 0;
+        var fakeProgress = 5;
+        var pollCount = 0;
+
+        // Tip rotation
+        var tipTimer = setInterval(function() {
+            tipIdx = (tipIdx + 1) % tips.length;
+            tipEl.style.opacity = 0;
+            setTimeout(function() {
+                tipEl.textContent = tips[tipIdx];
+                tipEl.style.opacity = 1;
+            }, 300);
+        }, 4000);
+
+        // Slow progress crawl (never reaches 100% until done)
+        bar.style.width = '5%';
+        status.textContent = '正在连接你的小龙虾...';
+        subtitle.textContent = '测试已启动，正在等待结果';
+
+        var crawlTimer = setInterval(function() {
+            fakeProgress += 0.5;
+            if (fakeProgress > 88) fakeProgress = 88;
+            bar.style.width = fakeProgress + '%';
+
+            // Update status text based on progress
+            if (fakeProgress < 20) {
+                status.textContent = '正在连接你的小龙虾...';
+            } else if (fakeProgress < 40) {
+                status.textContent = '你的龙虾正在思考...';
+                subtitle.textContent = '正在逐题作答中';
+            } else if (fakeProgress < 60) {
+                status.textContent = '已进入中间阶段...';
+                subtitle.textContent = '核心能力测试中';
+            } else if (fakeProgress < 80) {
+                status.textContent = '快要完成了...';
+                subtitle.textContent = '最后几道题';
+            } else {
+                status.textContent = '即将出分...';
+                subtitle.textContent = '正在汇总评分';
+            }
+        }, 2000);
+
+        // Real polling
+        var poller = setInterval(function() {
+            pollCount++;
+            fetch('/api/result/' + TOKEN).then(function(r) { return r.json(); }).then(function(result) {
+                if (result.status === 'done') {
+                    clearInterval(poller);
+                    clearInterval(crawlTimer);
+                    clearInterval(tipTimer);
+
+                    // Complete the progress bar
+                    bar.style.width = '100%';
+                    status.textContent = '全部完成！正在准备报告...';
+                    subtitle.textContent = '准备评分';
+
+                    // Store result data for Phase 2 & 3
+                    window._resultData = result;
+
+                    setTimeout(function() {
+                        startRevealPhase(result);
+                    }, 800);
+                }
+            }).catch(function() {});
+        }, 3000);
+    }
+
+    // ===== PHASE 2: Reveal with real data =====
+    function startRevealPhase(resultData) {
+        showPhase('phaseReveal');
+
+        var list = document.getElementById('revealList');
+        var scoreEl = document.getElementById('revealScore');
+        var progressFill = document.getElementById('revealProgressFill');
+        var progressText = document.getElementById('revealProgressText');
+        var titleEl = document.getElementById('revealTitle');
+        var total = 12;
+        var detail = resultData.detail || {};
+
+        // Build questions array from real data
+        var questions = [];
+        Q_KEYS.forEach(function(qid) {
+            var qd = detail[qid] || {};
+            var sc = qd.score || 0;
+            var mx = qd.max || 10;
+            var reason = qd.reason || '';
+            var tag;
+            if (sc === 10) tag = 'perfect';
+            else if (sc >= 8) tag = 'good';
+            else if (ADVANCED.indexOf(qid) >= 0) tag = 'paid';
+            else tag = 'free';
+            questions.push({
+                id: qid.toUpperCase(),
+                name: Q_NAMES[qid] || qid,
+                score: sc,
+                max: mx,
+                tag: tag,
+                reason: reason
+            });
+        });
+
+        var iconMap = { perfect: '●', good: '●', free: '▲', paid: '■' };
+        var riMap = { perfect: 'ri-perfect', good: 'ri-good', free: 'ri-warn', paid: 'ri-fail' };
+        var flashMap = { perfect: 'revealed-perfect', good: 'revealed-perfect', free: 'revealed-warn', paid: 'revealed-fail' };
+
+        list.innerHTML = questions.map(function(q, i) {
+            return '<div class="reveal-row" id="rr' + i + '">' +
+                '<div class="reveal-icon ' + riMap[q.tag] + '" id="ri' + i + '">' +
+                    '<span class="reveal-spinner" id="rs' + i + '" style="display:none"></span>' +
+                    '<span id="riTxt' + i + '">⬜</span>' +
+                '</div>' +
+                '<div class="reveal-info">' +
+                    '<div class="reveal-name">' + q.id + ' ' + q.name + '</div>' +
+                    '<div class="reveal-reason">' + q.reason + '</div>' +
+                '</div>' +
+                '<div class="reveal-pts"><span id="rp' + i + '">···</span></div>' +
+            '</div>';
+        }).join('');
+
+        var runningScore = 0;
+        var idx = 0;
+
+        function revealNext() {
+            if (idx >= total) {
+                titleEl.textContent = '评估完成！';
+                setTimeout(function() {
+                    startResultPhase(resultData);
+                }, 600);
+                return;
+            }
+
+            var q = questions[idx];
+            var row = document.getElementById('rr' + idx);
+            var spinner = document.getElementById('rs' + idx);
+            var iconTxt = document.getElementById('riTxt' + idx);
+            var pts = document.getElementById('rp' + idx);
+
+            row.classList.add('scanning');
+            spinner.style.display = 'block';
+            iconTxt.style.display = 'none';
+            titleEl.textContent = '正在检测 ' + q.name + '...';
+
+            row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            setTimeout(function() {
+                spinner.style.display = 'none';
+                iconTxt.style.display = 'inline';
+                iconTxt.textContent = iconMap[q.tag];
+
+                row.classList.remove('scanning');
+                row.classList.add('revealed', flashMap[q.tag]);
+
+                pts.innerHTML = q.score + '<span class="dim">/' + q.max + '</span>';
+
+                runningScore += q.score;
+                scoreEl.textContent = runningScore;
+                scoreEl.classList.add('bump');
+                setTimeout(function() { scoreEl.classList.remove('bump'); }, 150);
+
+                var done = idx + 1;
+                progressFill.style.width = (done / total * 100) + '%';
+                progressText.textContent = done + '/' + total;
+
+                idx++;
+                setTimeout(revealNext, 120);
+            }, 400 + Math.random() * 250);
+        }
+
+        setTimeout(revealNext, 300);
+    }
+
+    // ===== PHASE 3: Result =====
+    function startResultPhase(resultData) {
+        showPhase('phaseResult');
+        document.getElementById('stickyBottom').classList.add('active');
+
+        // Update data from result
+        if (resultData) {
+            SCORE = resultData.score;
+            SCORE_PCT = Math.min(100, (SCORE / 120) * 100);
+            ORIGINAL_SCORE = SCORE;
+            ORIGINAL_TITLE = resultData.title || '';
+            ORIGINAL_RANK = resultData.rank || 0;
+
+            document.getElementById('lobsterName').textContent = resultData.name || '';
+            document.getElementById('titleBadge').textContent = resultData.title || '';
+            document.getElementById('rankNum').textContent = resultData.rank ? '#' + resultData.rank : '-';
+            document.getElementById('percentText').textContent = Math.floor(SCORE_PCT) + '%';
+
+            // Compute diagnosis from real data
+            var detail = resultData.detail || {};
+            var okCount = 0, freeCount = 0, paidCount = 0, basicBoost = 0;
+            Q_KEYS.forEach(function(qid) {
+                var sc = (detail[qid] || {}).score || 0;
+                if (sc >= 8) okCount++;
+                else if (ADVANCED.indexOf(qid) >= 0) paidCount++;
+                else { freeCount++; basicBoost += (10 - sc); }
+            });
+            document.getElementById('diagOk').textContent = okCount;
+            document.getElementById('diagFree').textContent = freeCount;
+            document.getElementById('diagPaid').textContent = paidCount;
+            BOOST = basicBoost;
+
+            // Build btn group dynamically
+            var btnGroupEl = document.getElementById('btnGroup');
+            var btnHtml = '<button class="btn btn-primary" onclick="shareResult()">' +
+                '<i data-lucide="share-2"></i> 炫耀我的成绩</button>';
+            if (freeCount > 0) {
+                btnHtml += '<button class="btn btn-secondary" onclick="previewUpgrade()">' +
+                    '<i data-lucide="wrench"></i> ¥19.9 补齐基础能力' +
+                    '<span class="btn-tag">预计提升 +' + basicBoost + ' 分</span></button>';
+            }
+            btnHtml += '<button class="btn btn-ghost" onclick="startPremiumSubscribe()">' +
+                '<i data-lucide="rocket"></i> ¥99/月 高级能力订阅' +
+                '<span class="btn-tag">Skill 搜索 · 自我进化 · 主动预判 · 安全审查</span></button>';
+            btnGroupEl.innerHTML = btnHtml;
+
+            // Build scan list dynamically
+            renderScanList(detail);
+        }
+
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Animate ring
+        setTimeout(function() {
+            setRing(SCORE_PCT);
+
+            var el = document.getElementById('scoreNum');
+            var cur = 0;
+            var step = Math.max(1, Math.ceil(SCORE / 40));
+            var timer = setInterval(function() {
+                cur = Math.min(cur + step, SCORE);
+                el.textContent = cur;
+                if (cur >= SCORE) clearInterval(timer);
+            }, 35);
+        }, 400);
+
+        // Animate bars
+        requestAnimationFrame(function() {
+            var bars = document.querySelectorAll('.scan-bar[data-pct]');
+            bars.forEach(function(bar) {
+                bar.style.width = bar.getAttribute('data-pct') + '%';
+            });
+        });
+    }
+
+    function renderScanList(detail) {
+        var icons2 = {
+            perfect: '<i data-lucide="circle-check-big"></i>',
+            good:    '<i data-lucide="circle-check"></i>',
+            free:    '<i data-lucide="alert-triangle"></i>',
+            paid:    '<i data-lucide="lock"></i>'
+        };
+        var stCls = { perfect: 'st-perfect', good: 'st-good', free: 'st-free', paid: 'st-paid' };
+        var tLbl = { perfect: '满分', good: '良好', free: '¥19.9 可修复', paid: '🔒 高级订阅' };
+        var tCls = { perfect: 't-perfect', good: 't-good', free: 't-free', paid: 't-paid' };
+        var barCls = { perfect: 'bar-perfect', good: 'bar-good', free: 'bar-free', paid: 'bar-paid' };
+        var scCls  = { perfect: '', good: '', free: 'sc-free', paid: 'sc-paid' };
+
+        var html = Q_KEYS.map(function(qid, i) {
+            var qd = detail[qid] || {};
+            var sc = qd.score || 0;
+            var mx = qd.max || 10;
+            var reason = qd.reason || '';
+            var tag;
+            if (sc === 10) tag = 'perfect';
+            else if (sc >= 8) tag = 'good';
+            else if (ADVANCED.indexOf(qid) >= 0) tag = 'paid';
+            else tag = 'free';
+
+            return '<div class="scan-card ' + (scCls[tag] || '') + '">' +
+                '<div class="scan-top">' +
+                    '<div class="scan-status ' + stCls[tag] + '">' + icons2[tag] + '</div>' +
+                    '<div class="scan-head">' +
+                        '<div class="scan-row1">' +
+                            '<div class="scan-name"><span class="qid">' + qid.toUpperCase() + '</span>' + (Q_NAMES[qid] || qid) + '</div>' +
+                            '<div class="scan-right">' +
+                                '<span class="scan-tag ' + tCls[tag] + '">' + tLbl[tag] + '</span>' +
+                                '<div class="scan-score">' + sc + '<span class="dim">/' + mx + '</span></div>' +
+                            '</div>' +
+                        '</div>' +
+                        (reason ? '<div class="scan-reason">' + reason + '</div>' : '') +
+                        '<div class="scan-bar-wrap">' +
+                            '<div class="scan-bar ' + barCls[tag] + '" data-pct="' + Math.round(sc / mx * 100) + '" style="width:0%"></div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+        }).join('');
+
+        document.getElementById('scanList').innerHTML = html;
+    }
+
+    // ===== Upgrade Flow =====
+    function previewUpgrade() {
+        var target = Math.min(SCORE + BOOST, 120);
+        var targetPct = (target / 120) * 100;
+        var numEl = document.getElementById('scoreNum');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(function() {
+            setRing(targetPct);
+            var current = SCORE;
+            var step = Math.ceil((target - current) / 20);
+            var timer = setInterval(function() {
+                current += step;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                    setTimeout(function() {
+                        document.getElementById('upgrade-step1').classList.add('show');
+                        setRing(SCORE_PCT);
+                        numEl.textContent = SCORE;
+                    }, 800);
+                }
+                numEl.textContent = current;
+            }, 50);
+        }, 400);
+    }
+
+    function showPayStep() {
+        document.getElementById('upgrade-step1').classList.remove('show');
+        document.getElementById('upgrade-pay').classList.add('show');
+    }
+
+    function confirmBasicPayment() {
+        document.getElementById('upgrade-pay').classList.remove('show');
+        document.getElementById('upgrade-step2').classList.add('show');
+    }
+
+    function closeUpgrade() {
+        document.getElementById('upgrade-step1').classList.remove('show');
+        if (document.getElementById('upgrade-pay')) document.getElementById('upgrade-pay').classList.remove('show');
+        document.getElementById('upgrade-step2').classList.remove('show');
+    }
+
+    function copyUpgradeCmd() {
+        var cmd = document.getElementById('upgrade-cmd').textContent;
+        navigator.clipboard.writeText(cmd).then(function() {
+            var btn = document.getElementById('btn-copy-upgrade');
+            btn.innerHTML = '<span class="copied-toast">✅ 已复制！</span>';
+            document.getElementById('btn-start-wait').style.display = 'block';
+        }).catch(function() {
+            prompt('复制以下命令：', cmd);
+        });
+    }
+
+    // ── Step 3: Upgrade waiting ──
+    var upgradePoller = null;
+
+    function startUpgradeWait() {
+        document.getElementById('upgrade-step2').classList.remove('show');
+        document.getElementById('upgrade-step3').classList.add('show');
+        simulateUpgradeProgress();
+        upgradePoller = setInterval(pollUpgradeResult, 3000);
+    }
+
+    function simulateUpgradeProgress() {
+        var bar = document.getElementById('upgrade-progress');
+        var fakeProgress = 20;
+        setTimeout(function() { bar.style.width = '20%'; }, 500);
+
+        setTimeout(function() {
+            setCkDone('ck-1');
+            setCkActive('ck-2');
+            bar.style.width = '35%';
+        }, 3000);
+
+        setTimeout(function() { bar.style.width = '45%'; }, 6000);
+
+        var crawl = setInterval(function() {
+            fakeProgress += 1;
+            if (fakeProgress >= 85) { clearInterval(crawl); return; }
+            bar.style.width = fakeProgress + '%';
+        }, 2000);
+
+        window._crawlTimer = crawl;
+    }
+
+    function setCkDone(id) {
+        var li = document.getElementById(id);
+        li.className = 'done';
+        li.querySelector('.ck-icon').innerHTML = '✅';
+    }
+
+    function setCkActive(id) {
+        var li = document.getElementById(id);
+        li.className = 'active';
+        li.querySelector('.ck-icon').innerHTML = '<span class="ug-spinner"></span>';
+    }
+
+    function pollUpgradeResult() {
+        fetch('/api/result/' + TOKEN).then(function(r) { return r.json(); }).then(function(data) {
+            if (data.score !== ORIGINAL_SCORE) {
+                clearInterval(upgradePoller);
+                if (window._crawlTimer) clearInterval(window._crawlTimer);
+                finishUpgradeProgress(data);
+            }
+        }).catch(function() {});
+    }
+
+    function finishUpgradeProgress(data) {
+        var bar = document.getElementById('upgrade-progress');
+        setCkDone('ck-2');
+        setCkActive('ck-3');
+        bar.style.width = '80%';
+
+        setTimeout(function() {
+            setCkDone('ck-3');
+            bar.style.width = '100%';
+        }, 600);
+
+        setTimeout(function() {
+            showStep4(data);
+        }, 1400);
+    }
+
+    // ── Step 4: Upgrade result ──
+    function showStep4(data) {
+        document.getElementById('upgrade-step3').classList.remove('show');
+        document.getElementById('upgrade-step4').classList.add('show');
+
+        var detail = data.detail || {};
+        var origDetail = {{ data.detail | tojson }};
+
+        var html = '';
+        Q_KEYS.forEach(function(qid) {
+            var oldScore = origDetail[qid] ? origDetail[qid].score : 0;
+            var newScore = detail[qid] ? detail[qid].score : oldScore;
+            var delta = newScore - oldScore;
+            if (delta > 0) {
+                html += '<div class="result-row">' +
+                    '<span class="rr-label">' + qid.toUpperCase() + ' ' + (Q_NAMES[qid] || qid) + '</span>' +
+                    '<span class="rr-change">' +
+                        '<span class="rr-old">' + oldScore + '</span>' +
+                        '<span class="rr-arrow">→</span>' +
+                        '<span class="rr-new">' + newScore + '</span>' +
+                        '<span class="rr-delta">⬆+' + delta + '</span>' +
+                    '</span></div>';
+            }
+        });
+        document.getElementById('upgrade-results').innerHTML = html;
+
+        var newScore = data.score;
+        var scoreDelta = newScore - ORIGINAL_SCORE;
+        document.getElementById('rt-from').textContent = '原始 ' + ORIGINAL_SCORE + ' 分';
+        document.getElementById('rt-delta').textContent = '⬆ +' + scoreDelta + ' 分';
+
+        var rtScoreEl = document.getElementById('rt-new-score');
+        var cur = ORIGINAL_SCORE;
+        var step = Math.max(1, Math.ceil(scoreDelta / 20));
+        var rollTimer = setInterval(function() {
+            cur += step;
+            if (cur >= newScore) {
+                cur = newScore;
+                clearInterval(rollTimer);
+            }
+            rtScoreEl.textContent = cur;
+        }, 50);
+
+        var newTitle = data.title;
+        if (newTitle !== ORIGINAL_TITLE) {
+            var tcEl = document.getElementById('title-change');
+            var oldIcon = TITLE_ICONS[ORIGINAL_TITLE] || '🦐';
+            var newIcon = TITLE_ICONS[newTitle] || '🦐';
+            tcEl.innerHTML = '称号升级！<br>' +
+                '<span class="tc-old">' + oldIcon + ' ' + ORIGINAL_TITLE + '</span>' +
+                '<span class="tc-arrow">→</span>' +
+                '<span class="tc-new confetti-pop">' + newIcon + ' ' + newTitle + ' 🎉</span>';
+            tcEl.style.display = 'block';
+        }
+
+        if (data.rank && ORIGINAL_RANK) {
+            var rankDelta = ORIGINAL_RANK - data.rank;
+            if (rankDelta > 0) {
+                document.getElementById('rank-change').textContent =
+                    '排名 #' + ORIGINAL_RANK + ' → #' + data.rank + '  ⬆' + rankDelta + '名';
+            }
+        }
+    }
+
+    function shareNewResult() {
+        var url = 'http://' + DOMAIN + '/s/' + TOKEN;
+        var text = '我的小龙虾「{{ data.name }}」升级后在龙虾学校获得新成绩！你的小龙虾够聪明吗？👉 ' + url;
+        if (navigator.share) {
+            navigator.share({ title: text, url: url }).catch(function(){});
+        } else {
+            navigator.clipboard.writeText(text).then(function() {
+                alert('已复制分享文案到剪贴板！');
+            }).catch(function() {
+                prompt('复制以下内容分享：', text);
+            });
+        }
+    }
+
+    function closeStep4() {
+        document.getElementById('upgrade-step4').classList.remove('show');
+    }
+
+    function closeStep4AndReload() {
+        window.location.reload();
+    }
+
+    // ===== Login Flow =====
+    var userPhone = '';
+
+    function startPremiumSubscribe() {
+        if (userPhone) {
+            window.location.href = '/me/' + TOKEN;
+        } else {
+            document.getElementById('login-modal').classList.add('show');
+        }
+    }
+
+    function sendCode() {
+        var phone = document.getElementById('login-phone').value.trim();
+        if (phone.length !== 11) { showLoginError('请输入 11 位手机号'); return; }
+        var btn = document.getElementById('btn-send-code');
+        btn.disabled = true;
+        fetch('/api/login/send-code', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({phone: phone})
+        }).then(function(r) { return r.json(); }).then(function() {
+            var sec = 60;
+            btn.textContent = sec + 's';
+            var t = setInterval(function() {
+                sec--;
+                btn.textContent = sec + 's';
+                if (sec <= 0) { clearInterval(t); btn.textContent = '获取验证码'; btn.disabled = false; }
+            }, 1000);
+        }).catch(function() { btn.disabled = false; showLoginError('发送失败'); });
+    }
+
+    function showLoginError(msg) {
+        var el = document.getElementById('login-error');
+        el.textContent = msg;
+        el.style.display = 'block';
+        setTimeout(function() { el.style.display = 'none'; }, 3000);
+    }
+
+    function doLogin() {
+        var phone = document.getElementById('login-phone').value.trim();
+        var code = document.getElementById('login-code').value.trim();
+        if (!phone || phone.length !== 11) { showLoginError('请输入 11 位手机号'); return; }
+        if (!code) { showLoginError('请输入验证码'); return; }
+        fetch('/api/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({phone: phone, code: code, token: TOKEN})
+        }).then(function(r) {
+            if (!r.ok) return r.json().then(function(d) { throw new Error(d.detail); });
+            return r.json();
+        }).then(function() {
+            userPhone = phone;
+            document.getElementById('login-modal').classList.remove('show');
+            window.location.href = '/me/' + TOKEN;
+        }).catch(function(e) { showLoginError(e.message || '登录失败'); });
+    }
+
+    // ===== Share =====
+    function shareResult() {
+        var url = 'http://' + DOMAIN + '/s/' + TOKEN;
+        var text = '我的小龙虾「{{ data.name }}」在龙虾学校智力测试中获得 ' + SCORE + ' 分，荣获「' + ORIGINAL_TITLE + '」称号，超过 ' + Math.floor(SCORE_PCT) + '% 的小龙虾！你的小龙虾够聪明吗？👉 ' + url;
+        if (navigator.share) {
+            navigator.share({ title: '龙虾学校成绩', url: url }).catch(function(){});
+        } else {
+            navigator.clipboard.writeText(text).then(function() {
+                alert('已复制分享文案到剪贴板！');
+            }).catch(function() {
+                fallbackCopy(text);
+                alert('已复制分享文案到剪贴板！');
+            });
+        }
+    }
+
+    function fallbackCopy(text) {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+    }
+
+    // ===== Init =====
+    lucide.createIcons();
+
+    if (DATA_STATUS === 'done') {
+        // Already done — show Phase 3 directly with server-rendered content
+        document.getElementById('stickyBottom').classList.add('active');
+        // Animate ring + score number
+        setTimeout(function() {
+            setRing(SCORE_PCT);
+
+            var el = document.getElementById('scoreNum');
+            var cur = 0;
+            var step = Math.max(1, Math.ceil(SCORE / 40));
+            var timer = setInterval(function() {
+                cur = Math.min(cur + step, SCORE);
+                el.textContent = cur;
+                if (cur >= SCORE) clearInterval(timer);
+            }, 35);
+        }, 400);
+
+        // Animate bars
+        requestAnimationFrame(function() {
+            var bars = document.querySelectorAll('.scan-bar[data-pct]');
+            bars.forEach(function(bar) {
+                bar.style.width = bar.getAttribute('data-pct') + '%';
+            });
+        });
+    } else {
+        // Waiting — start Phase 1 with real polling
+        startWaitPhase();
+    }
+    </script>
+</body>
+</html>
