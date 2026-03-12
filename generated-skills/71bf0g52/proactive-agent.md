@@ -1,53 +1,52 @@
 # proactive-agent
 
 ## Goal
-Enable the agent to autonomously gather, synthesize, and deliver timely information (e.g., daily news, market data, project status) on a recurring schedule without manual prompting.
-
-## Trigger
-User says: "每天给我整理新闻", "schedule a daily digest", "set up a recurring report", or uses `/loop`.
+Run on a recurring schedule, check one or more configured sources (URLs, SQL queries, log streams, APIs), compare against a baseline or threshold, and emit a structured alert when something worth the user's attention is detected.
 
 ## Execution Steps
 
-### 1. Parse the request
-- Extract: **topic** (e.g., "AI news"), **frequency** (e.g., `daily @ 08:00`), **output channel** (reply / email draft / file).
-- Confirm schedule with user before creating the cron.
+1. **Parse invocation arguments**
+   ```
+   /proactive-agent <interval> <source> [threshold]
+   ```
+   - `interval`: cron expression or shorthand (e.g. `15m`, `1h`, `0 9 * * 1-5`)
+   - `source`: URL, SQL snippet, or named monitor key
+   - `threshold` (optional): numeric delta or keyword pattern that triggers an alert
 
-### 2. Register the cron job
-```
-CronCreate  interval=<parsed_cron_expression>  prompt="<assembled research prompt>"
-```
-Store the returned cron ID so it can be managed later.
+2. **Register the cron job** using `CronCreate`:
+   - Store the source + threshold in the cron job's metadata
+   - Set a human-readable label: `proactive-agent: {source}`
 
-### 3. Research step (runs each cycle)
-1. Use `WebSearch` with targeted queries (e.g., `"AI" after:<yesterday_date>`).
-2. Fetch up to 5 top result URLs via `WebFetch`; skip any that return non-2xx.
-3. On fetch failure: log the URL as unavailable, continue with remaining sources — never abort the whole run.
-4. Deduplicate stories by URL and headline similarity.
+3. **On each tick — fetch & compare**
+   - Retrieve current state from the source (WebFetch / execute_sql / WebSearch)
+   - Load the previous snapshot from the job's persisted state
+   - Compute diff / delta / new matches
 
-### 4. Synthesize digest
-```
-## Daily Digest — <YYYY-MM-DD>
-### Top Stories
-1. **<Headline>** — <one-sentence summary> ([source](<url>))
-…
-### Trending Topics
-- …
-```
+4. **Decision gate**
+   - If delta exceeds threshold OR no baseline exists → emit alert (step 5)
+   - Otherwise → update snapshot silently, no output
 
-### 5. Deliver output
-- If channel = email → `mcp__claude_ai_Gmail__gmail_create_draft` with digest as body.
-- Otherwise → respond directly in chat.
+5. **Format alert**
+   ```
+   ## Proactive Alert — {source}
+   **Triggered at:** {ISO timestamp}
+   **Change detected:** {brief description}
 
-### 6. Error handling
-| Scenario | Action |
-|---|---|
-| All fetches fail | Report "No sources reachable" and skip cycle — do NOT fabricate news |
-| Search returns 0 results | Broaden query, retry once with wider date range |
-| Cron missed | Log missed run; do not double-run on next cycle |
+   ### Details
+   {diff or excerpt, max 20 lines}
+
+   ### Recommended Action
+   {1–3 bullet points}
+   ```
+
+6. **Persist new snapshot** so the next tick has a fresh baseline.
+
+7. **To stop monitoring**, run `/proactive-agent stop <label>` which calls `CronDelete`.
 
 ## Acceptance Criteria
-- [ ] Cron job created and listed in `CronList` after setup.
-- [ ] Digest contains ≥ 3 stories from real fetched sources (no hallucinated URLs).
-- [ ] Individual URL fetch failures do not crash the pipeline.
-- [ ] Digest delivered to correct output channel.
-- [ ] User can cancel via `CronDelete <id>` and agent confirms deletion.
+- [ ] Cron job is created and visible via `CronList`
+- [ ] First run captures a baseline without triggering a false alert
+- [ ] Alert fires within one tick of the threshold being crossed
+- [ ] Alert includes timestamp, source, change description, and recommended action
+- [ ] Silent ticks produce no output to avoid notification fatigue
+- [ ] `stop` subcommand cleanly deletes the cron job
