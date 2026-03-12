@@ -18,6 +18,7 @@ from .scorer import score_submission, merge_retest, get_title, raw_to_iq, SCORER
 from .og_image import generate_og_image
 from .questions import QUESTIONS
 from .repair import generate_repair_skill, ADVANCED_QIDS, BASIC_QIDS
+from .payment import PaymentConfig, WechatPayClient, AlipayClient
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SKILL_TEMPLATE = BASE_DIR / "public" / "SKILL.md"
@@ -28,6 +29,12 @@ app = FastAPI(title="龙虾学校", docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 QUESTION_IDS = [q["id"] for q in QUESTIONS]
+
+pay_config = PaymentConfig()
+wechat_pay = WechatPayClient(pay_config)
+alipay_pay = AlipayClient(pay_config)
+
+VALID_CHANNELS = {"wechat_native", "wechat_h5", "alipay_pc", "alipay_h5"}
 
 @app.on_event("startup")
 def startup():
@@ -592,36 +599,156 @@ async def login(request: Request):
 
 @app.post("/api/payment/create")
 async def payment_create(request: Request):
+    """创建支付订单并发起真实支付。
+    channel: wechat_native | wechat_h5 | alipay_pc | alipay_h5
+    """
     body = await request.json()
     phone = (body.get("phone") or "").strip()
     token = (body.get("token") or "").strip()
     plan_type = (body.get("plan_type") or "basic").strip()
+    channel = (body.get("channel") or "").strip()
 
     if not token:
         raise HTTPException(400, "缺少 token")
+    if channel not in VALID_CHANNELS:
+        raise HTTPException(400, f"不支持的支付渠道，可选: {', '.join(sorted(VALID_CHANNELS))}")
 
-    # plan_type: basic=1990(¥19.9), premium=9900(¥99)
+    # 微信 H5 域名审核中，暂不开放
+    if channel == "wechat_h5":
+        raise HTTPException(400, "微信 H5 支付域名审核中，请使用支付宝 H5 或微信扫码支付")
+
     amount = 1990 if plan_type == "basic" else 9900
-
+    description = "龙虾学校 - 基础能力升级" if plan_type == "basic" else "龙虾学校 - 高级能力订阅"
     order_id = "PAY" + _gen_token(12)
     now = _now_iso()
 
+    # 写入数据库
     db = get_db()
     try:
         db.execute(
-            "INSERT INTO payments (order_id, phone, token, amount, status, created_at) VALUES (?, ?, ?, ?, 'pending', ?)",
-            (order_id, phone, token, amount, now)
+            """INSERT INTO payments (order_id, phone, token, amount, plan_type, channel, status, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)""",
+            (order_id, phone, token, amount, plan_type, channel, now),
         )
         db.commit()
     finally:
         db.close()
 
-    return {"success": True, "order_id": order_id, "amount": amount, "plan_type": plan_type}
+    # 调用支付渠道
+    try:
+        if channel == "wechat_native":
+            payment_info = wechat_pay.create_native_order(order_id, amount, description)
+        elif channel == "wechat_h5":
+            client_ip = request.client.host if request.client else "127.0.0.1"
+            payment_info = wechat_pay.create_h5_order(order_id, amount, description, client_ip)
+        elif channel == "alipay_pc":
+            payment_info = alipay_pay.create_pc_order(order_id, amount, description)
+        elif channel == "alipay_h5":
+            payment_info = alipay_pay.create_h5_order(order_id, amount, description)
+    except RuntimeError as e:
+        raise HTTPException(500, str(e))
+
+    return {
+        "success": True,
+        "order_id": order_id,
+        "channel": channel,
+        "amount": amount,
+        "plan_type": plan_type,
+        "payment_info": payment_info,
+    }
+
+
+@app.post("/api/payment/wechat/notify")
+async def wechat_notify(request: Request):
+    """微信支付异步回调"""
+    body = await request.body()
+    try:
+        result = wechat_pay.decrypt_callback(body)
+    except Exception:
+        return JSONResponse({"code": "FAIL", "message": "解密失败"}, status_code=400)
+
+    out_trade_no = result.get("out_trade_no", "")
+    trade_state = result.get("trade_state", "")
+    transaction_id = result.get("transaction_id", "")
+
+    if trade_state == "SUCCESS":
+        now = _now_iso()
+        db = get_db()
+        try:
+            db.execute(
+                "UPDATE payments SET status='paid', trade_no=?, paid_at=?, confirmed_at=? WHERE order_id=? AND status='pending'",
+                (transaction_id, now, now, out_trade_no),
+            )
+            db.commit()
+        finally:
+            db.close()
+
+    return JSONResponse({"code": "SUCCESS", "message": "OK"})
+
+
+@app.post("/api/payment/alipay/notify")
+async def alipay_notify(request: Request):
+    """支付宝异步回调"""
+    form = await request.form()
+    data = dict(form)
+
+    if not alipay_pay.verify_callback(data):
+        return PlainTextResponse("fail")
+
+    trade_status = data.get("trade_status", "")
+    out_trade_no = data.get("out_trade_no", "")
+    trade_no = data.get("trade_no", "")
+
+    if trade_status in ("TRADE_SUCCESS", "TRADE_FINISHED"):
+        now = _now_iso()
+        db = get_db()
+        try:
+            db.execute(
+                "UPDATE payments SET status='paid', trade_no=?, paid_at=?, confirmed_at=? WHERE order_id=? AND status='pending'",
+                (trade_no, now, now, out_trade_no),
+            )
+            db.commit()
+        finally:
+            db.close()
+
+    return PlainTextResponse("success")
+
+
+@app.get("/api/payment/alipay/return")
+async def alipay_return(request: Request):
+    """支付宝同步返回（用户支付后跳转回来）"""
+    from fastapi.responses import RedirectResponse
+    out_trade_no = request.query_params.get("out_trade_no", "")
+    if out_trade_no:
+        db = get_db()
+        try:
+            row = db.execute("SELECT token FROM payments WHERE order_id=?", (out_trade_no,)).fetchone()
+        finally:
+            db.close()
+        if row:
+            return RedirectResponse(url=f"/wait/{row['token']}", status_code=302)
+    return RedirectResponse(url="/", status_code=302)
+
+
+@app.get("/api/payment/status/{order_id}")
+async def payment_status(order_id: str):
+    """前端轮询支付状态"""
+    db = get_db()
+    try:
+        row = db.execute(
+            "SELECT order_id, token, amount, plan_type, channel, status, paid_at FROM payments WHERE order_id=?",
+            (order_id,),
+        ).fetchone()
+    finally:
+        db.close()
+    if not row:
+        raise HTTPException(404, "订单不存在")
+    return dict(row)
 
 
 @app.post("/api/payment/confirm")
 async def payment_confirm(request: Request):
-    """用户点击"我已支付"后调用。TODO: 接入真实支付系统验证。MVP 阶段前端点击即放行。"""
+    """向后兼容：旧版前端"我已支付"按钮调用。真实支付到账后由回调自动更新状态。"""
     body = await request.json()
     order_id = (body.get("order_id") or "").strip()
     token = (body.get("token") or "").strip()
@@ -629,24 +756,21 @@ async def payment_confirm(request: Request):
     if not order_id and not token:
         raise HTTPException(400, "缺少订单号或 token")
 
-    now = _now_iso()
+    # 查询是否已真实支付
     db = get_db()
     try:
         if order_id:
-            db.execute(
-                "UPDATE payments SET status='submitted', confirmed_at=? WHERE order_id=?",
-                (now, order_id)
-            )
-        elif token:
-            db.execute(
-                "UPDATE payments SET status='submitted', confirmed_at=? WHERE token=? AND status='pending'",
-                (now, token)
-            )
-        db.commit()
+            row = db.execute("SELECT status FROM payments WHERE order_id=?", (order_id,)).fetchone()
+        else:
+            row = db.execute(
+                "SELECT status FROM payments WHERE token=? ORDER BY created_at DESC LIMIT 1",
+                (token,),
+            ).fetchone()
     finally:
         db.close()
 
-    return {"success": True}
+    paid = row["status"] == "paid" if row else False
+    return {"success": True, "paid": paid}
 
 
 # ─── SSR 页面路由 ───

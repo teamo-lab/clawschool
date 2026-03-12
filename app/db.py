@@ -57,16 +57,33 @@ def init_db():
     conn.execute("""
         CREATE TABLE IF NOT EXISTS payments (
             order_id TEXT PRIMARY KEY,
-            phone TEXT NOT NULL,
+            phone TEXT NOT NULL DEFAULT '',
             token TEXT NOT NULL,
             amount INTEGER NOT NULL DEFAULT 9900,
+            plan_type TEXT NOT NULL DEFAULT 'basic',
+            channel TEXT NOT NULL DEFAULT '',
             status TEXT NOT NULL DEFAULT 'pending',
+            trade_no TEXT,
             created_at TEXT NOT NULL,
-            confirmed_at TEXT
+            confirmed_at TEXT,
+            paid_at TEXT
         )
     """)
     conn.execute("CREATE INDEX IF NOT EXISTS idx_payments_phone ON payments(phone)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_payments_token ON payments(token)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_payments_trade_no ON payments(trade_no)")
+
+    # 兼容旧表：增量添加新列（已有 DB 不会重建表）
+    for col, typedef in [
+        ("plan_type", "TEXT NOT NULL DEFAULT 'basic'"),
+        ("channel", "TEXT NOT NULL DEFAULT ''"),
+        ("trade_no", "TEXT"),
+        ("paid_at", "TEXT"),
+    ]:
+        try:
+            conn.execute(f"ALTER TABLE payments ADD COLUMN {col} {typedef}")
+        except Exception:
+            pass  # 列已存在
 
     conn.commit()
     conn.close()
