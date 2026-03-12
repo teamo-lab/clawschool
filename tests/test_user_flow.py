@@ -54,14 +54,11 @@ class TestDetailPage:
         r = client.get(f"/wait/{d['token']}")
         assert str(d["iq"]) in r.text
 
-    def test_upgrade_command_uses_diagnose_skill(self, client):
+    def test_upgrade_command_uses_repair_skill(self, client):
         d = submit_test(client)
         r = client.get(f"/wait/{d['token']}")
-        assert "skills/diagnose.md" in r.text
-        assert "scope" in r.text
-        assert "basic" in r.text
-        # 不再使用 repair-skill
-        assert "repair-skill" not in r.text
+        assert f"/api/repair-skill/{d['token']}" in r.text
+        assert "skills/diagnose.md" not in r.text
 
     def test_passes_advanced_basic_qids(self, client):
         d = submit_test(client)
@@ -232,13 +229,11 @@ class TestDetailPageIntegration:
         r = http.get(f"/wait/{d['token']}")
         assert str(d["iq"]) in r.text
 
-    def test_upgrade_command_uses_diagnose_skill(self, http):
+    def test_upgrade_command_uses_repair_skill(self, http):
         d = integration_submit(http)
         r = http.get(f"/wait/{d['token']}")
-        assert "skills/diagnose.md" in r.text
-        assert "scope" in r.text
-        assert "basic" in r.text
-        assert "repair-skill" not in r.text
+        assert f"/api/repair-skill/{d['token']}" in r.text
+        assert "skills/diagnose.md" not in r.text
 
 
 @pytest.mark.integration
