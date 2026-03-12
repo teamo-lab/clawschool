@@ -991,6 +991,29 @@ async def payment_confirm(request: Request):
     return {"success": True, "paid": paid}
 
 
+# ─── Waitlist ───
+
+@app.post("/api/waitlist")
+async def join_waitlist(request: Request):
+    body = await request.json()
+    phone = (body.get("phone") or "").strip()
+    platform = (body.get("platform") or "").strip()
+    if not phone or len(phone) != 11 or not phone.isdigit():
+        raise HTTPException(400, "手机号格式不正确")
+    if platform not in ("pc", "mobile"):
+        raise HTTPException(400, "platform 必须为 pc 或 mobile")
+    db = get_db()
+    try:
+        db.execute(
+            "INSERT INTO waitlist (phone, platform) VALUES (?, ?)",
+            (phone, platform),
+        )
+        db.commit()
+    finally:
+        db.close()
+    return {"success": True, "message": "已加入等待列表"}
+
+
 # ─── SSR 页面路由 ───
 
 @app.get("/", response_class=HTMLResponse)

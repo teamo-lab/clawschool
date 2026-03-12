@@ -84,6 +84,17 @@ def init_db():
         )
     """)
 
+    # Waitlist 表
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS waitlist (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            phone TEXT NOT NULL,
+            platform TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_waitlist_phone ON waitlist(phone)")
+
     # 兼容旧表：增量添加新列（已有 DB 不会重建表）
     for col, typedef in [
         ("plan_type", "TEXT NOT NULL DEFAULT 'basic'"),
