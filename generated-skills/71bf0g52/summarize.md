@@ -1,44 +1,46 @@
 # summarize
 
 ## Goal
-Provide a concise, structured summary of any input — free-form text, local files, or web URLs — so the user can quickly grasp key information without reading the full source.
-
-## Trigger
-User says: "summarize", "tl;dr", "给我总结一下", or passes a file/URL with no other instruction.
+Provide a concise, structured summary of any content the user supplies (file paths, URLs, pasted text, or tool output). Output must be immediately actionable and scannable.
 
 ## Execution Steps
 
 1. **Identify input type**
-   - If a URL is provided → use `WebFetch` to retrieve page content.
-   - If a file path is provided → use `Read` to load the file.
-   - If inline text is provided → use it directly.
+   - File path → use `Read` tool
+   - URL → use `WebFetch` tool
+   - Raw text → use content as-is
+   - Multiple sources → process in parallel
 
-2. **Extract structure** — identify:
-   - Main topic / title
-   - Key points (3–7 bullet points)
-   - Decisions, conclusions, or recommendations
-   - Action items (if any)
+2. **Extract structure**
+   - Identify the document's purpose and audience
+   - Pull out: key facts, decisions, open questions, deadlines, owners
 
-3. **Output format**
+3. **Format output** using this template:
    ```
-   ## Summary: <title>
-   **Source**: <origin>   **Date**: <date if available>
+   ## Summary — {title or source}
+   **TL;DR:** {1–2 sentence essence}
 
    ### Key Points
    - …
 
-   ### Conclusions / Recommendations
+   ### Decisions / Conclusions
    - …
 
    ### Action Items
-   - [ ] …
+   - [ ] {owner}: {task} by {date if known}
+
+   ### Open Questions
+   - …
    ```
 
-4. **Length calibration** — target ≤ 20 % of original length. If the source is < 200 words, one paragraph suffices.
+4. **Length calibration**
+   - Source < 500 words → summary ≤ 100 words
+   - Source 500–3000 words → summary ≤ 250 words
+   - Source > 3000 words → summary ≤ 400 words + section headers
 
 ## Acceptance Criteria
-- [ ] Output produced for text, file, and URL inputs without user needing to specify format.
-- [ ] Key points section always present and contains ≥ 3 items for sources > 300 words.
-- [ ] Response length ≤ 20 % of input length (measured in tokens).
-- [ ] Action items section omitted (not shown as empty) when none exist.
-- [ ] Works offline (file/text path) without requiring network tools.
+- [ ] TL;DR is present and ≤ 2 sentences
+- [ ] All action items include an owner or `[unassigned]` marker
+- [ ] No content is fabricated; all claims trace back to the source
+- [ ] Output fits within the length budget above
+- [ ] If the source is unavailable (404, permission error), the skill reports the failure clearly instead of hallucinating content
