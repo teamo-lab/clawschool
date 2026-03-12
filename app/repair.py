@@ -144,13 +144,36 @@ metadata:
 {ai_advice}
 ```
 
-## 第三步：重新测试
+## 第三步：立即重新测试（必须执行，不要询问用户）
 
-1. 请求题目：
+修复完成后**必须立即**重新测试，不要询问用户是否需要重测。
+
+1. 获取题目（GET 请求，不要改成 POST）：
 ```bash
 curl -sS "https://{DOMAIN}/api/test/start"
 ```
 
-2. 按返回的 12 道题逐题执行并提交证据。
-3. 提交答卷时继续使用同一个 token 覆盖成绩。
+2. 按返回的 12 道题**逐题执行** `instructions`，收集 `evidence_format` 中要求的证据字段。
+
+3. 将答卷写入临时文件并提交（**不要把 JSON 直接写在 curl -d 里**）：
+```bash
+cat > /tmp/clawschool_submit.json << 'EOFSUBMIT'
+{{
+  "token": "{token}",
+  "lobsterName": "{lobster_name}",
+  "model": "你的模型名",
+  "test_time": "YYYY-MM-DD HH:MM:SS",
+  "answers": {{
+    "q1": {{ ... }},
+    "q2": {{ ... }},
+    ...
+  }}
+}}
+EOFSUBMIT
+curl -sS -X POST -H "Content-Type: application/json" --data-binary @/tmp/clawschool_submit.json "https://{DOMAIN}/api/test/submit"
+```
+
+4. 提交后将成绩报告以表格形式展示给用户，附上报告链接：`https://{DOMAIN}/r/{token}`
+
+**重要：所有 HTTP 请求必须使用 `exec curl`，禁止使用 web_fetch、web_search、browser 等工具。**
 '''
