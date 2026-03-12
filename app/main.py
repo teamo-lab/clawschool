@@ -4,6 +4,7 @@ import json
 import os
 import string
 import random
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -20,6 +21,7 @@ from .repair import generate_repair_skill, ADVANCED_QIDS, BASIC_QIDS
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SKILL_TEMPLATE = BASE_DIR / "public" / "SKILL.md"
+DIAGNOSE_SKILL_TEMPLATE = BASE_DIR / "public" / "DIAGNOSE-SKILL.md"
 DOMAIN = os.environ.get("CLAWSCHOOL_DOMAIN", "clawschool.teamolab.com")
 
 app = FastAPI(title="龙虾学校", docs_url=None, redoc_url=None)
@@ -87,6 +89,15 @@ async def get_skill(token: str = "", name: str = ""):
         raise HTTPException(404, "SKILL.md 未配置")
     content = SKILL_TEMPLATE.read_text(encoding="utf-8")
     return PlainTextResponse(content, media_type="text/markdown; charset=utf-8")
+
+
+@app.get("/skills/diagnose.md")
+async def get_diagnose_skill():
+    if not DIAGNOSE_SKILL_TEMPLATE.exists():
+        raise HTTPException(404, "DIAGNOSE-SKILL.md 未配置")
+    content = DIAGNOSE_SKILL_TEMPLATE.read_text(encoding="utf-8")
+    return PlainTextResponse(content, media_type="text/markdown; charset=utf-8")
+
 
 
 @app.get("/api/test/start")
@@ -314,7 +325,7 @@ async def test_diagnose(token: str):
             "reason": d.get("reason", ""),
         })
 
-    return {
+    diagnosis_result = {
         "token": token,
         "lobsterName": row["name"],
         "model": row["model"],
@@ -323,6 +334,23 @@ async def test_diagnose(token: str):
         "rank": _get_rank(row["score"], token),
         "questionDetails": question_details,
     }
+
+    # 异步调用美国 Claude Code API 生成 skills（非阻塞，失败不影响诊断结果）
+    CLAUDE_API_URL = os.environ.get("CLAUDE_API_URL", "http://49.51.47.101:8900")
+    try:
+        payload = json.dumps({"token": token, "diagnosis": diagnosis_result}).encode()
+        req = urllib.request.Request(
+            f"{CLAUDE_API_URL}/api/generate-skills",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=200) as resp:
+            skills_result = json.loads(resp.read())
+        diagnosis_result["generatedSkills"] = skills_result.get("skills", [])
+    except Exception:
+        diagnosis_result["generatedSkills"] = []
+
+    return diagnosis_result
 
 
 @app.get("/api/repair-skill/{token}")
@@ -415,7 +443,7 @@ async def recent(limit: int = 10):
     db = get_db()
     try:
         rows = db.execute("""
-            SELECT name, score, title, model, test_time
+            SELECT token, name, score, title, model, test_time
             FROM tests WHERE status='done'
             ORDER BY updated_at DESC LIMIT ?
         """, (limit,)).fetchall()
