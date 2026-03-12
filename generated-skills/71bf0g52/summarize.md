@@ -1,58 +1,44 @@
 # summarize
 
 ## Goal
-Address the **Summarize skill not installed** gap (q6) by providing a single, reliable entry-point for all summarization tasks across content types.
+Provide a concise, structured summary of any input — free-form text, local files, or web URLs — so the user can quickly grasp key information without reading the full source.
 
 ## Trigger
-User says: "summarize this", "give me a summary of", "TL;DR", "condense this article", or pastes a URL / file path and asks for a summary.
+User says: "summarize", "tl;dr", "给我总结一下", or passes a file/URL with no other instruction.
 
 ## Execution Steps
 
-### 1. Detect content type
-| Input | Action |
-|-------|--------|
-| URL | `WebFetch` the page; extract body text |
-| File path | `Read` the file |
-| Pasted text | Use directly |
-| Ambiguous | Ask user: "Is this a URL, a file path, or text?" |
+1. **Identify input type**
+   - If a URL is provided → use `WebFetch` to retrieve page content.
+   - If a file path is provided → use `Read` to load the file.
+   - If inline text is provided → use it directly.
 
-### 2. Determine desired length
-- Check if user specified length: `short` (3 bullets), `medium` (1 paragraph), `long` (structured sections).
-- Default: `medium`.
+2. **Extract structure** — identify:
+   - Main topic / title
+   - Key points (3–7 bullet points)
+   - Decisions, conclusions, or recommendations
+   - Action items (if any)
 
-### 3. Produce summary
+3. **Output format**
+   ```
+   ## Summary: <title>
+   **Source**: <origin>   **Date**: <date if available>
 
-**Short** — 3 bullet points:
-```
-- {key point 1}
-- {key point 2}
-- {key point 3}
-```
+   ### Key Points
+   - …
 
-**Medium** — 1 paragraph (4–6 sentences): context → main argument → key evidence → conclusion.
+   ### Conclusions / Recommendations
+   - …
 
-**Long** — structured Markdown:
-```markdown
-## Summary
-### Background
-...
-### Key Points
-...
-### Conclusion
-...
-```
+   ### Action Items
+   - [ ] …
+   ```
 
-### 4. Handle fetch failures
-- If `WebFetch` returns an error: report the error code to the user and ask them to paste the text manually.
-- If the file is not found: report the path and ask the user to verify it.
-
-### 5. Output
-- Print the summary directly in the conversation.
-- If the source was a URL, append: `**Source:** {url}`.
+4. **Length calibration** — target ≤ 20 % of original length. If the source is < 200 words, one paragraph suffices.
 
 ## Acceptance Criteria
-- [ ] Works for all three input types: URL, file, pasted text.
-- [ ] Respects the user's length preference.
-- [ ] Fetch/read failures produce a clear error message and a recovery prompt — never a silent empty output.
-- [ ] Summary accurately reflects the source material (no hallucinated facts).
-- [ ] Response time under 30 seconds for typical article lengths.
+- [ ] Output produced for text, file, and URL inputs without user needing to specify format.
+- [ ] Key points section always present and contains ≥ 3 items for sources > 300 words.
+- [ ] Response length ≤ 20 % of input length (measured in tokens).
+- [ ] Action items section omitted (not shown as empty) when none exist.
+- [ ] Works offline (file/text path) without requiring network tools.
