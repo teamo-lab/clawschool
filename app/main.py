@@ -239,8 +239,10 @@ async def get_result(token: str):
 
 
 @app.get("/api/test/diagnose")
-async def test_diagnose(token: str):
-    """诊断：返回答卷详情，供 agent 端分析弱项和推荐 skills"""
+async def test_diagnose(token: str, scope: str = "full"):
+    """诊断：返回答卷详情，供 agent 端分析弱项和推荐 skills。
+    scope=basic 只分析基础 8 题（BASIC_QIDS），scope=full 分析全部 12 题。
+    """
     db = get_db()
     try:
         row = db.execute("SELECT * FROM tests WHERE token=? AND status='done'", (token,)).fetchone()
@@ -252,11 +254,17 @@ async def test_diagnose(token: str):
     detail = json.loads(row["detail"]) if row["detail"] else {}
     submission = json.loads(row["submission"]) if row["submission"] else {}
 
+    # 根据 scope 筛选题目范围
+    if scope == "basic":
+        target_qids = BASIC_QIDS
+    else:
+        target_qids = QUESTION_IDS
+
     # 构建题目索引
     q_index = {q["id"]: q for q in QUESTIONS}
 
     question_details = []
-    for qid in QUESTION_IDS:
+    for qid in target_qids:
         q = q_index.get(qid, {})
         d = detail.get(qid, {})
         s = submission.get(qid, {})
@@ -280,6 +288,7 @@ async def test_diagnose(token: str):
         "iq": raw_to_iq(row["score"]),
         "title": row["title"],
         "rank": _get_rank(row["score"], token),
+        "scope": scope,
         "questionDetails": question_details,
     }
 
