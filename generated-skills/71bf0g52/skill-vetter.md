@@ -1,91 +1,64 @@
 # skill-vetter
 
-## 目标
+## Goal
+Before a skill is shipped or used, systematically verify that it is well-formed, safe, idempotent where required, and actually solves the stated problem. Produce a structured report so the author knows exactly what to fix.
 
-在 Skill 文档落地前进行自动化审核，检查目标清晰度、步骤可执行性、安全边界与验收标准完整性，杜绝「未经验证的 Skill 直接上线」风险（q8）。
+## Trigger
+User says: "vet this skill", "review my skill doc", "check if this skill is ready", or passes a `.md` skill file.
 
-## 使用方式
+## Execution Steps
 
+### 1. Load the skill
+- If a file path is given → `Read` it.
+- If inline markdown is given → use it directly.
+- If a skill name is given → locate it in `~/.claude/skills/` via `Glob`.
+
+### 2. Structural checks (auto-fail if missing)
+| Check | Criterion |
+|---|---|
+| `name` | kebab-case slug, ≤ 40 chars |
+| `summary` | single sentence, ≤ 120 chars |
+| `Goal` section | present, ≥ 1 sentence |
+| `Trigger` section | lists ≥ 1 concrete user phrase |
+| `Execution Steps` | numbered, ≥ 2 steps |
+| `Acceptance Criteria` | checklist with ≥ 2 items |
+
+### 3. Quality checks (warnings)
+- Steps reference real available tools (cross-check against tool list).
+- No hallucinated tool names or parameters.
+- Error / failure paths addressed for any network or file I/O step.
+- No hard-coded secrets, personal data, or absolute paths outside home dir.
+- Steps are deterministic — no "maybe do X" ambiguity.
+
+### 4. Safety checks
+- Does not instruct bypassing `--no-verify` or destructive git ops without explicit user confirmation.
+- Does not auto-push, auto-delete, or auto-send without user approval gate.
+- Network requests use only user-supplied or whitelisted URLs.
+
+### 5. Emit report
 ```
-/skill-vetter <skill_name_or_content>
-```
+## Skill Vet Report: <skill-name>
+Veredict: PASS | FAIL | WARN
 
-- 传入已有 Skill 的 slug 名称，或直接粘贴 Markdown 内容
-- 支持批量：多个 slug 用逗号分隔
+### ✅ Passed Checks
+- …
 
-## 执行步骤
+### ❌ Failed Checks (must fix before use)
+- [structural | quality | safety] <issue> → <suggested fix>
 
-### Step 1 — 内容获取
+### ⚠️ Warnings (recommended fixes)
+- …
 
-- 若传入 slug：在项目目录下查找对应 `.md` 文件并读取
-- 若传入 Markdown 文本：直接使用
-- 若均不匹配：报告 `SKILL_NOT_FOUND`，停止
-
-### Step 2 — 结构完整性检查
-
-逐项核查，缺失项记录为 `MISSING`：
-
-| 检查项 | 要求 |
-|--------|------|
-| 目标（Objective） | 明确说明 Skill 解决什么问题 |
-| 使用方式（Usage） | 包含命令示例与参数说明 |
-| 执行步骤（Steps） | 至少 2 个可操作步骤，步骤间有逻辑顺序 |
-| 验收标准（Acceptance Criteria） | 至少 3 条可验证的通过/失败条件 |
-| 错误处理 | 至少说明 1 种失败场景的处理方式 |
-
-### Step 3 — 安全边界审查
-
-扫描内容，若出现以下模式则标记 `SECURITY_FLAG`：
-
-- 无授权上下文的破坏性操作（`rm -rf`、`DROP TABLE`、`--force`）
-- 硬编码凭据或 secret
-- 未经用户确认的外部写操作（push、send、post）
-- 拒绝服务或大规模目标操作
-
-### Step 4 — 可执行性验证
-
-- 检查引用的工具名（`WebFetch`、`CronCreate` 等）是否在已知工具列表中
-- 检查步骤中的变量占位符（`{{param}}`）是否在使用方式中有对应声明
-- 检查外部 URL（如有）是否由文档内部给出，而非凭空捏造
-
-### Step 5 — 评分与报告
-
-```markdown
-## Skill Vetter Report — {{skill_name}}
-
-### 总评
-- 状态：✅ PASS / ⚠️ WARN / ❌ FAIL
-- 得分：X / 100
-
-### 结构完整性
-- ✅ 目标
-- ✅ 使用方式
-- ❌ 验收标准 — MISSING
-
-### 安全审查
-- ✅ 无危险操作
-
-### 可执行性
-- ⚠️ 工具 `MagicFetch` 未在已知列表中找到
-
-### 修复建议
-1. 补充「验收标准」章节，至少 3 条
-2. 将 `MagicFetch` 替换为 `WebFetch`
+### Score: <passed>/<total> checks
 ```
 
-评分规则：
-- 结构完整性：50 分（每缺 1 项 -10 分）
-- 安全审查：30 分（每个 FLAG -15 分）
-- 可执行性：20 分（每个问题 -5 分）
-- 得分 ≥ 80 → PASS；60–79 → WARN；< 60 → FAIL
+### 6. Offer to apply fixes
+If FAIL or WARN: ask user "Shall I patch the skill doc with the suggested fixes?"
+If yes → use `Edit` to apply only the flagged changes.
 
-## 验收标准
-
-| 场景 | 期望结果 |
-|------|----------|
-| 完整合规的 Skill | 状态 PASS，得分 ≥ 80 |
-| 缺少验收标准 | 结构完整性扣分，列出具体缺失项 |
-| 含危险命令 | SECURITY_FLAG，状态至少 WARN |
-| 引用不存在的工具 | 可执行性标记，给出替换建议 |
-| Skill 文件不存在 | 报告 SKILL_NOT_FOUND，不崩溃 |
-| 批量审核 3 个 Skill | 每个独立报告，最后输出汇总表 |
+## Acceptance Criteria
+- [ ] Report produced for any valid markdown input without crashing.
+- [ ] All 6 structural checks evaluated and explicitly listed.
+- [ ] FAIL verdict correctly blocks skills missing Goal, Trigger, or Acceptance Criteria.
+- [ ] Safety section flags any auto-destructive instruction.
+- [ ] Patch offer presented when issues found; no edits made without user confirmation.
