@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>龙虾学校 · 测测你的 AI 龙虾有多聪明</title>
+    <title>🦞 龙虾学校 · 测测你的 AI 龙虾有多聪明</title>
     <meta property="og:title" content="龙虾学校 · AI 智力测试">
     <meta property="og:description" content="12 道核心实战题，测测你的 AI agent 有多强">
     <meta property="og:type" content="website">
@@ -15,12 +15,12 @@
 
     <style>
         :root {
-            --bg-base: #0a0a0b;
+            --bg-base: #0B0102;
             --brand-red: #CC0F14;
             --brand-orange: #FF9616;
             --text-h1: #FFFFFF;
-            --text-body: rgba(255, 255, 255, 0.55);
-            --text-muted: rgba(255, 255, 255, 0.35);
+            --text-body: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.4);
             --color-perfect: #10B981;
             --font-display: 'Outfit', sans-serif;
             --font-ui: 'Inter', sans-serif;
@@ -33,6 +33,13 @@
             -webkit-tap-highlight-color: transparent;
             margin: 0;
             padding: 0;
+            touch-action: manipulation;
+        }
+
+        img {
+            pointer-events: none;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         body {
@@ -63,7 +70,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 60px 24px 40px;
+            padding: 72px 24px 40px;
             overflow: hidden;
             background: var(--bg-base);
         }
@@ -84,26 +91,40 @@
         }
 
         .noise-overlay {
-            position: absolute;
+            position: fixed;
             inset: 0;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-            opacity: 0.03;
-            mix-blend-mode: overlay;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+            -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
             z-index: 1;
             pointer-events: none;
         }
 
-        /* ===== Brand Name — Top Center ===== */
+        /* ===== Brand Name — Fixed Top Nav ===== */
         .brand-name {
-            position: relative;
-            z-index: 3;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
             font-family: var(--font-ui);
             font-size: 16px;
             font-weight: 500;
             color: var(--text-body);
             letter-spacing: 3px;
-            margin-bottom: 32px;
+            padding: 16px 0;
+            text-align: center;
+            transition: background 0.3s, backdrop-filter 0.3s;
             animation: fadeIn 1s var(--ease-fluid) both;
+        }
+
+        .brand-name.scrolled {
+            background: rgba(11, 1, 2, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
 
         @keyframes fadeIn {
@@ -360,7 +381,7 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
-            animation: slideUp 0.8s var(--ease-fluid) 0.65s both;
+            animation: slideUp 0.8s var(--ease-fluid) 0.8s both;
         }
 
         .btn {
@@ -372,7 +393,7 @@
             width: 100%;
             min-height: 52px;
             padding: 14px 24px;
-            border-radius: 100px;
+            border-radius: 14px;
             border: none;
             font-family: var(--font-display);
             font-size: 16px;
@@ -384,7 +405,7 @@
         }
 
         .btn:focus-visible {
-            outline: 2px solid var(--brand-orange);
+            outline: 2px solid #ff2d55;
             outline-offset: 3px;
         }
 
@@ -395,9 +416,9 @@
         .btn svg { width: 18px; height: 18px; flex-shrink: 0; }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--brand-orange) 0%, #FF7A16 100%);
-            color: #000;
-            box-shadow: 0 8px 24px rgba(255, 150, 22, 0.3);
+            background: linear-gradient(135deg, #ff2d55, #ff6b3d);
+            color: #fff;
+            box-shadow: 0 8px 24px rgba(255, 45, 85, 0.3);
         }
 
         .btn-secondary {
@@ -614,9 +635,9 @@
         .sheet-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             z-index: 100;
             opacity: 0;
             visibility: hidden;
@@ -634,8 +655,8 @@
             transform: translateX(-50%) translateY(100%);
             width: 100%;
             max-width: 480px;
-            background: #141416;
-            border-radius: 24px 24px 0 0;
+            background: #0D0506;
+            border-radius: 40px 40px 0 0;
             padding: 20px 24px calc(24px + env(safe-area-inset-bottom));
             z-index: 101;
             transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
@@ -645,10 +666,10 @@
         }
 
         .sheet-handle {
-            width: 36px;
-            height: 4px;
-            border-radius: 2px;
-            background: rgba(255, 255, 255, 0.15);
+            width: 48px;
+            height: 5px;
+            border-radius: 2.5px;
+            background: rgba(255, 255, 255, 0.2);
             margin: 0 auto 24px;
         }
 
@@ -661,7 +682,7 @@
 
         .sheet-title {
             font-family: var(--font-display);
-            font-size: 22px;
+            font-size: 26px;
             font-weight: 700;
             color: var(--text-h1);
             text-align: center;
@@ -758,10 +779,10 @@
             outline-offset: 3px;
         }
         .sheet-submit.ready {
-            background: linear-gradient(135deg, var(--brand-orange) 0%, #FF7A16 100%);
-            color: #000;
+            background: linear-gradient(135deg, #ff2d55, #ff6b3d);
+            color: #fff;
             cursor: pointer;
-            box-shadow: 0 8px 24px rgba(255, 150, 22, 0.3);
+            box-shadow: 0 8px 24px rgba(255, 45, 85, 0.3);
         }
         .sheet-submit.ready:active {
             transform: scale(0.97);
@@ -980,7 +1001,7 @@
 
         /* 平板竖屏 (481px - 768px) */
         @media (min-width: 481px) and (max-width: 768px) {
-            .app-container { max-width: 560px; }
+            .app-container { max-width: 480px; }
 
             .hero-screen { padding: 72px 32px 48px; }
 
@@ -1002,14 +1023,14 @@
             .lb-score { font-size: 17px; }
             .lb-avatar { width: 36px; height: 36px; }
 
-            .sheet-panel { max-width: 560px; padding: 24px 28px calc(28px + env(safe-area-inset-bottom)); }
+            .sheet-panel { max-width: 480px; padding: 24px 28px calc(28px + env(safe-area-inset-bottom)); }
             .sheet-title { font-size: 24px; }
             .sheet-input { height: 56px; font-size: 17px; border-radius: 18px; }
             .sheet-submit { height: 58px; font-size: 17px; }
             .sheet-cmd-box { padding: 20px; border-radius: 18px; }
             .sheet-cmd-text { font-size: 13px; }
 
-            #hero-bg-canvas { max-width: 560px; }
+            #hero-bg-canvas { max-width: 480px; }
         }
 
         /* ==========================================================
@@ -1017,7 +1038,7 @@
            参考 Todoist 布局: 文字(top) → 主视觉(mid) → 毛玻璃卡片(bot)
            ========================================================== */
         @media (min-width: 769px) {
-            .app-container { max-width: 100%; }
+            .app-container { max-width: 480px; }
 
             /* --- hero 通栏，不限制 justify-content，改为 flex-start 自然流 --- */
             .hero-screen {
@@ -1037,12 +1058,10 @@
                     transparent 65%);
             }
 
-            /* --- 用 order 重排: 品牌→龙虾→文字→排行榜 --- */
+            /* --- brand-name is fixed nav, no order needed --- */
             .brand-name {
-                order: 1;
                 font-size: 13px;
                 letter-spacing: 5px;
-                margin-bottom: 20px;
             }
 
             .hero-asset-zone {
@@ -1056,7 +1075,7 @@
                 order: 3;
                 align-items: center;
                 text-align: center;
-                max-width: 560px;
+                max-width: 480px;
                 margin: 0 auto;
                 width: 100%;
             }
@@ -1109,20 +1128,18 @@
                 margin-bottom: 20px;
             }
 
-            /* --- 按钮横排 --- */
+            /* --- 按钮纵排 (单列) --- */
             .btn-group-hero {
-                flex-direction: row;
-                justify-content: center;
+                flex-direction: column;
                 gap: 12px;
-                max-width: 420px;
+                max-width: 480px;
                 margin: 0 auto;
             }
             .btn {
                 min-height: 46px;
                 padding: 12px 32px;
                 font-size: 14px;
-                width: auto;
-                flex: 0 0 auto;
+                width: 100%;
             }
             .btn-secondary {
                 min-height: 44px;
@@ -1185,26 +1202,25 @@
             /* --- hover 交互 --- */
             .btn:hover { transform: translateY(-1px); }
             .btn:active { transform: translateY(0) scale(0.98); }
-            .btn-primary:hover { box-shadow: 0 8px 24px rgba(255, 150, 22, 0.35); }
+            .btn-primary:hover { box-shadow: 0 8px 24px rgba(255, 45, 85, 0.35); }
             .btn-secondary:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.18); }
             .lb-row:hover { background: rgba(255, 255, 255, 0.04); }
 
-            /* --- 弹窗居中 --- */
+            /* --- 弹窗底部 --- */
             .sheet-panel {
-                bottom: auto;
-                top: 50%;
-                transform: translateX(-50%) translateY(calc(-50% + 30px));
-                border-radius: 20px;
-                max-width: 440px;
-                padding: 28px 32px;
+                bottom: 0;
+                top: auto;
+                transform: translateX(-50%) translateY(100%);
+                border-radius: 40px 40px 0 0;
+                max-width: 480px;
+                padding: 28px 32px calc(28px + env(safe-area-inset-bottom));
                 opacity: 0;
                 transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.3s;
             }
             .sheet-overlay.active .sheet-panel {
-                transform: translateX(-50%) translateY(-50%);
+                transform: translateX(-50%) translateY(0);
                 opacity: 1;
             }
-            .sheet-handle { display: none; }
             .sheet-title { font-size: 20px; }
             .sheet-desc { font-size: 13px; }
             .sheet-input { height: 44px; font-size: 14px; border-radius: 12px; }
@@ -1249,7 +1265,7 @@
             .lb-rank { width: 28px; height: 28px; font-size: 13px; }
             .lb-avatar { width: 30px; height: 30px; }
 
-            .sheet-panel { max-width: 460px; padding: 32px 36px; border-radius: 24px; }
+            .sheet-panel { max-width: 480px; padding: 32px 36px; border-radius: 40px 40px 0 0; }
         }
 
         /* ===== 超大屏 (≥1600px) ===== */
@@ -1286,7 +1302,7 @@
             .lb-rank { width: 30px; height: 30px; font-size: 14px; }
             .lb-avatar { width: 32px; height: 32px; }
 
-            .sheet-panel { max-width: 500px; padding: 36px 40px; }
+            .sheet-panel { max-width: 480px; padding: 36px 40px; border-radius: 40px 40px 0 0; }
         }
     </style>
 </head>
@@ -1757,6 +1773,19 @@
     loadStats();
     loadLeaderboard();
     loadRecent();
+
+    // --- Nav scroll blur effect ---
+    (function() {
+        var brandEl = document.querySelector('.brand-name');
+        if (!brandEl) return;
+        window.addEventListener('scroll', function() {
+            if (window.scrollY > 20) {
+                brandEl.classList.add('scrolled');
+            } else {
+                brandEl.classList.remove('scrolled');
+            }
+        }, { passive: true });
+    })();
     </script>
 
     <!-- Naked-eye 3D Parallax -->
@@ -1836,7 +1865,7 @@
 
         const scene = new THREE.Scene();
         // Fog for depth fade
-        scene.fog = new THREE.FogExp2(0x0a0a0b, 0.035);
+        scene.fog = new THREE.FogExp2(0x0B0102, 0.035);
 
         const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 100);
         camera.position.set(0, 8, 6);

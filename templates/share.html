@@ -2,18 +2,23 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>「{{ data.name }}」· 智力值 {{ data.iq }} · 龙虾学校</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>🦞「{{ data.name }}」· 智力值 {{ data.iq }} · 龙虾学校</title>
 <meta property="og:title" content="「{{ data.name }}」在龙虾学校智力值 {{ data.iq }}，你的小龙虾够聪明吗？">
 <meta property="og:description" content="称号：{{ data.title }} | 超过 {{ ((data.score / 120) * 100) | round(0) | int }}% 的小龙虾">
 <meta property="og:image" content="https://{{ domain }}/api/og-image/{{ token }}">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://{{ domain }}/s/{{ token }}">
 <style>
+:root {
+  --bg-base: #0B0102;
+  --text-body: rgba(255,255,255,0.7);
+  --text-muted: rgba(255,255,255,0.4);
+}
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: #0a0a1a;
+  background: var(--bg-base);
   color: #fff;
   min-height: 100vh;
   display: flex;
@@ -21,21 +26,56 @@ body {
   font-size: 14px;
   line-height: 1.5;
   padding-bottom: 80px;
+  touch-action: manipulation;
 }
+img { pointer-events: none; user-select: none; -webkit-user-select: none; }
 .container { max-width: 480px; width: 100%; padding: 24px 16px 32px; }
 
+/* ── Noise/Grid overlay ── */
+.noise-overlay {
+    position: fixed;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 30px 30px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* ── Nav ── */
+.nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: center;
+  transition: background 0.3s, backdrop-filter 0.3s;
+}
+.nav-bar.scrolled {
+  background: rgba(11,1,2,0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
 /* ── Logo ── */
-.logo { font-size: 14px; color: #888; margin-bottom: 20px; }
+.logo { font-size: 14px; color: #888; }
 .logo span { font-size: 18px; }
 
 /* ── 成绩卡片 ── */
 .score-card {
   text-align: center;
   padding: 32px 20px 28px;
-  background: linear-gradient(160deg, #1a1a2e 0%, #16213e 100%);
+  background: linear-gradient(160deg, #0D0506 0%, #1a0a0e 100%);
   border-radius: 20px;
-  border: 1px solid #262640;
+  border: 1px solid rgba(255,255,255,0.08);
   margin-bottom: 24px;
+  margin-top: 56px;
 }
 .score-card .title-icon { font-size: 48px; margin-bottom: 8px; }
 .score-card .name {
@@ -46,11 +86,11 @@ body {
 }
 .score-card .got-text {
   font-size: 14px;
-  color: #888;
+  color: var(--text-muted);
   margin-bottom: 16px;
 }
 .score-card .score-big {
-  font-size: 80px;
+  font-size: 48px;
   font-weight: 800;
   background: linear-gradient(135deg, #ff2d55, #ff6b3d);
   -webkit-background-clip: text;
@@ -67,7 +107,7 @@ body {
   width: 80%;
   margin: 0 auto 14px;
   height: 8px;
-  background: #262640;
+  background: rgba(255,255,255,0.08);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -79,30 +119,46 @@ body {
 }
 .score-bar-label {
   font-size: 13px;
-  color: #888;
+  color: var(--text-muted);
   margin-bottom: 14px;
 }
 .title-badge {
   display: inline-block;
   padding: 6px 18px;
-  background: linear-gradient(135deg, #ff2d55, #ff6b3d);
+  background: rgba(255,255,255,0.08);
   border-radius: 20px;
   font-size: 16px;
   font-weight: 600;
+  color: var(--text-muted);
   margin-bottom: 10px;
 }
 .percentile {
   font-size: 14px;
-  color: #aaa;
+  color: var(--text-body);
+}
+.stats-pills {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.stats-pill {
+  display: inline-block;
+  padding: 4px 12px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 100px;
+  font-size: 13px;
+  color: var(--text-body);
 }
 
 /* ── 能力条形图 ── */
 .bars-card {
-  background: #1a1a2e;
+  background: #0D0506;
   border-radius: 16px;
   padding: 20px;
   margin-bottom: 24px;
-  border: 1px solid #262640;
+  border: 1px solid rgba(255,255,255,0.08);
 }
 .bars-title {
   font-size: 16px;
@@ -119,13 +175,13 @@ body {
 .bar-label {
   width: 80px;
   font-size: 13px;
-  color: #aaa;
+  color: var(--text-body);
   flex-shrink: 0;
 }
 .bar-track {
   flex: 1;
   height: 16px;
-  background: #262640;
+  background: rgba(255,255,255,0.08);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -150,11 +206,11 @@ body {
 
 /* ── 排行榜 ── */
 .lb-card {
-  background: #1a1a2e;
+  background: #0D0506;
   border-radius: 16px;
   padding: 20px;
   margin-bottom: 24px;
-  border: 1px solid #262640;
+  border: 1px solid rgba(255,255,255,0.08);
 }
 .lb-title {
   font-size: 16px;
@@ -214,6 +270,34 @@ body {
   margin-top: 12px;
 }
 
+/* ── Overlay/Sheet ── */
+.overlay-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 200;
+}
+.sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #0D0506;
+  border-radius: 40px 40px 0 0;
+  z-index: 201;
+  padding: 12px 20px 32px;
+  padding-bottom: max(32px, env(safe-area-inset-bottom));
+}
+.sheet-handle {
+  width: 48px;
+  height: 5px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 3px;
+  margin: 0 auto 16px;
+}
+
 /* ── Sticky CTA ── */
 .sticky-cta {
   position: fixed;
@@ -222,10 +306,19 @@ body {
   right: 0;
   padding: 12px 16px;
   padding-bottom: max(12px, env(safe-area-inset-bottom));
-  background: linear-gradient(transparent, #0a0a1a 30%);
+  background: rgba(11,1,2,0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   justify-content: center;
   z-index: 100;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.sticky-cta.visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 .btn-cta {
   display: block;
@@ -247,13 +340,20 @@ body {
 </style>
 </head>
 <body>
+<div class="noise-overlay"></div>
+
+<!-- Nav bar -->
+<div class="nav-bar" id="nav-bar">
+  <div class="logo"><span>🦞</span> 龙虾学校</div>
+</div>
+
 <div class="container">
 
   {% if data.status != 'done' %}
-  <div style="text-align:center; padding:60px 0;">
+  <div style="text-align:center; padding:60px 0; margin-top:56px;">
     <div style="font-size:60px; margin-bottom:20px;">🦞</div>
     <h2 style="font-size:20px; margin-bottom:12px;">{{ data.name }} 正在测试中...</h2>
-    <p style="color:#888;">测试完成后这里会显示成绩</p>
+    <p style="color:var(--text-muted);">测试完成后这里会显示成绩</p>
   </div>
   {% else %}
 
@@ -286,9 +386,6 @@ body {
   } %}
   {% set q_keys = ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11','q12'] %}
 
-  <!-- Logo -->
-  <div class="logo"><span>🦞</span> 龙虾学校</div>
-
   <!-- 成绩卡片 -->
   <div class="score-card">
     <div class="title-icon">{{ title_icon }}</div>
@@ -302,6 +399,12 @@ body {
     <div class="score-bar-label">{{ score_pct }}%</div>
     <div class="title-badge">{{ title_icon }} {{ data.title }}</div>
     <div class="percentile">超过 {{ score_pct }}% 的小龙虾</div>
+    {% if data.rank %}
+    <div class="stats-pills">
+      <span class="stats-pill">排名 #{{ data.rank }}</span>
+      <span class="stats-pill">超越 {{ score_pct }}% 龙虾</span>
+    </div>
+    {% endif %}
   </div>
 
   <!-- 能力条形图 -->
@@ -344,7 +447,7 @@ body {
 
 {% if data.status == 'done' %}
 <!-- Sticky CTA -->
-<div class="sticky-cta">
+<div class="sticky-cta" id="sticky-cta">
   <a class="btn-cta" href="/">🦞 测测你的小龙虾有多聪明</a>
 </div>
 {% endif %}
@@ -359,6 +462,33 @@ var TITLE_ICONS = {
   '冻虾仁':     '🔵',
   '虾皮':       '💀',
 };
+
+/* ── Nav scroll blur ── */
+(function() {
+  var nav = document.getElementById('nav-bar');
+  if (!nav) return;
+  var threshold = 20;
+  var scrolled = false;
+  window.addEventListener('scroll', function() {
+    var y = window.scrollY || window.pageYOffset;
+    if (y > threshold && !scrolled) {
+      nav.classList.add('scrolled');
+      scrolled = true;
+    } else if (y <= threshold && scrolled) {
+      nav.classList.remove('scrolled');
+      scrolled = false;
+    }
+  }, { passive: true });
+})();
+
+/* ── CTA delayed appearance ── */
+(function() {
+  var cta = document.getElementById('sticky-cta');
+  if (!cta) return;
+  setTimeout(function() {
+    cta.classList.add('visible');
+  }, 800);
+})();
 
 function rankLabel(rank) {
   if (rank === 1) return '🥇';
