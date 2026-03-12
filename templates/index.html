@@ -33,14 +33,13 @@
             -webkit-tap-highlight-color: transparent;
             margin: 0;
             padding: 0;
-            -webkit-touch-callout: none;
+            touch-action: manipulation;
         }
 
         img {
-            -webkit-user-select: none;
-            user-select: none;
             pointer-events: none;
-            -webkit-touch-callout: none;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         body {
@@ -71,7 +70,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: calc(env(safe-area-inset-top, 20px) + 110px) 24px 40px;
+            padding: 72px 24px 40px;
             overflow: hidden;
             background: var(--bg-base);
         }
@@ -92,76 +91,40 @@
         }
 
         .noise-overlay {
-            position: absolute;
+            position: fixed;
             inset: 0;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-            opacity: 0.03;
-            mix-blend-mode: overlay;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+            -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
             z-index: 1;
             pointer-events: none;
         }
 
-        /* ===== Top Nav Bar ===== */
-        .top-nav {
+        /* ===== Brand Name — Fixed Top Nav ===== */
+        .brand-name {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: calc(env(safe-area-inset-top, 20px) + 10px) 20px 10px;
-            background: rgba(10, 10, 11, 0.65);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            backdrop-filter: blur(20px) saturate(180%);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            z-index: 50;
+            font-family: var(--font-ui);
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-body);
+            letter-spacing: 3px;
+            padding: 16px 0;
+            text-align: center;
+            transition: background 0.3s, backdrop-filter 0.3s;
             animation: fadeIn 1s var(--ease-fluid) both;
         }
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .brand-logo {
-            width: 44px;
-            height: 44px;
-            object-fit: contain;
-            border-radius: 10px;
-            flex-shrink: 0;
-        }
-        .brand-name {
-            font-family: var(--font-display);
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text-h1);
-            letter-spacing: 1px;
-        }
-        .nav-share-btn {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 10px 20px;
-            border-radius: 100px;
-            border: none;
-            background: linear-gradient(135deg, #CC0F14, #ff6b3d);
-            color: #fff;
-            font-family: var(--font-ui);
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, opacity 0.2s;
-            flex-shrink: 0;
-        }
-        .nav-share-btn:active { transform: scale(0.95); }
-        .nav-share-btn svg {
-            width: 16px;
-            height: 16px;
-            stroke: currentColor;
-            fill: none;
-            stroke-width: 2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
+
+        .brand-name.scrolled {
+            background: rgba(11, 1, 2, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
 
         @keyframes fadeIn {
@@ -386,13 +349,6 @@
         .marquee-item .m-emoji {
             font-size: 14px;
             line-height: 1;
-            display: inline-flex;
-            align-items: center;
-        }
-        .marquee-item .m-emoji img {
-            width: 18px;
-            height: 18px;
-            object-fit: contain;
         }
 
         .marquee-item .m-name {
@@ -425,7 +381,7 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
-            animation: slideUp 0.8s var(--ease-fluid) 0.65s both;
+            animation: slideUp 0.8s var(--ease-fluid) 0.8s both;
         }
 
         .btn {
@@ -437,7 +393,7 @@
             width: 100%;
             min-height: 52px;
             padding: 14px 24px;
-            border-radius: 100px;
+            border-radius: 14px;
             border: none;
             font-family: var(--font-display);
             font-size: 16px;
@@ -449,7 +405,7 @@
         }
 
         .btn:focus-visible {
-            outline: 2px solid var(--brand-orange);
+            outline: 2px solid #ff2d55;
             outline-offset: 3px;
         }
 
@@ -460,9 +416,9 @@
         .btn svg { width: 18px; height: 18px; flex-shrink: 0; }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--brand-orange) 0%, #FF7A16 100%);
-            color: #000;
-            box-shadow: 0 8px 24px rgba(255, 150, 22, 0.3);
+            background: linear-gradient(135deg, #ff2d55, #ff6b3d);
+            color: #fff;
+            box-shadow: 0 8px 24px rgba(255, 45, 85, 0.3);
         }
 
         .btn-secondary {
@@ -531,6 +487,36 @@
             -webkit-backdrop-filter: blur(12px);
         }
 
+        .lb-body {
+            max-height: 960px; /* ~20 rows × 48px */
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .lb-body::-webkit-scrollbar {
+            width: 4px;
+        }
+        .lb-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .lb-body::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
+        .lb-row.lb-row-self {
+            background: rgba(255, 150, 22, 0.08);
+            border-left: 3px solid var(--brand-orange);
+            position: relative;
+        }
+        .lb-row.lb-row-self .lb-name-text {
+            color: var(--brand-orange);
+        }
+        .lb-row.lb-row-self .lb-score {
+            color: var(--brand-orange);
+        }
+
         .lb-thead {
             display: grid;
             grid-template-columns: 56px 1fr 80px;
@@ -565,11 +551,6 @@
 
         .lb-row:hover {
             background: rgba(255, 255, 255, 0.03);
-        }
-
-        .lb-row-self {
-            background: rgba(255, 150, 22, 0.06);
-            border-left: 3px solid var(--brand-orange);
         }
 
         .lb-rank {
@@ -617,26 +598,12 @@
         .lb-avatar {
             width: 32px;
             height: 32px;
-            border-radius: 50%;
+            border-radius: 10px;
             background: rgba(255, 255, 255, 0.06);
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
-            flex-shrink: 0;
             font-size: 16px;
-        }
-        .lb-avatar img {
-            width: 140%;
-            height: 140%;
-            object-fit: contain;
-        }
-        .lb-avatar-text {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: 13px;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.5);
         }
 
         .lb-name-text {
@@ -667,22 +634,14 @@
         /* ===== Bottom Sheet — Name Input ===== */
         .sheet-overlay {
             position: fixed;
-            left: 0;
-            right: 0;
-            top: -100vh;
-            bottom: -100vh;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             z-index: 100;
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.3s, visibility 0.3s;
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            overflow: hidden;
-            padding-bottom: 100vh;
         }
         .sheet-overlay.active {
             opacity: 1;
@@ -690,34 +649,27 @@
         }
 
         .sheet-panel {
-            position: relative;
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%) translateY(100%);
             width: 100%;
             max-width: 480px;
-            background: #141416;
-            border-radius: 24px 24px 0 0;
+            background: #0D0506;
+            border-radius: 40px 40px 0 0;
             padding: 20px 24px calc(24px + env(safe-area-inset-bottom));
             z-index: 101;
-            transform: translateY(100%);
             transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
         }
-        .sheet-panel::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            right: 0;
-            top: 100%;
-            height: 100vh;
-            background: #141416;
-        }
         .sheet-overlay.active .sheet-panel {
-            transform: translateY(0);
+            transform: translateX(-50%) translateY(0);
         }
 
         .sheet-handle {
-            width: 36px;
-            height: 4px;
-            border-radius: 2px;
-            background: rgba(255, 255, 255, 0.15);
+            width: 48px;
+            height: 5px;
+            border-radius: 2.5px;
+            background: rgba(255, 255, 255, 0.2);
             margin: 0 auto 24px;
         }
 
@@ -730,7 +682,7 @@
 
         .sheet-title {
             font-family: var(--font-display);
-            font-size: 22px;
+            font-size: 26px;
             font-weight: 700;
             color: var(--text-h1);
             text-align: center;
@@ -827,10 +779,10 @@
             outline-offset: 3px;
         }
         .sheet-submit.ready {
-            background: linear-gradient(135deg, var(--brand-orange) 0%, #FF7A16 100%);
-            color: #000;
+            background: linear-gradient(135deg, #ff2d55, #ff6b3d);
+            color: #fff;
             cursor: pointer;
-            box-shadow: 0 8px 24px rgba(255, 150, 22, 0.3);
+            box-shadow: 0 8px 24px rgba(255, 45, 85, 0.3);
         }
         .sheet-submit.ready:active {
             transform: scale(0.97);
@@ -1049,7 +1001,7 @@
 
         /* 平板竖屏 (481px - 768px) */
         @media (min-width: 481px) and (max-width: 768px) {
-            .app-container { max-width: 560px; }
+            .app-container { max-width: 480px; }
 
             .hero-screen { padding: 72px 32px 48px; }
 
@@ -1071,14 +1023,14 @@
             .lb-score { font-size: 17px; }
             .lb-avatar { width: 36px; height: 36px; }
 
-            .sheet-panel { max-width: 560px; padding: 24px 28px calc(28px + env(safe-area-inset-bottom)); }
+            .sheet-panel { max-width: 480px; padding: 24px 28px calc(28px + env(safe-area-inset-bottom)); }
             .sheet-title { font-size: 24px; }
             .sheet-input { height: 56px; font-size: 17px; border-radius: 18px; }
             .sheet-submit { height: 58px; font-size: 17px; }
             .sheet-cmd-box { padding: 20px; border-radius: 18px; }
             .sheet-cmd-text { font-size: 13px; }
 
-            #hero-bg-canvas { max-width: 560px; }
+            #hero-bg-canvas { max-width: 480px; }
         }
 
         /* ==========================================================
@@ -1086,7 +1038,7 @@
            参考 Todoist 布局: 文字(top) → 主视觉(mid) → 毛玻璃卡片(bot)
            ========================================================== */
         @media (min-width: 769px) {
-            .app-container { max-width: 100%; }
+            .app-container { max-width: 480px; }
 
             /* --- hero 通栏，不限制 justify-content，改为 flex-start 自然流 --- */
             .hero-screen {
@@ -1106,9 +1058,10 @@
                     transparent 65%);
             }
 
-            /* --- 顶栏桌面适配 --- */
-            .top-nav {
-                padding: 16px 48px 12px;
+            /* --- brand-name is fixed nav, no order needed --- */
+            .brand-name {
+                font-size: 13px;
+                letter-spacing: 5px;
             }
 
             .hero-asset-zone {
@@ -1122,7 +1075,7 @@
                 order: 3;
                 align-items: center;
                 text-align: center;
-                max-width: 560px;
+                max-width: 480px;
                 margin: 0 auto;
                 width: 100%;
             }
@@ -1175,20 +1128,18 @@
                 margin-bottom: 20px;
             }
 
-            /* --- 按钮横排 --- */
+            /* --- 按钮纵排 (单列) --- */
             .btn-group-hero {
-                flex-direction: row;
-                justify-content: center;
+                flex-direction: column;
                 gap: 12px;
-                max-width: 420px;
+                max-width: 480px;
                 margin: 0 auto;
             }
             .btn {
                 min-height: 46px;
                 padding: 12px 32px;
                 font-size: 14px;
-                width: auto;
-                flex: 0 0 auto;
+                width: 100%;
             }
             .btn-secondary {
                 min-height: 44px;
@@ -1251,31 +1202,25 @@
             /* --- hover 交互 --- */
             .btn:hover { transform: translateY(-1px); }
             .btn:active { transform: translateY(0) scale(0.98); }
-            .btn-primary:hover { box-shadow: 0 8px 24px rgba(255, 150, 22, 0.35); }
+            .btn-primary:hover { box-shadow: 0 8px 24px rgba(255, 45, 85, 0.35); }
             .btn-secondary:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.18); }
             .lb-row:hover { background: rgba(255, 255, 255, 0.04); }
 
-            /* --- 弹窗居中 --- */
-            .sheet-overlay {
-                align-items: center;
-                padding-bottom: 0;
-            }
-            .sheet-panel::after {
-                display: none;
-            }
+            /* --- 弹窗底部 --- */
             .sheet-panel {
-                border-radius: 20px;
-                max-width: 440px;
-                padding: 28px 32px;
+                bottom: 0;
+                top: auto;
+                transform: translateX(-50%) translateY(100%);
+                border-radius: 40px 40px 0 0;
+                max-width: 480px;
+                padding: 28px 32px calc(28px + env(safe-area-inset-bottom));
                 opacity: 0;
-                transform: translateY(30px);
                 transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.3s;
             }
             .sheet-overlay.active .sheet-panel {
-                transform: translateY(0);
+                transform: translateX(-50%) translateY(0);
                 opacity: 1;
             }
-            .sheet-handle { display: none; }
             .sheet-title { font-size: 20px; }
             .sheet-desc { font-size: 13px; }
             .sheet-input { height: 44px; font-size: 14px; border-radius: 12px; }
@@ -1291,6 +1236,8 @@
             .hero-screen { padding: 64px 64px 96px; }
 
             .hero-screen::before { width: 720px; height: 720px; }
+
+            .brand-name { margin-bottom: 32px; }
 
             .hero-content { max-width: 600px; }
             .hero-title { font-size: 42px; letter-spacing: -1px; }
@@ -1318,7 +1265,7 @@
             .lb-rank { width: 28px; height: 28px; font-size: 13px; }
             .lb-avatar { width: 30px; height: 30px; }
 
-            .sheet-panel { max-width: 460px; padding: 32px 36px; border-radius: 24px; }
+            .sheet-panel { max-width: 480px; padding: 32px 36px; border-radius: 40px 40px 0 0; }
         }
 
         /* ===== 超大屏 (≥1600px) ===== */
@@ -1328,6 +1275,8 @@
             }
 
             .hero-screen::before { width: 840px; height: 840px; }
+
+            .brand-name { font-size: 14px; margin-bottom: 36px; }
 
             .hero-content { max-width: 640px; }
             .hero-title { font-size: 48px; letter-spacing: -1.2px; }
@@ -1353,7 +1302,7 @@
             .lb-rank { width: 30px; height: 30px; font-size: 14px; }
             .lb-avatar { width: 32px; height: 32px; }
 
-            .sheet-panel { max-width: 500px; padding: 36px 40px; }
+            .sheet-panel { max-width: 480px; padding: 36px 40px; border-radius: 40px 40px 0 0; }
         }
     </style>
 </head>
@@ -1365,16 +1314,7 @@
             <div class="noise-overlay"></div>
 
             <!-- Brand Name — Top Center -->
-            <nav class="top-nav">
-                <div class="brand">
-                    <img class="brand-logo" src="/static/badges/logo.png" alt="Claw School">
-                    <span class="brand-name">龙虾学校</span>
-                </div>
-                <button class="nav-share-btn" onclick="shareApp()">
-                    <svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-                    分享
-                </button>
-            </nav>
+            <div class="brand-name">龙虾学校</div>
 
             <!-- Lobster Hero — Naked-eye 3D Parallax -->
             <div class="hero-asset-zone">
@@ -1398,7 +1338,7 @@
 
                 <div class="hero-counter">
                     <span class="counter-dot"></span>
-                    已有 <strong id="testCount">{{ total_done }}</strong> 只龙虾完成测试
+                    已有 <strong id="testCount">0</strong> 只龙虾完成测试
                 </div>
 
                 <div class="marquee-wrap">
@@ -1414,7 +1354,7 @@
                     <button class="btn btn-secondary" id="heroResultBtn" style="display:none" onclick="">
                         查看测试结果
                     </button>
-                    <button class="btn btn-secondary" id="heroLeaderboardBtn" onclick="scrollToLeaderboard()">
+                    <button class="btn btn-secondary" onclick="scrollToLeaderboard()">
                         查看排行榜
                     </button>
                 </div>
@@ -1441,7 +1381,7 @@
                     <div class="lb-thead">
                         <span class="lb-th">排名</span>
                         <span class="lb-th">龙虾名称</span>
-                        <span class="lb-th">智力值</span>
+                        <span class="lb-th">最佳智力值</span>
                     </div>
                     <div class="lb-body" id="lbBody">
                         <div class="lb-empty">加载中...</div>
@@ -1509,63 +1449,44 @@
     </div>
 
     <script>
-    // --- Badge image by IQ ---
-    var BADGE_MAP = [
-      { min: 230, src: '/static/badges/最强.png', alt: '最强' },
-      { min: 170, src: '/static/badges/高级.png', alt: '高级' },
-      { min: 120, src: '/static/badges/银.png',   alt: '银' },
-      { min: 70,  src: '/static/badges/铜.png',   alt: '铜' },
-      { min: 0,   src: '/static/badges/黑铁.png', alt: '黑铁' },
-    ];
-    function badgeImg(iq) {
-      for (var i = 0; i < BADGE_MAP.length; i++) {
-        if (iq >= BADGE_MAP[i].min) {
-          return '<img src="' + BADGE_MAP[i].src + '" alt="' + BADGE_MAP[i].alt + '">';
-        }
-      }
-      return '<img src="/static/badges/黑铁.png" alt="黑铁">';
-    }
+    // --- Title icon mapping ---
+    const TITLE_ICONS = {
+      '波士顿龙虾': '🦞',
+      '澳洲大龙虾': '🔴',
+      '蒜蓉大虾': '🟠',
+      '麻辣小龙虾': '🟡',
+      '冻虾仁': '🔵',
+      '虾皮': '💀',
+    };
+    function titleIcon(title) { return TITLE_ICONS[title] || '🦐'; }
 
     // --- Utils ---
     function esc(s) {
-      var d = document.createElement('div');
+      const d = document.createElement('div');
       d.textContent = s;
       return d.innerHTML;
-    }
-
-    // --- Share ---
-    function shareApp() {
-        var text = '🦞 龙虾学校 — 你的小龙虾够聪明吗？12 道 AI 实战能力测试等你挑战！👉 {{ domain }}';
-        if (navigator.share) {
-            navigator.share({ title: '龙虾学校', text: text, url: 'https://{{ domain }}' }).catch(function(){});
-        } else if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text).then(function() {
-                var btn = document.querySelector('.nav-share-btn');
-                btn.textContent = '已复制';
-                setTimeout(function() { btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>分享'; }, 1500);
-            });
-        }
     }
 
     // --- Stats ---
     async function loadStats() {
       try {
-        var r = await fetch('/api/stats');
-        var d = await r.json();
+        const r = await fetch('/api/stats');
+        const d = await r.json();
         document.getElementById('testCount').textContent = d.total_tests ?? 0;
       } catch(e) {
-        document.getElementById('testCount').textContent = '{{ total_done }}';
+        document.getElementById('testCount').textContent = '0';
       }
     }
 
     // --- Leaderboard ---
+    // 尝试从 localStorage 读取用户的龙虾名
     var myLobsterName = localStorage.getItem('clawschool_name') || '';
 
     async function loadLeaderboard() {
       try {
-        var r = await fetch('/api/leaderboard?limit=100');
-        var d = await r.json();
-        var body = document.getElementById('lbBody');
+        const r = await fetch('/api/leaderboard?limit=100');
+        const d = await r.json();
+        const body = document.getElementById('lbBody');
         if (!d.entries || d.entries.length === 0) {
           body.innerHTML = '<div class="lb-empty">暂无数据，快来成为第一名！</div>';
           return;
@@ -1583,20 +1504,19 @@
           return '<div class="' + rowClass + '" data-rank="' + (i + 1) + '">' +
             '<div class="lb-rank ' + rankClass + '">' + (i + 1) + '</div>' +
             '<div class="lb-name">' +
-              '<div class="lb-avatar">' + badgeImg(e.iq) + '</div>' +
+              '<div class="lb-avatar">' + titleIcon(e.title) + '</div>' +
               '<span class="lb-name-text">' + esc(e.name) + '</span>' +
             '</div>' +
             '<div class="' + scoreClass + '">' + e.iq + '</div>' +
           '</div>';
         }).join('');
 
+        // 如果有自己的记录，滚动到自己的位置
         if (selfIdx >= 0) {
           requestAnimationFrame(function() {
             var selfRow = body.querySelector('.lb-row-self');
-            if (selfRow && selfRow.closest('.leaderboard-table')) {
-              // 只在排行榜容器内滚动，不滚动整个页面
-              selfRow.closest('.leaderboard-table').scrollTop =
-                selfRow.offsetTop - selfRow.closest('.leaderboard-table').offsetHeight / 2;
+            if (selfRow) {
+              selfRow.scrollIntoView({ block: 'center', behavior: 'smooth' });
             }
           });
         }
@@ -1613,12 +1533,12 @@
     // --- Recent marquee ---
     async function loadRecent() {
       try {
-        var r = await fetch('/api/recent');
-        var d = await r.json();
+        const r = await fetch('/api/recent');
+        const d = await r.json();
         if (!d.entries || d.entries.length === 0) return;
 
-        var bar = document.getElementById('marqueeBar');
-        var track = document.getElementById('marqueeTrack');
+        const bar = document.getElementById('marqueeBar');
+        const track = document.getElementById('marqueeTrack');
 
         if (d.entries.length < 3) {
           bar.setAttribute('data-hidden', 'true');
@@ -1627,7 +1547,7 @@
 
         var items = d.entries.map(function(e) {
           return '<span class="marquee-item">' +
-            '<span class="m-emoji">' + badgeImg(e.iq) + '</span>' +
+            '<span class="m-emoji">' + titleIcon(e.title) + '</span>' +
             '<span class="m-name">' + esc(e.name) + '</span>' +
             '智力 <span class="m-score">' + e.iq + '</span>' +
             '<span class="m-sep"></span>' +
@@ -1636,6 +1556,7 @@
         track.innerHTML = items + items;
         bar.removeAttribute('data-hidden');
 
+        // adjust speed based on content width
         requestAnimationFrame(function() {
           var half = track.scrollWidth / 2;
           var speed = Math.max(half / 60, 8);
@@ -1645,12 +1566,12 @@
     }
 
     // --- Name Sheet Logic ---
-    var nameInput = document.getElementById('lobsterName');
-    var nameSubmitBtn = document.getElementById('nameSubmit');
-    var nameSheetEl = document.getElementById('nameSheet');
-    var currentToken = '';
+    const nameInput = document.getElementById('lobsterName');
+    const nameSubmitBtn = document.getElementById('nameSubmit');
+    const nameSheetEl = document.getElementById('nameSheet');
+    let currentToken = '';
 
-    var randomNames = [
+    const randomNames = [
         '大力龙虾', '闪电虾', '学霸虾', '红甲将军', '小龙侠',
         '赤焰龙虾', '铁钳无敌', '龙虾战神', '深海霸主', '龙虾小天才',
         '虾皇', '红袍大侠', '横行霸道', '钳刀侯', '火焰钳'
@@ -1729,6 +1650,7 @@
             var cmd = '请帮我安装龙虾学校智力测试 skill。用 exec 执行 curl -s ' + domain + '/skill.md?token=' + data.token + '&name=' + encodedName + ' 下载内容，然后用 write 工具保存到 skills/clawschool/SKILL.md 文件。保存好后，帮我做一次龙虾学校智力测试。';
             document.getElementById('cmdText').textContent = cmd;
 
+            // close name sheet, open cmd sheet
             nameSheetEl.classList.remove('active');
             setTimeout(function() {
                 document.getElementById('cmdSheet').classList.add('active');
@@ -1766,6 +1688,7 @@
     function copyCommand() {
         var text = document.getElementById('cmdText').textContent;
 
+        // try modern API, fallback if needed
         var p = (navigator.clipboard && navigator.clipboard.writeText)
             ? navigator.clipboard.writeText(text).catch(function() { fallbackCopy(text); })
             : Promise.resolve(fallbackCopy(text));
@@ -1777,22 +1700,29 @@
             var toast = document.getElementById('copyToast');
             var submitBtn = document.getElementById('cmdSubmitBtn');
 
+            // icon toggle
             copyIconEl.style.display = 'none';
             checkIconEl.style.display = 'block';
 
+            // button green state
             btn.classList.add('copied');
 
+            // bottom button success state
             submitBtn.classList.add('copied-state');
             submitBtn.textContent = '已复制';
 
+            // toast popup
             toast.classList.add('show');
 
+            // haptic feedback
             if (navigator.vibrate) navigator.vibrate(50);
 
             hasCopied = true;
 
+            // toast dismiss
             setTimeout(function() { toast.classList.remove('show'); }, 2200);
 
+            // button recover: change to "已发送给我的龙虾" which navigates to /wait/{token}
             setTimeout(function() {
                 btn.classList.remove('copied');
                 copyIconEl.style.display = 'block';
@@ -1814,6 +1744,7 @@
         var savedName = localStorage.getItem('clawschool_name');
         if (!savedToken) return;
 
+        // Pre-fill name for next test
         if (savedName) myLobsterName = savedName;
 
         fetch('/api/result/' + savedToken).then(function(r) {
@@ -1823,9 +1754,6 @@
             if (!result) return;
             var mainBtn = document.getElementById('heroMainBtn');
             var resultBtn = document.getElementById('heroResultBtn');
-
-            var lbBtn = document.getElementById('heroLeaderboardBtn');
-            if (lbBtn) lbBtn.style.display = 'none';
 
             if (result.status === 'done') {
                 mainBtn.textContent = '再次测试';
@@ -1845,46 +1773,58 @@
     loadStats();
     loadLeaderboard();
     loadRecent();
+
+    // --- Nav scroll blur effect ---
+    (function() {
+        var brandEl = document.querySelector('.brand-name');
+        if (!brandEl) return;
+        window.addEventListener('scroll', function() {
+            if (window.scrollY > 20) {
+                brandEl.classList.add('scrolled');
+            } else {
+                brandEl.classList.remove('scrolled');
+            }
+        }, { passive: true });
+    })();
     </script>
 
     <!-- Naked-eye 3D Parallax -->
     <script>
     (function() {
-        var container = document.getElementById('parallax3d');
+        const container = document.getElementById('parallax3d');
         if (!container) return;
 
-        var layers = [
-            { el: container.querySelector('.hero-layer-shadow'),    depth: 30 },
+        const layers = [
+            { el: container.querySelector('.hero-layer-shadow'),    depth: 30 },   // 最远，动最多
             { el: container.querySelector('.hero-layer-glow'),      depth: 18 },
-            { el: container.querySelector('.hero-asset-wrap'),      depth: 8 },
-            { el: container.querySelector('.hero-layer-highlight'), depth: -14 },
+            { el: container.querySelector('.hero-asset-wrap'),      depth: 8 },    // 主体，轻微动
+            { el: container.querySelector('.hero-layer-highlight'), depth: -14 },  // 负值=反向
         ];
 
-        var targetX = 0, targetY = 0;
-        var curX = 0, curY = 0;
+        let targetX = 0, targetY = 0;
+        let curX = 0, curY = 0;
 
         function tick() {
             curX += (targetX - curX) * 0.07;
             curY += (targetY - curY) * 0.07;
 
-            for (var i = 0; i < layers.length; i++) {
-                var l = layers[i];
-                var dx = curX * l.depth;
-                var dy = curY * l.depth;
-                l.el.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
+            for (const l of layers) {
+                const dx = curX * l.depth;
+                const dy = curY * l.depth;
+                l.el.style.transform = `translate(${dx}px, ${dy}px)`;
             }
             requestAnimationFrame(tick);
         }
         requestAnimationFrame(tick);
 
         // ===== 陀螺仪（手机）=====
-        var hasGyro = false;
+        let hasGyro = false;
 
         function onOrient(e) {
             if (e.gamma === null) return;
             hasGyro = true;
-            var gamma = Math.max(-25, Math.min(25, e.gamma || 0));
-            var beta = Math.max(-25, Math.min(25, (e.beta || 0) - 40));
+            const gamma = Math.max(-25, Math.min(25, e.gamma || 0));
+            const beta = Math.max(-25, Math.min(25, (e.beta || 0) - 40));
             targetX = gamma / 25;
             targetY = beta / 25;
         }
@@ -1894,8 +1834,8 @@
             typeof DeviceOrientationEvent.requestPermission === 'function') {
             document.addEventListener('touchstart', function req() {
                 DeviceOrientationEvent.requestPermission()
-                    .then(function(s) { if (s === 'granted') window.addEventListener('deviceorientation', onOrient); })
-                    .catch(function() {});
+                    .then(s => { if (s === 'granted') window.addEventListener('deviceorientation', onOrient); })
+                    .catch(() => {});
                 document.removeEventListener('touchstart', req);
             }, { once: true });
         } else if (typeof DeviceOrientationEvent !== 'undefined') {
@@ -1918,94 +1858,104 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
     (function() {
-        var canvas = document.getElementById('hero-bg-canvas');
-        var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+        const canvas = document.getElementById('hero-bg-canvas');
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setClearColor(0x000000, 0);
 
-        var scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x0a0a0b, 0.035);
+        const scene = new THREE.Scene();
+        // Fog for depth fade
+        scene.fog = new THREE.FogExp2(0x0B0102, 0.035);
 
-        var camera = new THREE.PerspectiveCamera(55, 1, 0.1, 100);
+        const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 100);
         camera.position.set(0, 8, 6);
         camera.lookAt(0, 0, -6);
 
-        var gridSize = 20;
-        var gridDiv = 20;
-        var geo = new THREE.PlaneGeometry(gridSize, gridSize, gridDiv, gridDiv);
+        // --- Grid plane with custom shader ---
+        const gridSize = 20;
+        const gridDiv = 20;
+        const geo = new THREE.PlaneGeometry(gridSize, gridSize, gridDiv, gridDiv);
 
-        var vertexShader = [
-            'uniform float uTime;',
-            'varying vec2 vUv;',
-            'varying float vElevation;',
-            '',
-            'void main() {',
-            '    vUv = uv;',
-            '    vec3 pos = position;',
-            '',
-            '    float dist = length(pos.xy - vec2(0.0, -5.0));',
-            '    float wave = sin(dist * 0.6 - uTime * 0.8) * 0.4;',
-            '    wave += sin(pos.x * 0.3 + uTime * 0.5) * 0.2;',
-            '    wave *= smoothstep(20.0, 2.0, dist);',
-            '    pos.z = wave;',
-            '    vElevation = wave;',
-            '',
-            '    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);',
-            '}'
-        ].join('\n');
+        const vertexShader = `
+            uniform float uTime;
+            varying vec2 vUv;
+            varying float vElevation;
 
-        var fragmentShader = [
-            'uniform float uTime;',
-            'varying vec2 vUv;',
-            'varying float vElevation;',
-            '',
-            'void main() {',
-            '    vec2 grid = abs(fract(vUv * 20.0 - 0.5) - 0.5);',
-            '    float line = min(grid.x, grid.y);',
-            '    float gridLine = 1.0 - smoothstep(0.0, 0.04, line);',
-            '',
-            '    vec2 majorGrid = abs(fract(vUv * 4.0 - 0.5) - 0.5);',
-            '    float majorLine = min(majorGrid.x, majorGrid.y);',
-            '    float majorGridLine = 1.0 - smoothstep(0.0, 0.06, majorLine);',
-            '',
-            '    float combinedGrid = max(gridLine * 0.3, majorGridLine * 0.6);',
-            '',
-            '    float dist = length(vUv - 0.5) * 2.0;',
-            '    float fade = 1.0 - smoothstep(0.2, 1.0, dist);',
-            '',
-            '    vec3 baseColor = vec3(1.0, 0.588, 0.086);',
-            '    vec3 coolColor = vec3(0.6, 0.65, 0.75);',
-            '    float elNorm = smoothstep(-0.2, 0.5, vElevation);',
-            '    vec3 color = mix(coolColor, baseColor, elNorm * 0.7);',
-            '',
-            '    float alpha = combinedGrid * fade * 0.45;',
-            '',
-            '    float glowDot = gridLine * majorGridLine;',
-            '    alpha += glowDot * fade * 0.15 * (0.5 + 0.5 * sin(uTime * 2.0 + dist * 6.0));',
-            '',
-            '    gl_FragColor = vec4(color, alpha);',
-            '}'
-        ].join('\n');
+            void main() {
+                vUv = uv;
+                vec3 pos = position;
 
-        var mat = new THREE.ShaderMaterial({
+                // Wave displacement
+                float dist = length(pos.xy - vec2(0.0, -5.0));
+                float wave = sin(dist * 0.6 - uTime * 0.8) * 0.4;
+                wave += sin(pos.x * 0.3 + uTime * 0.5) * 0.2;
+                wave *= smoothstep(20.0, 2.0, dist);
+                pos.z = wave;
+                vElevation = wave;
+
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+            }
+        `;
+
+        const fragmentShader = `
+            uniform float uTime;
+            varying vec2 vUv;
+            varying float vElevation;
+
+            void main() {
+                // Grid lines
+                vec2 grid = abs(fract(vUv * 20.0 - 0.5) - 0.5);
+                float line = min(grid.x, grid.y);
+                float gridLine = 1.0 - smoothstep(0.0, 0.04, line);
+
+                // Thicker major grid every 5 cells
+                vec2 majorGrid = abs(fract(vUv * 4.0 - 0.5) - 0.5);
+                float majorLine = min(majorGrid.x, majorGrid.y);
+                float majorGridLine = 1.0 - smoothstep(0.0, 0.06, majorLine);
+
+                // Combine
+                float combinedGrid = max(gridLine * 0.3, majorGridLine * 0.6);
+
+                // Fade from center
+                float dist = length(vUv - 0.5) * 2.0;
+                float fade = 1.0 - smoothstep(0.2, 1.0, dist);
+
+                // Color: brand orange tint on peaks, subtle base
+                vec3 baseColor = vec3(1.0, 0.588, 0.086); // brand orange
+                vec3 coolColor = vec3(0.6, 0.65, 0.75);    // cool grey
+                float elNorm = smoothstep(-0.2, 0.5, vElevation);
+                vec3 color = mix(coolColor, baseColor, elNorm * 0.7);
+
+                float alpha = combinedGrid * fade * 0.45;
+
+                // Subtle intersection glow
+                float glowDot = gridLine * majorGridLine;
+                alpha += glowDot * fade * 0.15 * (0.5 + 0.5 * sin(uTime * 2.0 + dist * 6.0));
+
+                gl_FragColor = vec4(color, alpha);
+            }
+        `;
+
+        const mat = new THREE.ShaderMaterial({
             uniforms: { uTime: { value: 0 } },
-            vertexShader: vertexShader,
-            fragmentShader: fragmentShader,
+            vertexShader,
+            fragmentShader,
             transparent: true,
             side: THREE.DoubleSide,
             depthWrite: false,
         });
 
-        var gridMesh = new THREE.Mesh(geo, mat);
+        const gridMesh = new THREE.Mesh(geo, mat);
         gridMesh.rotation.x = -Math.PI / 2;
         gridMesh.position.y = -1;
         scene.add(gridMesh);
 
-        var particleCount = 60;
-        var pGeo = new THREE.BufferGeometry();
-        var pPos = new Float32Array(particleCount * 3);
-        var pAlpha = new Float32Array(particleCount);
-        for (var i = 0; i < particleCount; i++) {
+        // --- Floating particles ---
+        const particleCount = 60;
+        const pGeo = new THREE.BufferGeometry();
+        const pPos = new Float32Array(particleCount * 3);
+        const pAlpha = new Float32Array(particleCount);
+        for (let i = 0; i < particleCount; i++) {
             pPos[i*3]     = (Math.random() - 0.5) * 20;
             pPos[i*3 + 1] = Math.random() * 8;
             pPos[i*3 + 2] = (Math.random() - 0.5) * 20 - 4;
@@ -2013,24 +1963,25 @@
         }
         pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
 
-        var pMat = new THREE.PointsMaterial({
+        const pMat = new THREE.PointsMaterial({
             color: 0xFF9616,
             size: 0.12,
             transparent: true,
             opacity: 0,
             sizeAttenuation: true,
         });
-        var pTargetOpacity = 0.7;
-        var pFadeStart = -1;
-        var pFadeDelay = 2.0;
-        var pFadeDuration = 1.5;
-        var particles = new THREE.Points(pGeo, pMat);
+        const pTargetOpacity = 0.7;
+        let pFadeStart = -1;
+        const pFadeDelay = 2.0;  // 2秒后开始出现
+        const pFadeDuration = 1.5; // 1.5秒淡入
+        const particles = new THREE.Points(pGeo, pMat);
         scene.add(particles);
 
+        // --- Resize — match header area only (55vh) ---
         function resize() {
-            var cont = canvas.parentElement;
-            var w = cont.clientWidth;
-            var h = Math.round(window.innerHeight * 0.6);
+            const container = canvas.parentElement;
+            const w = container.clientWidth;
+            const h = Math.round(window.innerHeight * 0.6);
             canvas.style.width = w + 'px';
             canvas.style.height = h + 'px';
             renderer.setSize(w, h);
@@ -2040,23 +1991,27 @@
         resize();
         window.addEventListener('resize', resize);
 
-        var clock = new THREE.Clock();
+        // --- Animate ---
+        const clock = new THREE.Clock();
         function animate() {
             requestAnimationFrame(animate);
-            var t = clock.getElapsedTime();
+            const t = clock.getElapsedTime();
             mat.uniforms.uTime.value = t;
 
+            // Slow camera drift
             camera.position.x = Math.sin(t * 0.15) * 1.2;
             camera.lookAt(0, 0, -6);
 
+            // Particle fade-in after delay
             if (pFadeStart < 0 && t >= pFadeDelay) pFadeStart = t;
             if (pFadeStart > 0) {
-                var progress = Math.min((t - pFadeStart) / pFadeDuration, 1);
+                const progress = Math.min((t - pFadeStart) / pFadeDuration, 1);
                 pMat.opacity = pTargetOpacity * progress;
             }
 
-            var pos = particles.geometry.attributes.position.array;
-            for (var i = 0; i < particleCount; i++) {
+            // Particle float
+            const pos = particles.geometry.attributes.position.array;
+            for (let i = 0; i < particleCount; i++) {
                 pos[i*3 + 1] += 0.012 + pAlpha[i] * 0.01;
                 if (pos[i*3 + 1] > 10) {
                     pos[i*3 + 1] = -1;
@@ -2070,22 +2025,6 @@
         }
         animate();
     })();
-    </script>
-
-    <!-- 禁止双指缩放 + 双击缩放 -->
-    <script>
-    document.addEventListener('touchstart', function(e) {
-        if (e.touches.length > 1) e.preventDefault();
-    }, { passive: false });
-    document.addEventListener('gesturestart', function(e) {
-        e.preventDefault();
-    }, { passive: false });
-    var lastTouchEnd = 0;
-    document.addEventListener('touchend', function(e) {
-        var now = Date.now();
-        if (now - lastTouchEnd < 300) e.preventDefault();
-        lastTouchEnd = now;
-    }, { passive: false });
     </script>
 </body>
 
