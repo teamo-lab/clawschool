@@ -99,7 +99,7 @@ def generate_ai_advice(detail, submission):
             REPAIR_MODEL,
             [qid for qid in BASIC_QIDS if detail.get(qid, {}).get("score", 0) < detail.get(qid, {}).get("max", 10)],
         )
-        return f"## 龙虾学校修复备忘\n- AI 建议生成失败：{e}\n- 请先根据静态修复步骤完成能力补齐。"
+        return "## 龙虾学校修复备忘\n- AI 建议暂时不可用，请先根据静态修复步骤完成能力补齐。"
 
 
 def generate_repair_skill(token, lobster_name, score, detail, submission):
