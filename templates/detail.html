@@ -1012,10 +1012,32 @@
             background: var(--brand-orange);
             border-radius: 0 0 6px 6px;
         }
-        .upgrade-card--pro .upgrade-card-price { color: rgba(255, 255, 255, 0.45); }
+        /* PRO 卡片突出样式 */
+        .upgrade-card--pro {
+            background: linear-gradient(135deg, rgba(255, 150, 22, 0.15) 0%, rgba(204, 15, 20, 0.1) 100%);
+            border: 1.5px solid rgba(255, 150, 22, 0.5);
+            box-shadow: 0 4px 24px rgba(255, 150, 22, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+        .upgrade-card--pro:hover {
+            border-color: rgba(255, 150, 22, 0.7);
+            box-shadow: 0 6px 32px rgba(255, 150, 22, 0.3);
+        }
+        .upgrade-card--pro .upgrade-card-price {
+            color: var(--brand-orange);
+            font-size: 15px;
+            font-weight: 800;
+        }
         .upgrade-card--pro .upgrade-card-badge {
-            background: rgba(255, 255, 255, 0.15);
-            color: rgba(255, 255, 255, 0.6);
+            background: linear-gradient(135deg, var(--brand-orange), #ff6b3d);
+            color: #000;
+            font-weight: 800;
+            padding: 3px 10px 4px;
+            font-size: 11px;
+        }
+        .upgrade-card--pro .upgrade-card-title { font-size: 15px; }
+        .upgrade-card--pro .upgrade-card-desc { color: rgba(255, 255, 255, 0.6); }
+        .upgrade-card--pro .upgrade-card-icon {
+            background: linear-gradient(135deg, rgba(255, 150, 22, 0.25), rgba(255, 100, 50, 0.18));
         }
 
         .report-section {
