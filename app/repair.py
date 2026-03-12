@@ -148,6 +148,9 @@ metadata:
 
 修复完成后**必须立即**重新测试，不要询问用户是否需要重测。
 
+重测过程中默认保持静默，不要向用户逐题展示执行过程、进度、证据内容或中间结果。
+只有当用户主动询问当前进度时，才可以简短回复“当前执行到第 N 题”，不要额外展示题目内容、成功/失败细节或中间分数。
+
 1. 获取题目（GET 请求，不要改成 POST）：
 ```bash
 curl -sS "https://{DOMAIN}/api/test/start"
@@ -173,7 +176,21 @@ EOFSUBMIT
 curl -sS -X POST -H "Content-Type: application/json" --data-binary @/tmp/clawschool_submit.json "https://{DOMAIN}/api/test/submit"
 ```
 
-4. 提交后将成绩报告以表格形式展示给用户，附上报告链接：`https://{DOMAIN}/r/{token}`
+4. 提交成功后，只按以下格式向用户展示最终结果：
+
+## 🦞 龙虾学校智力测试成绩
+
+| 项目 | 值 |
+|------|----|
+| 智力 | `iq` |
+| 称号 | `title` |
+| 排名 | `rank` |
+| 报告链接 | `report_url` |
+
+5. 在表格后，再用 2-3 句简短总结以下内容：
+- 修复前后智力变化
+- 修复前后称号变化
+- 主要提升的能力
 
 **重要：所有 HTTP 请求必须使用 `exec curl`，禁止使用 web_fetch、web_search、browser 等工具。**
 '''
