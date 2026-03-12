@@ -2128,7 +2128,7 @@
             <h3>🔧 基础能力升级包</h3>
             <p>一次性补齐你龙虾的基础短板：</p>
             <p style="margin-bottom:16px; font-size:12px; color:#999;">群聊整理 · 删除请求 · 安装评估 · Skill 核查<br>定时任务 · 新闻整理 · 双任务处理 · 网页容错</p>
-            <div class="upgrade-detail">
+            <div class="upgrade-detail" id="upgrade-detail-list">
                 {% for qid in q_keys %}
                 {% set qd = data.detail.get(qid, {}) %}
                 {% set sc = qd.get('score', 0) | int %}
@@ -2139,7 +2139,7 @@
                 </div>
                 {% endif %}
                 {% endfor %}
-                <div class="ud-row" style="border-top:1px solid rgba(255,255,255,0.1); padding-top:10px; margin-top:4px;">
+                <div class="ud-row" id="upgrade-detail-total" style="border-top:1px solid rgba(255,255,255,0.1); padding-top:10px; margin-top:4px;">
                     <span class="ud-label" style="font-weight:600; color:#ddd;">预计智力值提升</span>
                     <span class="ud-total">+{{ basic_iq_boost }}</span>
                 </div>
@@ -2648,6 +2648,7 @@
             document.getElementById('diagPaid').textContent = paidCount;
             BOOST = basicBoost;
             BOOST_IQ = rawToIq(Math.min(resultData.score + basicBoost, 120)) - IQ;
+            renderUpgradeDetail(detail, BOOST_IQ);
 
             // Build upgrade cards dynamically
             var btnGroupEl = document.getElementById('btnGroup');
@@ -2704,6 +2705,26 @@
 
         // Load leaderboard
         loadResultLeaderboard();
+    }
+
+    function renderUpgradeDetail(detail, boostIq) {
+        var listEl = document.getElementById('upgrade-detail-list');
+        if (!listEl) return;
+        var rows = '';
+        Q_KEYS.forEach(function(qid) {
+            if (ADVANCED.indexOf(qid) >= 0) return;
+            var sc = (detail[qid] || {}).score || 0;
+            if (sc >= 8) return;
+            rows += '<div class="ud-row">' +
+                '<span class="ud-label">' + qid.toUpperCase() + ' ' + (Q_NAMES[qid] || qid) + '</span>' +
+                '<span class="ud-value green">' + sc + ' → 10 <small>(+' + (10 - sc) + ')</small></span>' +
+            '</div>';
+        });
+        rows += '<div class="ud-row" id="upgrade-detail-total" style="border-top:1px solid rgba(255,255,255,0.1); padding-top:10px; margin-top:4px;">' +
+            '<span class="ud-label" style="font-weight:600; color:#ddd;">预计智力值提升</span>' +
+            '<span class="ud-total">+' + boostIq + '</span>' +
+        '</div>';
+        listEl.innerHTML = rows;
     }
 
     // ===== Leaderboard =====

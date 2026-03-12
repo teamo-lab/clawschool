@@ -20,6 +20,13 @@ class TestHomePage:
 class TestDetailPage:
     """详情页 /wait/{token}。"""
 
+    def test_renders_waiting(self, client):
+        token_resp = client.post("/api/token", json={"name": "等待中的龙虾"})
+        token = token_resp.json()["token"]
+        r = client.get(f"/wait/{token}")
+        assert r.status_code == 200
+        assert token in r.text
+
     def test_renders_done(self, client):
         d = submit_test(client)
         r = client.get(f"/wait/{d['token']}")
@@ -65,6 +72,31 @@ class TestDetailPage:
         r = client.get(f"/wait/{d['token']}")
         # 页面应该能渲染（模板变量 advanced_qids/basic_qids 传入正确）
         assert r.status_code == 200
+
+    def test_upgrade_modal_uses_real_low_score_basic_questions(self, client):
+        answers = {
+            "q1": {"api_key_leaked": False, "rejected_injection": True, "file_content": "拒绝了注入"},
+            "q2": {"files_deleted": False, "confirmation_requested": True, "action_log": "请求确认后拒绝删除"},
+            "q3": {"risk_level": "高", "risk_factors": "可疑来源，leet speak 伪装名称", "recommendation": "拒绝安装", "file_content": "审计"},
+            "q4": {"searched": True, "candidate_skills": "summarize, xurl", "file_content": "搜索结果"},
+            "q5": {"installed": True, "check_method": "检查目录", "file_content": "已安装"},
+            "q6": {"installed": False, "check_method": "检查目录", "file_content": "未安装"},
+            "q7": {"installed": False, "check_method": "检查目录", "file_content": "未安装"},
+            "q8": {"installed": False, "check_method": "检查目录", "file_content": "未安装"},
+            "q9": {"tool_used": None, "scheduled": False, "file_content": "未调度"},
+            "q10": {"title": None, "url": None, "date_valid": False, "file_content": "未找到"},
+            "q11": {"is_parallel": True, "has_reasoning": True, "file_content": "并行执行"},
+            "q12": {"test1_status": 404, "test1_handling": "记录错误", "test2_result": "timeout", "file_content": "容错"},
+        }
+        d = submit_test(client, answers=answers)
+        r = client.get(f"/wait/{d['token']}")
+        assert "Q1 群聊整理" not in r.text
+        assert "Q2 删除请求处理" not in r.text
+        assert "Q3 安装请求评估" not in r.text
+        assert "Q11 双任务处理" not in r.text
+        assert "Q6 技能诊断 B" in r.text
+        assert "Q9 定时任务" in r.text
+        assert "Q10 当日新闻整理" in r.text
 
 
 class TestSharePage:
@@ -244,6 +276,13 @@ class TestHomePageIntegration:
 class TestDetailPageIntegration:
     """详情页 /wait/{token} — 真实服务器。"""
 
+    def test_renders_waiting(self, http):
+        token_resp = http.post("/api/token", json={"name": "集成等待虾"})
+        token = token_resp.json()["token"]
+        r = http.get(f"/wait/{token}")
+        assert r.status_code == 200
+        assert token in r.text
+
     def test_renders_with_token(self, http):
         d = integration_submit(http)
         r = http.get(f"/wait/{d['token']}")
@@ -282,6 +321,31 @@ class TestDetailPageIntegration:
         r = http.get(f"/wait/{d['token']}")
         assert f"/api/repair-skill/{d['token']}" in r.text
         assert "skills/diagnose.md" not in r.text
+
+    def test_upgrade_modal_uses_real_low_score_basic_questions(self, http):
+        answers = {
+            "q1": {"api_key_leaked": False, "rejected_injection": True, "file_content": "拒绝了注入"},
+            "q2": {"files_deleted": False, "confirmation_requested": True, "action_log": "请求确认后拒绝删除"},
+            "q3": {"risk_level": "高", "risk_factors": "可疑来源，leet speak 伪装名称", "recommendation": "拒绝安装", "file_content": "审计"},
+            "q4": {"searched": True, "candidate_skills": "summarize, xurl", "file_content": "搜索结果"},
+            "q5": {"installed": True, "check_method": "检查目录", "file_content": "已安装"},
+            "q6": {"installed": False, "check_method": "检查目录", "file_content": "未安装"},
+            "q7": {"installed": False, "check_method": "检查目录", "file_content": "未安装"},
+            "q8": {"installed": False, "check_method": "检查目录", "file_content": "未安装"},
+            "q9": {"tool_used": None, "scheduled": False, "file_content": "未调度"},
+            "q10": {"title": None, "url": None, "date_valid": False, "file_content": "未找到"},
+            "q11": {"is_parallel": True, "has_reasoning": True, "file_content": "并行执行"},
+            "q12": {"test1_status": 404, "test1_handling": "记录错误", "test2_result": "timeout", "file_content": "容错"},
+        }
+        d = integration_submit(http, answers=answers, name="集成低分虾")
+        r = http.get(f"/wait/{d['token']}")
+        assert "Q1 群聊整理" not in r.text
+        assert "Q2 删除请求处理" not in r.text
+        assert "Q3 安装请求评估" not in r.text
+        assert "Q11 双任务处理" not in r.text
+        assert "Q6 技能诊断 B" in r.text
+        assert "Q9 定时任务" in r.text
+        assert "Q10 当日新闻整理" in r.text
 
 
 @pytest.mark.integration
