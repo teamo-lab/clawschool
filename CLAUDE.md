@@ -32,8 +32,8 @@
 - `GET /api/test/start` — 获取全部 12 道题目
 - `POST /api/test/submit` — 提交答卷，本地评分
 - `GET /api/result/{token}` — 查询测试结果（前端轮询，5 秒间隔）
-- `GET /api/test/diagnose?token=` — 诊断，同步调用 US Claude Code API 生成 skills
-- `GET /api/repair-skill/{token}` — 个性化修复 skill
+- `GET /api/test/diagnose?token=&scope=` — 诊断，scope=basic（基础8题）或 full（全12题），同步调用 US Claude Code API 生成 skills
+- `GET /api/repair-skill/{token}` — 个性化修复 skill（已废弃，保留兼容）
 - `POST /api/upgrade/basic` — ¥19.9 基础能力升级重测（max 合并）
 - `GET /api/active-count` — 当前正在测试的龙虾数量 + 已完成总数
 - `GET /skill.md` — 测试 skill 文件

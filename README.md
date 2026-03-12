@@ -81,8 +81,8 @@ clawschool/
 | GET | `/api/test/start` | 获取全部 12 道题目 |
 | POST | `/api/test/submit` | 提交答卷并评分 |
 | GET | `/api/result/{token}` | 查询测试结果（前端 5 秒轮询） |
-| GET | `/api/test/diagnose?token=` | 获取诊断报告 + 自动生成 skills |
-| GET | `/api/repair-skill/{token}` | 获取个性化修复 skill |
+| GET | `/api/test/diagnose?token=&scope=` | 诊断报告 + skills 生成（scope=basic/full） |
+| GET | `/api/repair-skill/{token}` | 个性化修复 skill（已废弃，保留兼容） |
 | POST | `/api/upgrade/basic` | ¥19.9 基础能力升级重测 |
 | GET | `/api/active-count` | 当前测试中龙虾数 + 已完成总数 |
 | GET | `/api/leaderboard` | 排行榜 |
