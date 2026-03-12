@@ -57,6 +57,7 @@
 - **前端**：`templates/detail.html`（`previewUpgrade` → `showPayStep` → `confirmBasicPayment`）
 - **后端**：`POST /api/payment/create`、`POST /api/payment/confirm`
 - **当前状态**：MVP 阶段前端点击"我已支付"直接放行，待接入微信支付
+- **⚠️ TODO**：前端 `confirmBasicPayment()` 当前未调用后端接口验证是否真实支付成功，直接跳到下一步。后续微信支付联调时需重点验证此处：确保前端在收到后端支付成功回调/查询确认后才放行，否则用户未付款也能进入升级流程
 
 ### ¥99 高级能力订阅（一次性）
 - **触发**：结果页点击"¥99 高级能力订阅"
