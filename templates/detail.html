@@ -2419,9 +2419,12 @@
             }, 300);
         }, 4000);
 
-        // Real polling
+        // Real polling with retry mechanism
+        var pollRetries = 0;
+        var maxRetries = 3;
         var poller = setInterval(function() {
             fetch('/api/result/' + TOKEN).then(function(r) { return r.json(); }).then(function(result) {
+                pollRetries = 0; // 成功则重置重试计数
                 if (result.status === 'done') {
                     clearInterval(poller);
                     clearInterval(countdownTimer);
@@ -2438,7 +2441,14 @@
                     // Update status with real progress
                     status.textContent = '已完成 ' + result.answered + '/12 题';
                 }
-            }).catch(function() {});
+            }).catch(function() {
+                pollRetries++;
+                if (pollRetries >= maxRetries) {
+                    status.textContent = '网络不稳定，请刷新页面重试';
+                    status.style.color = '#ff9800';
+                    clearInterval(poller);
+                }
+            });
         }, 5000);
     }
 
@@ -2827,13 +2837,22 @@
         return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
     }
 
+    var isPayProcessing = false;
     function doBasicPay(provider) {
+        // 防止重复点击
+        if (isPayProcessing) return;
+        isPayProcessing = true;
+
         var channel;
         if (provider === 'alipay') {
             channel = isMobile() ? 'alipay_h5' : 'alipay_pc';
         } else {
             channel = 'wechat_native';  // 微信 H5 暂不可用，统一走扫码
         }
+
+        // 禁用按钮
+        var btn = document.getElementById('btn-basic-alipay');
+        if (btn) { btn.disabled = true; btn.textContent = '处理中...'; }
 
         document.getElementById('basic-channel-pick').style.display = 'none';
         document.getElementById('basic-pay-waiting').style.display = 'block';
@@ -2848,6 +2867,13 @@
             return r.json();
         }).then(function(data) {
             var info = data.payment_info;
+            // 保存订单信息到 localStorage，以便支付返回后继续
+            localStorage.setItem('clawschool_pending_order', JSON.stringify({
+                order_id: data.order_id,
+                plan_type: data.plan_type,
+                token: TOKEN,
+                created_at: Date.now()
+            }));
             if (channel === 'alipay_pc' || channel === 'alipay_h5') {
                 // 支付宝：跳转到支付页面
                 window.location.href = info.pay_url;
@@ -2861,6 +2887,9 @@
                 startBasicPayPolling(data.order_id);
             }
         }).catch(function(e) {
+            isPayProcessing = false;
+            var btn = document.getElementById('btn-basic-alipay');
+            if (btn) { btn.disabled = false; btn.textContent = '支付宝支付 ¥0.19'; }
             document.getElementById('basic-pay-waiting').style.display = 'none';
             document.getElementById('basic-channel-pick').style.display = 'flex';
             document.getElementById('basic-pay-title').textContent = '❌ ' + (e.message || '创建订单失败');
@@ -2881,6 +2910,8 @@
     }
 
     function onBasicPaySuccess() {
+        // 清除待支付订单记录
+        localStorage.removeItem('clawschool_pending_order');
         document.getElementById('upgrade-pay').classList.remove('show');
         document.getElementById('upgrade-step2').classList.add('show');
     }
@@ -2910,8 +2941,20 @@
 
     // ── Step 3: Upgrade waiting ──
     var upgradePoller = null;
+    var isUpgrading = false;
+
+    // 阻止用户在升级过程中离开页面
+    function warnBeforeLeave(e) {
+        if (isUpgrading) {
+            e.preventDefault();
+            e.returnValue = '升级正在进行中，离开可能导致升级失败！';
+            return e.returnValue;
+        }
+    }
 
     function startUpgradeWait() {
+        isUpgrading = true;
+        window.addEventListener('beforeunload', warnBeforeLeave);
         document.getElementById('upgrade-step2').classList.remove('show');
         document.getElementById('upgrade-step3').classList.add('show');
         simulateUpgradeProgress();
@@ -2980,6 +3023,10 @@
 
     // ── Step 4: Upgrade result ──
     function showStep4(data) {
+        // 升级完成，移除离开警告
+        isUpgrading = false;
+        window.removeEventListener('beforeunload', warnBeforeLeave);
+
         document.getElementById('upgrade-step3').classList.remove('show');
         document.getElementById('upgrade-step4').classList.add('show');
 
@@ -3206,10 +3253,43 @@
         if (urlParams.get('paid') === 'basic') {
             // 清除 URL 参数，避免刷新后重复触发
             history.replaceState(null, '', window.location.pathname);
+            // 清除待支付订单记录
+            localStorage.removeItem('clawschool_pending_order');
             // 延迟弹出，等动画完成
             setTimeout(function() {
                 document.getElementById('upgrade-step2').classList.add('show');
             }, 1200);
+        } else {
+            // 检查是否有未完成的支付订单
+            (function checkPendingOrder() {
+                var pending = localStorage.getItem('clawschool_pending_order');
+                if (!pending) return;
+                try {
+                    var order = JSON.parse(pending);
+                    // 检查是否超过 10 分钟（订单已过期）
+                    if (Date.now() - order.created_at > 10 * 60 * 1000) {
+                        localStorage.removeItem('clawschool_pending_order');
+                        return;
+                    }
+                    // 检查订单状态
+                    fetch('/api/payment/status/' + order.order_id).then(function(r) {
+                        return r.json();
+                    }).then(function(data) {
+                        if (data.status === 'paid') {
+                            localStorage.removeItem('clawschool_pending_order');
+                            // 支付已完成，显示命令弹窗
+                            setTimeout(function() {
+                                document.getElementById('upgrade-step2').classList.add('show');
+                            }, 1000);
+                        } else if (data.status === 'expired') {
+                            localStorage.removeItem('clawschool_pending_order');
+                        }
+                        // pending 状态不做处理，用户可重新发起支付
+                    }).catch(function() {});
+                } catch(e) {
+                    localStorage.removeItem('clawschool_pending_order');
+                }
+            })();
         }
     } else {
         // Waiting — start Phase 1 with real polling

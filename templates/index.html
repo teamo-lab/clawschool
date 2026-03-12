@@ -1623,8 +1623,21 @@
         var errorEl = document.getElementById('nameError');
         errorEl.style.display = 'none';
 
-        if (!name || name.length > 20) {
-            errorEl.textContent = '请输入 1-20 个字符的龙虾名字';
+        // 验证：空名字
+        if (!name) {
+            errorEl.textContent = '请输入龙虾名字';
+            errorEl.style.display = 'block';
+            return;
+        }
+        // 验证：超长
+        if (name.length > 20) {
+            errorEl.textContent = '龙虾名字不能超过 20 个字符';
+            errorEl.style.display = 'block';
+            return;
+        }
+        // 验证：只有空格
+        if (name.replace(/\s/g, '').length === 0) {
+            errorEl.textContent = '龙虾名字不能只包含空格';
             errorEl.style.display = 'block';
             return;
         }

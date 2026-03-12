@@ -164,13 +164,30 @@ async def test_submit(request: Request):
     db = get_db()
     try:
         if token:
-            existing = db.execute("SELECT token FROM tests WHERE token=?", (token,)).fetchone()
+            existing = db.execute("SELECT token, status, score, title FROM tests WHERE token=?", (token,)).fetchone()
             if existing:
+                # 防止重复提交：如果已经完成，直接返回现有结果
+                if existing["status"] == "done":
+                    db.close()
+                    return {
+                        "success": True,
+                        "token": token,
+                        "lobsterName": lobster_name,
+                        "score": existing["score"],
+                        "iq": raw_to_iq(existing["score"]),
+                        "title": existing["title"],
+                        "rank": _get_rank(existing["score"], token),
+                        "detail": result["detail"],
+                        "report_url": f"https://{DOMAIN}/r/{token}",
+                        "diagnoseUrl": f"/api/test/diagnose?token={token}",
+                        "repairSkillUrl": f"https://{DOMAIN}/api/repair-skill/{token}",
+                        "duplicate": True,  # 标记为重复提交
+                    }
                 db.execute("""
                     UPDATE tests SET
                         status='done', model=?, score=?, title=?, test_time=?,
                         detail=?, submission=?, updated_at=?
-                    WHERE token=?
+                    WHERE token=? AND status='waiting'
                 """, (model, score, title, submission["test_time"],
                       detail_json, submission_json, now, token))
             else:
@@ -220,7 +237,18 @@ async def get_result(token: str):
         raise HTTPException(404, "Token 不存在")
 
     data = dict(row)
-    resp = {"status": data["status"], "name": data["name"]}
+
+    # 检查 waiting 状态的 token 是否过期（30 分钟）
+    if data["status"] == "waiting" and data.get("created_at"):
+        from datetime import datetime, timedelta, timezone
+        try:
+            created = datetime.fromisoformat(data["created_at"].replace("Z", "+00:00"))
+            if datetime.now(timezone.utc) - created > timedelta(minutes=30):
+                return {"status": "expired", "name": data["name"], "message": "测试已过期，请重新开始"}
+        except Exception:
+            pass
+
+    resp = {"status": data["status"], "name": data["name"], "created_at": data.get("created_at")}
 
     if data["status"] == "done":
         resp.update({
@@ -568,12 +596,17 @@ async def login(request: Request):
         now_iso = _now_iso()
         db = get_db()
         try:
+            # 先检查验证码是否存在
             row = db.execute(
-                "SELECT code FROM verification_codes WHERE phone=? AND code=? AND expires_at>? AND used=0",
-                (phone, code, now_iso)
+                "SELECT code, expires_at, used FROM verification_codes WHERE phone=? AND code=?",
+                (phone, code)
             ).fetchone()
             if not row:
-                raise HTTPException(400, "验证码不正确或已过期")
+                raise HTTPException(400, "验证码不正确")
+            if row["used"] == 1:
+                raise HTTPException(400, "验证码已使用，请重新获取")
+            if row["expires_at"] <= now_iso:
+                raise HTTPException(400, "验证码已过期，请重新获取")
             db.execute(
                 "UPDATE verification_codes SET used=1 WHERE phone=? AND code=?",
                 (phone, code)
@@ -745,17 +778,31 @@ async def alipay_return(request: Request):
 
 @app.get("/api/payment/status/{order_id}")
 async def payment_status(order_id: str):
-    """前端轮询支付状态"""
+    """前端轮询支付状态，超过 10 分钟未支付自动过期"""
     db = get_db()
     try:
         row = db.execute(
-            "SELECT order_id, token, amount, plan_type, channel, status, paid_at FROM payments WHERE order_id=?",
+            "SELECT order_id, token, amount, plan_type, channel, status, paid_at, created_at FROM payments WHERE order_id=?",
             (order_id,),
         ).fetchone()
+        if not row:
+            raise HTTPException(404, "订单不存在")
+
+        # 检查是否过期：pending 状态且超过 10 分钟
+        if row["status"] == "pending" and row["created_at"]:
+            from datetime import datetime, timedelta, timezone
+            try:
+                created = datetime.fromisoformat(row["created_at"].replace("Z", "+00:00"))
+                if datetime.now(timezone.utc) - created > timedelta(minutes=10):
+                    db.execute("UPDATE payments SET status='expired' WHERE order_id=? AND status='pending'", (order_id,))
+                    db.commit()
+                    result = dict(row)
+                    result["status"] = "expired"
+                    return result
+            except Exception:
+                pass
     finally:
         db.close()
-    if not row:
-        raise HTTPException(404, "订单不存在")
     return dict(row)
 
 
