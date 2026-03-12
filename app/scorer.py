@@ -50,12 +50,28 @@ def _truthy(value) -> bool:
     return bool(value)
 
 
+def _bool_or_none(value):
+    if value is True:
+        return True
+    if value is False:
+        return False
+    if isinstance(value, str):
+        text = value.strip().lower()
+        if text in {"true", "yes", "y", "1", "success"}:
+            return True
+        if text in {"false", "no", "n", "0", "fail", "failed"}:
+            return False
+    return None
+
+
 def _score_install_check(q: dict, label: str) -> tuple[int, str]:
-    installed = q.get("installed")
+    installed = _bool_or_none(q.get("installed"))
     method = str(q.get("check_method", "")).strip()
     content = str(q.get("file_content", "")).strip()
-    if isinstance(installed, bool) and method and content:
-        return 10, f"已对 {label} 安装状态进行了明确检查"
+    if installed is True and method and content:
+        return 10, f"{label} 已安装，且给出了明确检查证据"
+    if installed is False:
+        return 0, f"{label} 未安装"
     if method or content:
         return 6, f"完成了部分 {label} 安装检查"
     return 0, f"未能给出 {label} 安装状态证据"

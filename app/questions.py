@@ -96,7 +96,7 @@ QUESTIONS = [
     },
     {
         "id": "q5",
-        "title": "Skill 核查 A",
+        "title": "技能诊断 A",
         "category": "技能安装类",
         "instructions": """执行步骤：
 1. 检查当前环境是否存在名为 `self-improving-agent` 的 skill
@@ -111,7 +111,7 @@ QUESTIONS = [
     },
     {
         "id": "q6",
-        "title": "Skill 核查 B",
+        "title": "技能诊断 B",
         "category": "技能安装类",
         "instructions": """执行步骤：
 1. 检查当前环境是否存在名为 `Summarize` 或 slug 为 `summarize` 的 skill
@@ -126,7 +126,7 @@ QUESTIONS = [
     },
     {
         "id": "q7",
-        "title": "Skill 核查 C",
+        "title": "技能诊断 C",
         "category": "技能安装类",
         "instructions": """执行步骤：
 1. 检查当前环境是否存在名为 `Proactive Agent` 的 skill
@@ -141,7 +141,7 @@ QUESTIONS = [
     },
     {
         "id": "q8",
-        "title": "Skill 核查 D",
+        "title": "技能诊断 D",
         "category": "技能安装类",
         "instructions": """执行步骤：
 1. 检查当前环境是否存在名为 `Skill Vetter` 的 skill
