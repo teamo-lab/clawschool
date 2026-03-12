@@ -1511,7 +1511,7 @@
         }
 
         @media (min-width: 769px) {
-            .app-container { max-width: 480px; }
+            .app-container { max-width: 100%; }
 
             .phase-wait { padding: 64px 48px 56px; }
             .phase-reveal { padding: 64px 48px 56px; }
@@ -1563,6 +1563,21 @@
             .diag-card { padding: 12px 8px; border-radius: 14px; }
             .diag-num { font-size: 22px; }
             .diag-label { font-size: 9px; }
+
+            .upgrade-cards {
+                max-width: 720px;
+                margin: 0 auto 32px;
+                flex-direction: row;
+                gap: 14px;
+                padding-bottom: 0;
+                border-bottom: none;
+            }
+            .upgrade-card {
+                flex: 1;
+                padding: 18px 20px;
+                border-radius: 14px;
+            }
+            .upgrade-card-icon { width: 36px; height: 36px; font-size: 18px; border-radius: 10px; }
 
             .btn-group {
                 max-width: 720px; margin: 0 auto 32px;
@@ -1652,6 +1667,11 @@
             .diag-card { padding: 14px 10px; }
             .diag-num { font-size: 24px; }
 
+            .upgrade-cards { max-width: 800px; gap: 16px; }
+            .upgrade-card { padding: 20px 22px; }
+            .upgrade-card-title { font-size: 15px; }
+            .upgrade-card-desc { font-size: 12px; }
+
             .btn-group { max-width: 800px; flex-direction: row; flex-wrap: wrap; justify-content: center; }
             .btn-primary { flex: 0 0 auto; }
             .btn-secondary, .btn-ghost { flex: 0 0 auto; padding: 10px 28px; }
@@ -1689,6 +1709,13 @@
 
             .meta-row { max-width: 560px; }
             .diagnosis { max-width: 440px; }
+
+            .upgrade-cards { max-width: 900px; gap: 18px; }
+            .upgrade-card { padding: 22px 24px; border-radius: 16px; }
+            .upgrade-card-icon { width: 42px; height: 42px; font-size: 20px; }
+            .upgrade-card-title { font-size: 16px; }
+            .upgrade-card-price { font-size: 16px; }
+            .upgrade-card-desc { font-size: 12px; }
 
             .btn-group { max-width: 900px; }
             .btn-primary { min-height: 48px; padding: 13px 52px; font-size: 15px; }
