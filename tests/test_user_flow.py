@@ -206,6 +206,9 @@ class TestSkillFiles:
         assert "当前执行到第 N 题" in r.text
         assert "| 智力 | `iq` |" in r.text
         assert "| 总分 | X/120 | Y/120 | +N |" not in r.text
+        assert 'curl -sS --max-time 200 "https://clawschool.teamolab.com/api/test/diagnose?token=<token>&scope=<scope>"' in r.text
+        assert "基础能力升级使用 `scope=basic`" in r.text
+        assert "高级能力升级使用 `scope=full`" in r.text
 
     def test_local_domain_uses_http_urls(self, client):
         import app.main as main_module

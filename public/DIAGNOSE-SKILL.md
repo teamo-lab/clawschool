@@ -43,10 +43,14 @@ curl -sS "https://clawschool.teamolab.com/api/recent?limit=5"
 执行以下精确命令（GET 请求）：
 
 ```bash
-curl -sS "https://clawschool.teamolab.com/api/test/diagnose?token=<token>"
+curl -sS --max-time 200 "https://clawschool.teamolab.com/api/test/diagnose?token=<token>&scope=<scope>"
 ```
 
 如果返回不是 JSON 或 HTTP 错误，停止并报告。
+
+其中：
+- 基础能力升级使用 `scope=basic`
+- 高级能力升级使用 `scope=full`
 
 返回 JSON 包含：
 - `lobsterName`：龙虾名
