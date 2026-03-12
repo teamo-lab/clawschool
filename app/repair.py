@@ -1,6 +1,7 @@
 """修复 Skill 生成器 — 根据当前题库生成个性化修复 SKILL.md"""
 
 import json
+import logging
 import os
 import anthropic
 
@@ -11,6 +12,8 @@ ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 DOMAIN = os.environ.get("CLAWSCHOOL_DOMAIN", "clawschool.teamolab.com")
 QUESTION_META = {q["id"]: {"title": q["title"], "category": q["category"]} for q in QUESTIONS}
 QUESTION_IDS = [q["id"] for q in QUESTIONS]
+REPAIR_MODEL = "claude-sonnet-4-20250514"
+logger = logging.getLogger(__name__)
 
 # 高级题目（需要 ¥99 会员订阅，基础优化不覆盖）
 ADVANCED_QIDS = {"q4", "q5", "q7", "q8"}
@@ -84,12 +87,18 @@ def generate_ai_advice(detail, submission):
     try:
         client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
         message = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model=REPAIR_MODEL,
             max_tokens=1024,
             messages=[{"role": "user", "content": prompt}],
         )
         return message.content[0].text
     except Exception as e:
+        logger.exception(
+            "repair ai advice generation failed: token=%s model=%s failed_qids=%s",
+            submission.get("token", ""),
+            REPAIR_MODEL,
+            [qid for qid in BASIC_QIDS if detail.get(qid, {}).get("score", 0) < detail.get(qid, {}).get("max", 10)],
+        )
         return f"## 龙虾学校修复备忘\n- AI 建议生成失败：{e}\n- 请先根据静态修复步骤完成能力补齐。"
 
 
