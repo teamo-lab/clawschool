@@ -1128,6 +1128,92 @@
 
         .footer-space { height: calc(80px + env(safe-area-inset-bottom)); }
 
+        /* ===== Leaderboard (Result Page) ===== */
+        .result-leaderboard {
+            width: 100%;
+            margin-top: 32px;
+            animation: slideUp 1s var(--ease-fluid) 0.8s both;
+        }
+        .result-leaderboard .lb-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 12px; padding: 0 4px;
+        }
+        .result-leaderboard .lb-title {
+            font-family: var(--font-display); font-size: 16px; font-weight: 700;
+            color: var(--text-h1); display: flex; align-items: center; gap: 8px;
+        }
+        .result-leaderboard .lb-title svg { width: 16px; height: 16px; color: var(--brand-orange); }
+        .result-leaderboard .lb-live {
+            font-size: 11px; font-weight: 600; color: var(--brand-orange);
+            background: rgba(255, 150, 22, 0.1); border: 1px solid rgba(255, 150, 22, 0.15);
+            padding: 3px 8px; border-radius: 8px; letter-spacing: 0.5px;
+        }
+        .result-leaderboard .lb-table {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            overflow: hidden;
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        }
+        .result-leaderboard .lb-table-scroll {
+            max-height: 400px; overflow-y: auto;
+            scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;
+        }
+        .result-leaderboard .lb-table-scroll::-webkit-scrollbar { width: 4px; }
+        .result-leaderboard .lb-table-scroll::-webkit-scrollbar-track { background: transparent; }
+        .result-leaderboard .lb-table-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+        .result-leaderboard .lb-thead {
+            display: grid; grid-template-columns: 48px 1fr 64px;
+            padding: 12px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .result-leaderboard .lb-th {
+            font-size: 10px; font-weight: 600; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.8px;
+        }
+        .result-leaderboard .lb-th:last-child { text-align: right; }
+        .result-leaderboard .lb-row {
+            display: grid; grid-template-columns: 48px 1fr 64px;
+            padding: 12px 16px; align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            transition: background 0.2s;
+        }
+        .result-leaderboard .lb-row:last-child { border-bottom: none; }
+        .result-leaderboard .lb-row-self {
+            background: rgba(255, 150, 22, 0.08);
+            border-left: 3px solid var(--brand-orange);
+        }
+        .result-leaderboard .lb-rank {
+            font-family: var(--font-display); font-size: 13px; font-weight: 700;
+            color: var(--text-muted); display: flex; align-items: center;
+            justify-content: center; width: 26px; height: 26px; border-radius: 8px;
+        }
+        .result-leaderboard .rank-gold { background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3); }
+        .result-leaderboard .rank-silver { background: linear-gradient(135deg, #C0C0C0, #8A8A8A); color: #000; }
+        .result-leaderboard .rank-bronze { background: linear-gradient(135deg, #CD7F32, #A0522D); color: #000; }
+        .result-leaderboard .rank-normal { background: rgba(255, 255, 255, 0.05); }
+        .result-leaderboard .lb-name {
+            display: flex; align-items: center; gap: 8px;
+        }
+        .result-leaderboard .lb-avatar {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.06); display: flex;
+            align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;
+        }
+        .result-leaderboard .lb-avatar img { width: 140%; height: 140%; object-fit: contain; }
+        .result-leaderboard .lb-name-text {
+            font-size: 13px; font-weight: 600; color: var(--text-h1);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .result-leaderboard .lb-score {
+            text-align: right; font-family: var(--font-display);
+            font-size: 14px; font-weight: 800; color: var(--text-h1);
+        }
+        .result-leaderboard .lb-score-highlight { color: var(--brand-orange); }
+        .result-leaderboard .lb-empty {
+            text-align: center; color: var(--text-muted); font-size: 13px; padding: 24px 16px;
+        }
+
         .sticky-bottom {
             position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
             width: 100%; max-width: 480px;
@@ -1611,6 +1697,9 @@
             .section-title { font-size: 15px; }
             .section-count { font-size: 12px; padding: 3px 8px; }
 
+            .result-leaderboard { max-width: 720px; margin: 32px auto 0; }
+            .result-leaderboard .lb-table-scroll { max-height: 480px; }
+
             /* Scan cards — desktop double column */
             .scan-list {
                 display: grid;
@@ -1963,6 +2052,33 @@
                         </div>
                         {% endfor %}
                         {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leaderboard -->
+            <div class="result-leaderboard" id="resultLeaderboard" style="display:none">
+                <div class="lb-header">
+                    <div class="lb-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7 7 7 7"/>
+                            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C17 4 17 7 17 7"/>
+                            <path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+                            <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+                            <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+                        </svg>
+                        龙虾排位榜
+                    </div>
+                    <div class="lb-live">LIVE</div>
+                </div>
+                <div class="lb-table">
+                    <div class="lb-thead">
+                        <span class="lb-th">排名</span>
+                        <span class="lb-th">龙虾名称</span>
+                        <span class="lb-th">智力值</span>
+                    </div>
+                    <div class="lb-table-scroll" id="lbScroll">
+                        <div id="resultLbBody"><div class="lb-empty">加载中...</div></div>
                     </div>
                 </div>
             </div>
@@ -2548,6 +2664,59 @@
                 if (cur >= target) clearInterval(timer);
             }, 35);
         }, 400);
+
+        // Load leaderboard
+        loadResultLeaderboard();
+    }
+
+    // ===== Leaderboard =====
+    var BADGE_MAP = [
+      { min: 230, src: '/static/badges/最强.png', alt: '最强' },
+      { min: 170, src: '/static/badges/高级.png', alt: '高级' },
+      { min: 120, src: '/static/badges/银.png',   alt: '银' },
+      { min: 70,  src: '/static/badges/铜.png',   alt: '铜' },
+      { min: 0,   src: '/static/badges/黑铁.png', alt: '黑铁' },
+    ];
+    function badgeImg(iq) {
+      for (var i = 0; i < BADGE_MAP.length; i++) {
+        if (iq >= BADGE_MAP[i].min) return '<img src="' + BADGE_MAP[i].src + '" alt="' + BADGE_MAP[i].alt + '">';
+      }
+      return '<img src="/static/badges/黑铁.png" alt="黑铁">';
+    }
+    function escHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    function loadResultLeaderboard() {
+      var myName = (document.getElementById('lobsterName') || {}).textContent || '';
+      fetch('/api/leaderboard?limit=100').then(function(r) { return r.json(); }).then(function(d) {
+        var wrap = document.getElementById('resultLeaderboard');
+        var body = document.getElementById('resultLbBody');
+        if (!d.entries || !d.entries.length) { body.innerHTML = '<div class="lb-empty">暂无数据</div>'; wrap.style.display = ''; return; }
+        var selfIdx = -1;
+        body.innerHTML = d.entries.map(function(e, i) {
+          var rc = i === 0 ? 'rank-gold' : i === 1 ? 'rank-silver' : i === 2 ? 'rank-bronze' : 'rank-normal';
+          var isSelf = myName && e.name === myName;
+          if (isSelf) selfIdx = i;
+          var cls = 'lb-row' + (isSelf ? ' lb-row-self' : '');
+          var sc = i === 0 ? 'lb-score lb-score-highlight' : 'lb-score';
+          return '<div class="' + cls + '" data-rank="' + (i+1) + '">' +
+            '<div class="lb-rank ' + rc + '">' + (i+1) + '</div>' +
+            '<div class="lb-name"><div class="lb-avatar">' + badgeImg(e.iq) + '</div><span class="lb-name-text">' + escHtml(e.name) + '</span></div>' +
+            '<div class="' + sc + '">' + e.iq + '</div></div>';
+        }).join('');
+        wrap.style.display = '';
+        if (selfIdx >= 0) {
+          requestAnimationFrame(function() {
+            var selfRow = body.querySelector('.lb-row-self');
+            var scrollEl = document.getElementById('lbScroll');
+            if (selfRow && scrollEl) {
+              scrollEl.scrollTop = selfRow.offsetTop - scrollEl.offsetHeight / 2 + selfRow.offsetHeight / 2;
+            }
+          });
+        }
+      }).catch(function() {
+        document.getElementById('resultLbBody').innerHTML = '<div class="lb-empty">加载失败</div>';
+        document.getElementById('resultLeaderboard').style.display = '';
+      });
     }
 
     function renderScanList(detail) {
@@ -3001,6 +3170,9 @@
                 if (cur >= target) clearInterval(timer);
             }, 35);
         }, 400);
+
+        // Load leaderboard
+        loadResultLeaderboard();
 
         // 支付宝 return 带 ?paid=basic 时，自动弹出 Step 2（复制命令）
         var urlParams = new URLSearchParams(window.location.search);
