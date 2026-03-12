@@ -214,38 +214,6 @@ class TestClaudeCodeAPICall:
             assert adv not in qids
 
 
-class TestPremiumRepairSkill:
-    """高级 repair-skill 统一入口。"""
-
-    def test_premium_repair_skill_includes_qveris_and_generated_skills(self, client):
-        d = submit_test(client)
-        mock_skills = {"skills": [
-            {
-                "name": "proactive-helper",
-                "url": "https://raw.githubusercontent.com/teamo-lab/clawschool/main/generated-skills/test/proactive-helper.md",
-                "description": "提升主动执行能力",
-            },
-        ]}
-        mock_resp = MagicMock()
-        mock_resp.read.return_value = json.dumps(mock_skills).encode()
-        mock_resp.__enter__ = lambda s: s
-        mock_resp.__exit__ = MagicMock(return_value=False)
-
-        with patch("urllib.request.urlopen", return_value=mock_resp):
-            r = client.get(f"/api/repair-skill/{d['token']}?plan=premium")
-
-        assert r.status_code == 200
-        assert "QVERIS_API_KEY" in r.text
-        assert "qveris-discover" in r.text
-        assert "proactive-helper" in r.text
-        assert "generated-skills/test/proactive-helper.md" in r.text
-
-    def test_premium_repair_skill_rejects_invalid_plan(self, client):
-        d = submit_test(client)
-        r = client.get(f"/api/repair-skill/{d['token']}?plan=nope")
-        assert r.status_code == 400
-
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 集成测试 — 命中 HK 真实服务器 + US Claude Code API
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

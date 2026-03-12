@@ -164,12 +164,13 @@ class TestMePage:
         assert "生效中" in r.text
         assert 'var PAYMENT_STATUS = "paid";' in r.text
 
-    def test_premium_command_uses_repair_skill_premium_plan(self, client):
+    def test_premium_command_uses_diagnose_skill_full_scope(self, client):
         d = submit_test(client)
         r = client.get(f"/me/{d['token']}")
-        assert f"/api/repair-skill/{d['token']}?plan=premium" in r.text
+        assert "skills/diagnose.md" in r.text
+        assert "scope 是 full" in r.text
         assert d["token"] in r.text
-        assert "skills/diagnose.md" not in r.text
+        assert "repair-skill" not in r.text
 
 
 class TestRedirects:
@@ -397,12 +398,21 @@ class TestMePageIntegration:
         r = http.get(f"/me/{d['token']}")
         assert str(d["iq"]) in r.text
 
-    def test_premium_command_uses_repair_skill_premium_plan(self, http):
+    def test_premium_command_uses_diagnose_skill_full_scope(self, http):
         d = integration_submit(http)
         r = http.get(f"/me/{d['token']}")
-        assert f"/api/repair-skill/{d['token']}?plan=premium" in r.text
+        assert "skills/diagnose.md" in r.text
+        assert "scope 是 full" in r.text
         assert d["token"] in r.text
-        assert "skills/diagnose.md" not in r.text
+        assert "repair-skill" not in r.text
+
+    def test_premium_command_uses_diagnose_skill_full_scope(self, http):
+        d = integration_submit(http)
+        r = http.get(f"/me/{d['token']}")
+        assert "skills/diagnose.md" in r.text
+        assert "scope 是 full" in r.text
+        assert d["token"] in r.text
+        assert "repair-skill" not in r.text
 
 
 @pytest.mark.integration
