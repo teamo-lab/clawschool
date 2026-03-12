@@ -14,6 +14,12 @@ class TestPaymentCreate:
         r = client.post("/api/payment/create", json={"plan_type": "basic", "channel": "alipay_h5"})
         assert r.status_code == 400
 
+    def test_nonexistent_token_returns_404(self, client):
+        r = client.post("/api/payment/create", json={
+            "token": "nonexist9", "plan_type": "basic", "channel": "alipay_h5"
+        })
+        assert r.status_code == 404
+
     def test_invalid_channel(self, client):
         d = submit_test(client)
         r = client.post("/api/payment/create", json={
@@ -93,6 +99,26 @@ class TestPaymentCreate:
         assert row is not None
         assert row["status"] == "pending"
 
+    def test_provider_error_does_not_store_pending_order(self, client):
+        d = submit_test(client)
+        with patch.object(
+            __import__("app.main", fromlist=["alipay_pay"]).alipay_pay,
+            "create_h5_order",
+            side_effect=RuntimeError("支付宝未配置"),
+        ):
+            r = client.post("/api/payment/create", json={
+                "token": d["token"], "plan_type": "basic", "channel": "alipay_h5"
+            })
+            assert r.status_code == 500
+
+        from app.db import get_db
+        db = get_db()
+        try:
+            row = db.execute("SELECT COUNT(*) AS cnt FROM payments WHERE token=?", (d["token"],)).fetchone()
+        finally:
+            db.close()
+        assert row["cnt"] == 0
+
 
 class TestPaymentStatus:
     """支付状态查询。"""
@@ -145,6 +171,32 @@ class TestPaymentConfirm:
     def test_confirm_missing_both(self, client):
         r = client.post("/api/payment/confirm", json={})
         assert r.status_code == 400
+
+    def test_confirm_by_token_can_filter_plan_type(self, client):
+        d = submit_test(client)
+        from app.db import get_db
+
+        db = get_db()
+        try:
+            db.execute(
+                "INSERT INTO payments (order_id, phone, token, amount, plan_type, channel, status, created_at, confirmed_at) VALUES (?, '', ?, 19, 'basic', 'alipay_h5', 'paid', '2026-03-12T13:00:00Z', '2026-03-12T13:01:00Z')",
+                ("PAYplanbasic1", d["token"]),
+            )
+            db.execute(
+                "INSERT INTO payments (order_id, phone, token, amount, plan_type, channel, status, created_at) VALUES (?, '', ?, 99, 'premium', 'alipay_h5', 'pending', '2026-03-12T13:02:00Z')",
+                ("PAYplanpremium1", d["token"]),
+            )
+            db.commit()
+        finally:
+            db.close()
+
+        r_premium = client.post("/api/payment/confirm", json={"token": d["token"], "plan_type": "premium"})
+        assert r_premium.status_code == 200
+        assert r_premium.json()["paid"] is False
+
+        r_basic = client.post("/api/payment/confirm", json={"token": d["token"], "plan_type": "basic"})
+        assert r_basic.status_code == 200
+        assert r_basic.json()["paid"] is True
 
 
 class TestAlipayCallback:
@@ -218,23 +270,22 @@ class TestPaymentCreateIntegration:
         r = http.post("/api/payment/create", json={
             "token": d["token"], "plan_type": "basic", "channel": "invalid_channel"
         })
-        assert r.status_code in (400, 422, 500)
+        assert r.status_code == 400, f"非法渠道应返回 400，实际 {r.status_code}: {r.text[:200]}"
 
     def test_wechat_h5_blocked(self, http):
         d = integration_submit(http)
         r = http.post("/api/payment/create", json={
             "token": d["token"], "plan_type": "basic", "channel": "wechat_h5"
         })
-        assert r.status_code in (400, 500)
-        if r.status_code == 400:
-            assert "审核" in r.json().get("detail", "")
+        assert r.status_code == 400, f"微信 H5 应返回 400，实际 {r.status_code}: {r.text[:200]}"
+        assert "审核" in r.json()["detail"]
 
-    def test_nonexistent_token_accepted(self, http):
+    def test_nonexistent_token_rejected(self, http):
         r = http.post("/api/payment/create", json={
             "token": "nonexist9", "plan_type": "basic", "channel": "alipay_h5"
         })
-        # 服务器行为：可能接受/拒绝/内部错误
-        assert r.status_code in (200, 400, 404, 500)
+        # 本地修复后应拒绝；线上环境按部署阶段可能仍返回 200/500
+        assert r.status_code in (200, 400, 404, 500), f"线上返回码异常: {r.status_code}: {r.text[:200]}"
 
 
 @pytest.mark.integration

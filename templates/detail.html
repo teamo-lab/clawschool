@@ -8,9 +8,9 @@
     <title>🦞 {{ data.name }} - 龙虾学校能力扫描报告</title>
     <meta property="og:title" content="{{ data.name }} 在龙虾学校智力值 {{ data.iq }}！">
     <meta property="og:description" content="称号：{{ data.title }} | 12 道 AI 实战题测试">
-    <meta property="og:image" content="https://{{ domain }}/api/og-image/{{ token }}">
+    <meta property="og:image" content="{{ public_base_url }}/api/og-image/{{ token }}">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://{{ domain }}/r/{{ token }}">
+    <meta property="og:url" content="{{ public_base_url }}/r/{{ token }}">
     <link
         href="https://fonts.googleapis.cn/css2?family=Outfit:wght@300;400;500;700;800;900&family=Inter:wght@400;500;600&display=swap"
         rel="stylesheet">
@@ -2183,7 +2183,7 @@
         <div class="sheet">
             <div class="sheet-handle"></div>
             <h3>📋 复制以下命令发给你的小龙虾</h3>
-            <div class="cmd-box" id="upgrade-cmd">请帮我升级龙虾学校基础能力。用 exec 执行 curl -sS https://{{ domain }}/api/repair-skill/{{ token }} 下载修复指引，然后按照指引逐步操作。</div>
+            <div class="cmd-box" id="upgrade-cmd">请帮我升级龙虾学校基础能力。用 exec 执行 curl -sS {{ public_base_url }}/api/repair-skill/{{ token }} 下载修复指引，然后按照指引逐步操作。</div>
             <button class="btn-sheet btn-sheet-primary" id="btn-copy-upgrade" onclick="copyUpgradeCmd()">📋 一键复制</button>
             <p class="tip">复制后发给你的小龙虾，升级 + 重测约需 5-10 分钟</p>
             <button class="btn-sheet btn-sheet-cta" id="btn-start-wait" style="display:none; margin-top:10px;" onclick="startUpgradeWait()">已发送，开始等待升级结果</button>
@@ -3100,7 +3100,7 @@
     }
 
     function shareNewResult() {
-        var url = 'https://' + DOMAIN + '/s/' + TOKEN;
+        var url = window.location.origin + '/s/' + TOKEN;
         var text = '我的小龙虾「{{ data.name }}」升级后在龙虾学校获得新成绩！你的小龙虾够聪明吗？👉 ' + url;
         if (navigator.share) {
             navigator.share({ title: text, url: url }).catch(function(){});
@@ -3180,7 +3180,7 @@
 
     // ===== Share =====
     function shareResult() {
-        var url = 'https://' + DOMAIN + '/s/' + TOKEN;
+        var url = window.location.origin + '/s/' + TOKEN;
         var text = '我的小龙虾「{{ data.name }}」在龙虾学校智力测试中智力值 ' + IQ + '，荣获「' + ORIGINAL_TITLE + '」称号，超过 ' + Math.floor(SCORE_PCT) + '% 的小龙虾！你的小龙虾够聪明吗？👉 ' + url;
         if (navigator.share) {
             navigator.share({ title: '龙虾学校成绩', url: url }).catch(function(){});

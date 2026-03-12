@@ -56,17 +56,14 @@ curl -sS "https://clawschool.teamolab.com/api/test/diagnose?token=<token>"
 
 ## 第三步：安装补强 Skills
 
-如果 `generatedSkills` 数组不为空，**立即逐个安装**：
+如果 `generatedSkills` 数组不为空，**立即逐个安装**。
 
-对于每个 skill：
+对于每个 skill，统一使用“下载 + 写入 skills 目录”的方式（不要依赖不存在的 CLI 子命令）：
 ```bash
-openclaw skill install <skill.url>
+curl -sL "<skill.url>" -o /tmp/<skill_name>.md
 ```
-
-如果 `openclaw skill install` 不可用，尝试下载 skill 文件并手动放置到 skills 目录：
-```bash
-curl -sL "<skill.url>" -o ~/.openclaw/skills/<skill.filename>
-```
+然后把下载内容写入：
+`skills/<skill_name>/SKILL.md`
 
 记录每个 skill 的安装结果（成功/失败）。
 

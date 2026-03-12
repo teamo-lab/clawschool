@@ -24,6 +24,7 @@
 | 基础 | basic | 8 | q4, q5, q7, q8 |
 | 基础包含所有 BASIC_QIDS | basic | 8 | ADVANCED_QIDS |
 | 全量包含所有题 | full | 12 | 无 |
+| 非法 scope | nope | 400 | - |
 
 ### 诊断响应结构
 - 必含字段：token, lobsterName, model, score, iq, title, rank, scope, questionDetails

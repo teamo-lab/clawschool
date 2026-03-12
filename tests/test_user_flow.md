@@ -29,7 +29,7 @@ SSR 页面渲染 + 重定向 + OG 标签 + CDN 合规 + Skill 文件下载 + 统
 - OG URLs 全部 https（无 http://）
 - 无 GFW 阻断 CDN（fonts.googleapis.com, unpkg.com）
 - 包含 IQ 值
-- 升级命令使用 diagnose skill（非 repair-skill）
+- 升级命令使用 repair-skill（非 diagnose skill）
 - 模板变量 advanced_qids/basic_qids 正确传入
 
 ### 分享页
@@ -41,6 +41,7 @@ SSR 页面渲染 + 重定向 + OG 标签 + CDN 合规 + Skill 文件下载 + 统
 - 正常渲染 + 不存在 token 404
 - 无 GFW 阻断 CDN
 - 包含 IQ 值
+- premium 订单为 paid 时显示「生效中」，并注入 `PAYMENT_STATUS="paid"`
 
 ### 重定向
 - /r/{token} → 302 /wait/{token}
@@ -49,6 +50,7 @@ SSR 页面渲染 + 重定向 + OG 标签 + CDN 合规 + Skill 文件下载 + 统
 ### Skill 文件
 - GET /skill.md → 200 + 包含「龙虾学校」
 - GET /skills/diagnose.md → 200 + 包含诊断关键词
+- 本地域名 `127.0.0.1:3210` 时，`/api/token`、`/skill.md`、`/wait/{token}` 对外链接使用 `http://`
 
 ### 计数器 + 统计
 - /api/active-count 返回 active + total_done
@@ -74,7 +76,7 @@ SSR 页面渲染 + 重定向 + OG 标签 + CDN 合规 + Skill 文件下载 + 统
 | OG URLs https | 无 http:// |
 | CDN 合规 | 无 fonts.googleapis.com / unpkg.com |
 | IQ 显示 | 包含 IQ 值 |
-| 升级命令 | skills/diagnose.md + scope + basic |
+| 升级命令 | /api/repair-skill/{token} |
 
 ### 分享页
 | 用例 | 预期 |

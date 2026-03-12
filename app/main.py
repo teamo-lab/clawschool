@@ -49,6 +49,27 @@ def _gen_token(length: int = 8) -> str:
 def _now_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
+def _public_base_url() -> str:
+    """对外公开 URL 前缀：线上默认 https，本地开发域名默认 http。"""
+    raw_domain = (DOMAIN or "").strip().rstrip("/")
+    if not raw_domain:
+        return ""
+    if raw_domain.startswith("http://") or raw_domain.startswith("https://"):
+        return raw_domain
+
+    host = raw_domain.split(":", 1)[0].lower()
+    scheme = "http" if host in {"127.0.0.1", "localhost", "0.0.0.0"} else "https"
+    return f"{scheme}://{raw_domain}"
+
+def _render_public_skill(path: Path) -> str:
+    content = path.read_text(encoding="utf-8")
+    base_url = _public_base_url()
+    # 兼容历史模板中的硬编码域名，也支持后续引入占位符。
+    content = content.replace("https://clawschool.teamolab.com", base_url)
+    content = content.replace("http://clawschool.teamolab.com", base_url)
+    content = content.replace("{{BASE_URL}}", base_url)
+    return content
+
 def _get_rank(score: int, token: str):
     """获取指定 token 在排行榜中的排名"""
     db = get_db()
@@ -86,7 +107,7 @@ async def create_token(request: Request):
         db.close()
 
     from urllib.parse import quote
-    skill_url = f"https://{DOMAIN}/skill.md?token={token}&name={quote(name)}"
+    skill_url = f"{_public_base_url()}/skill.md?token={token}&name={quote(name)}"
     return {"token": token, "name": name, "skill_url": skill_url, "created_at": now}
 
 
@@ -94,7 +115,7 @@ async def create_token(request: Request):
 async def get_skill(token: str = "", name: str = ""):
     if not SKILL_TEMPLATE.exists():
         raise HTTPException(404, "SKILL.md 未配置")
-    content = SKILL_TEMPLATE.read_text(encoding="utf-8")
+    content = _render_public_skill(SKILL_TEMPLATE)
     return PlainTextResponse(content, media_type="text/markdown; charset=utf-8")
 
 
@@ -102,7 +123,7 @@ async def get_skill(token: str = "", name: str = ""):
 async def get_diagnose_skill():
     if not DIAGNOSE_SKILL_TEMPLATE.exists():
         raise HTTPException(404, "DIAGNOSE-SKILL.md 未配置")
-    content = DIAGNOSE_SKILL_TEMPLATE.read_text(encoding="utf-8")
+    content = _render_public_skill(DIAGNOSE_SKILL_TEMPLATE)
     return PlainTextResponse(content, media_type="text/markdown; charset=utf-8")
 
 
@@ -122,7 +143,7 @@ async def test_start(token: str = ""):
     return {
         "questionCount": len(questions_out),
         "questions": questions_out,
-        "submitUrl": f"https://{DOMAIN}/api/test/submit",
+        "submitUrl": f"{_public_base_url()}/api/test/submit",
     }
 
 
@@ -220,9 +241,9 @@ async def test_submit(request: Request):
         "title": title,
         "rank": rank,
         "detail": result["detail"],
-        "report_url": f"https://{DOMAIN}/r/{token}",
+        "report_url": f"{_public_base_url()}/r/{token}",
         "diagnoseUrl": f"/api/test/diagnose?token={token}",
-        "repairSkillUrl": f"https://{DOMAIN}/api/repair-skill/{token}",
+        "repairSkillUrl": f"{_public_base_url()}/api/repair-skill/{token}",
     }
 
 
@@ -281,6 +302,9 @@ async def test_diagnose(token: str, scope: str = "full"):
 
     detail = json.loads(row["detail"]) if row["detail"] else {}
     submission = json.loads(row["submission"]) if row["submission"] else {}
+
+    if scope not in {"basic", "full"}:
+        raise HTTPException(400, "scope 仅支持 basic 或 full")
 
     # 根据 scope 筛选题目范围
     if scope == "basic":
@@ -649,6 +673,8 @@ async def payment_create(request: Request):
 
     if not token:
         raise HTTPException(400, "缺少 token")
+    if plan_type not in {"basic", "premium"}:
+        raise HTTPException(400, "plan_type 仅支持 basic 或 premium")
     if channel not in VALID_CHANNELS:
         raise HTTPException(400, f"不支持的支付渠道，可选: {', '.join(sorted(VALID_CHANNELS))}")
 
@@ -656,23 +682,20 @@ async def payment_create(request: Request):
     if channel == "wechat_h5":
         raise HTTPException(400, "微信 H5 支付域名审核中，请使用支付宝 H5 或微信扫码支付")
 
+    # token 必须存在，避免脏订单写入
+    db = get_db()
+    try:
+        token_row = db.execute("SELECT 1 FROM tests WHERE token=?", (token,)).fetchone()
+    finally:
+        db.close()
+    if not token_row:
+        raise HTTPException(404, "token 不存在，请先创建测试记录")
+
     # TODO: 测试期间使用小额，正式上线改回 1990 / 9900
     amount = 19 if plan_type == "basic" else 99
     description = "龙虾学校 - 基础能力升级" if plan_type == "basic" else "龙虾学校 - 高级能力订阅"
     order_id = "PAY" + _gen_token(12)
     now = _now_iso()
-
-    # 写入数据库
-    db = get_db()
-    try:
-        db.execute(
-            """INSERT INTO payments (order_id, phone, token, amount, plan_type, channel, status, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)""",
-            (order_id, phone, token, amount, plan_type, channel, now),
-        )
-        db.commit()
-    finally:
-        db.close()
 
     # 调用支付渠道
     try:
@@ -683,13 +706,25 @@ async def payment_create(request: Request):
             payment_info = wechat_pay.create_h5_order(order_id, amount, description, client_ip)
         elif channel == "alipay_pc":
             # 构造带 token 和 paid 参数的 return_url
-            alipay_return_url = f"https://{DOMAIN}/me/{token}?paid=premium" if plan_type == "premium" else f"https://{DOMAIN}/wait/{token}?paid=basic"
+            alipay_return_url = f"{_public_base_url()}/me/{token}?paid=premium" if plan_type == "premium" else f"{_public_base_url()}/wait/{token}?paid=basic"
             payment_info = alipay_pay.create_pc_order(order_id, amount, description, alipay_return_url)
         elif channel == "alipay_h5":
-            alipay_return_url = f"https://{DOMAIN}/me/{token}?paid=premium" if plan_type == "premium" else f"https://{DOMAIN}/wait/{token}?paid=basic"
+            alipay_return_url = f"{_public_base_url()}/me/{token}?paid=premium" if plan_type == "premium" else f"{_public_base_url()}/wait/{token}?paid=basic"
             payment_info = alipay_pay.create_h5_order(order_id, amount, description, alipay_return_url)
     except RuntimeError as e:
         raise HTTPException(500, str(e))
+
+    # 支付渠道返回成功后再写库，避免失败时留下 pending 脏数据
+    db = get_db()
+    try:
+        db.execute(
+            """INSERT INTO payments (order_id, phone, token, amount, plan_type, channel, status, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)""",
+            (order_id, phone, token, amount, plan_type, channel, now),
+        )
+        db.commit()
+    finally:
+        db.close()
 
     return {
         "success": True,
@@ -812,9 +847,12 @@ async def payment_confirm(request: Request):
     body = await request.json()
     order_id = (body.get("order_id") or "").strip()
     token = (body.get("token") or "").strip()
+    plan_type = (body.get("plan_type") or "").strip()
 
     if not order_id and not token:
         raise HTTPException(400, "缺少订单号或 token")
+    if plan_type and plan_type not in {"basic", "premium"}:
+        raise HTTPException(400, "plan_type 仅支持 basic 或 premium")
 
     # 查询是否已真实支付
     db = get_db()
@@ -822,10 +860,16 @@ async def payment_confirm(request: Request):
         if order_id:
             row = db.execute("SELECT status FROM payments WHERE order_id=?", (order_id,)).fetchone()
         else:
-            row = db.execute(
-                "SELECT status FROM payments WHERE token=? ORDER BY created_at DESC LIMIT 1",
-                (token,),
-            ).fetchone()
+            if plan_type:
+                row = db.execute(
+                    "SELECT status FROM payments WHERE token=? AND plan_type=? ORDER BY datetime(created_at) DESC LIMIT 1",
+                    (token, plan_type),
+                ).fetchone()
+            else:
+                row = db.execute(
+                    "SELECT status FROM payments WHERE token=? ORDER BY datetime(created_at) DESC LIMIT 1",
+                    (token,),
+                ).fetchone()
     finally:
         db.close()
 
@@ -837,7 +881,11 @@ async def payment_confirm(request: Request):
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "domain": DOMAIN})
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "domain": DOMAIN,
+        "public_base_url": _public_base_url(),
+    })
 
 
 @app.get("/r/{token}")
@@ -863,7 +911,11 @@ async def share_page(request: Request, token: str):
     data["iq"] = raw_to_iq(data["score"]) if data["status"] == "done" else 0
 
     return templates.TemplateResponse("share.html", {
-        "request": request, "domain": DOMAIN, "data": data, "token": token,
+        "request": request,
+        "domain": DOMAIN,
+        "public_base_url": _public_base_url(),
+        "data": data,
+        "token": token,
     })
 
 
@@ -885,7 +937,11 @@ async def wait_page(request: Request, token: str):
     data["iq"] = raw_to_iq(data["score"]) if data["status"] == "done" else 0
 
     return templates.TemplateResponse("detail.html", {
-        "request": request, "domain": DOMAIN, "data": data, "token": token,
+        "request": request,
+        "domain": DOMAIN,
+        "public_base_url": _public_base_url(),
+        "data": data,
+        "token": token,
         "advanced_qids": ADVANCED_QIDS, "basic_qids": BASIC_QIDS, "raw_to_iq": raw_to_iq,
     })
 
@@ -910,7 +966,7 @@ async def me_page(request: Request, token: str):
     db = get_db()
     try:
         payment = db.execute(
-            "SELECT status, confirmed_at FROM payments WHERE token=? ORDER BY created_at DESC LIMIT 1",
+            "SELECT status, confirmed_at FROM payments WHERE token=? AND plan_type='premium' ORDER BY datetime(created_at) DESC LIMIT 1",
             (token,)
         ).fetchone()
         total_done = db.execute(
@@ -931,7 +987,11 @@ async def me_page(request: Request, token: str):
             expire_date = ""
 
     return templates.TemplateResponse("me.html", {
-        "request": request, "domain": DOMAIN, "data": data, "token": token,
+        "request": request,
+        "domain": DOMAIN,
+        "public_base_url": _public_base_url(),
+        "data": data,
+        "token": token,
         "payment_status": payment_status, "total_done": total_done,
         "advanced_qids": ADVANCED_QIDS, "basic_qids": BASIC_QIDS,
         "expire_date": expire_date,

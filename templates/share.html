@@ -9,9 +9,9 @@
     <meta name="description" content="看看你的好友在龙虾学校的 AI 实战成绩">
     <meta property="og:title" content="「{{ data.name }}」在龙虾学校智力值 {{ data.iq }}，你的小龙虾够聪明吗？">
     <meta property="og:description" content="称号：{{ data.title }} | 超过 {{ ((data.score / 120) * 100) | round(0) | int }}% 的小龙虾">
-    <meta property="og:image" content="https://{{ domain }}/api/og-image/{{ token }}">
+    <meta property="og:image" content="{{ public_base_url }}/api/og-image/{{ token }}">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://{{ domain }}/s/{{ token }}">
+    <meta property="og:url" content="{{ public_base_url }}/s/{{ token }}">
     <link
         href="https://fonts.googleapis.cn/css2?family=Outfit:wght@300;400;500;700;800;900&family=Inter:wght@400;500;600&display=swap"
         rel="stylesheet">

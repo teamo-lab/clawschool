@@ -58,6 +58,11 @@ class TestDiagnoseScope:
         assert data["scope"] == "full"
         assert len(data["questionDetails"]) == 12
 
+    def test_invalid_scope_returns_400(self, client):
+        d = submit_test(client)
+        r = client.get(f"/api/test/diagnose?token={d['token']}&scope=nope")
+        assert r.status_code == 400
+
 
 class TestDiagnoseResponse:
     """诊断响应结构验证。"""
@@ -291,13 +296,15 @@ class TestClaudeCodeAPIIntegration:
 
     @pytest.mark.timeout(180)
     def test_diagnose_generates_skills(self, http):
+        """正常路径：诊断必须返回至少 1 个 skill（US API 必须可用）。"""
         d = integration_submit(http)
         r = http.get(f"/api/test/diagnose?token={d['token']}&scope=basic", timeout=180)
         assert r.status_code == 200
         data = r.json()
-        # generatedSkills 可能为空（US API 降级）或有数据
         assert "generatedSkills" in data
-        if data["generatedSkills"]:
-            skill = data["generatedSkills"][0]
-            assert "name" in skill
-            assert "url" in skill
+        # 业务预期：诊断必须生成 skills，空数组意味着 US API 挂了
+        assert len(data["generatedSkills"]) > 0, "generatedSkills 为空 — US Claude Code API 可能不可用"
+        skill = data["generatedSkills"][0]
+        assert "name" in skill
+        assert "url" in skill
+        assert skill["url"].startswith("https://"), f"skill URL 应为 https: {skill['url']}"

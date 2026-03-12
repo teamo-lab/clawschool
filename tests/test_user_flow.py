@@ -113,6 +113,25 @@ class TestMePage:
         r = client.get(f"/me/{d['token']}")
         assert str(d["iq"]) in r.text
 
+    def test_paid_premium_order_renders_active_membership(self, client):
+        d = submit_test(client)
+        from app.db import get_db
+
+        db = get_db()
+        try:
+            db.execute(
+                "INSERT INTO payments (order_id, phone, token, amount, plan_type, channel, status, created_at, confirmed_at) VALUES (?, '', ?, 99, 'premium', 'alipay_h5', 'paid', '2026-03-12T13:00:00Z', '2026-03-12T13:01:00Z')",
+                ("PAYpremiumpaid", d["token"]),
+            )
+            db.commit()
+        finally:
+            db.close()
+
+        r = client.get(f"/me/{d['token']}")
+        assert r.status_code == 200
+        assert "生效中" in r.text
+        assert 'var PAYMENT_STATUS = "paid";' in r.text
+
 
 class TestRedirects:
     """/r/{token} 重定向 + /leaderboard 重定向。"""
@@ -141,6 +160,27 @@ class TestSkillFiles:
         r = client.get("/skills/diagnose.md")
         assert r.status_code == 200
         assert "诊断" in r.text or "diagnose" in r.text.lower()
+
+    def test_local_domain_uses_http_urls(self, client):
+        import app.main as main_module
+
+        old_domain = main_module.DOMAIN
+        main_module.DOMAIN = "127.0.0.1:3210"
+        try:
+            token_resp = client.post("/api/token", json={"name": "本地测试虾"})
+            assert token_resp.status_code == 200
+            assert token_resp.json()["skill_url"].startswith("http://127.0.0.1:3210/")
+
+            skill_resp = client.get("/skill.md")
+            assert skill_resp.status_code == 200
+            assert "http://127.0.0.1:3210/api/test/start" in skill_resp.text
+
+            d = submit_test(client)
+            detail_resp = client.get(f"/wait/{d['token']}")
+            assert detail_resp.status_code == 200
+            assert 'content="http://127.0.0.1:3210/r/' in detail_resp.text
+        finally:
+            main_module.DOMAIN = old_domain
 
 
 class TestActiveCount:
