@@ -1331,9 +1331,12 @@
                     </div>
                 </div>
 
-                <div class="btn-group-hero">
-                    <button class="btn btn-primary" onclick="openNameSheet()">
+                <div class="btn-group-hero" id="heroBtnGroup">
+                    <button class="btn btn-primary" id="heroMainBtn" onclick="openNameSheet()">
                         开始智力测试
+                    </button>
+                    <button class="btn btn-secondary" id="heroResultBtn" style="display:none" onclick="">
+                        查看测试结果
                     </button>
                     <button class="btn btn-secondary" onclick="scrollToLeaderboard()">
                         查看排行榜
@@ -1560,8 +1563,14 @@
 
     function openNameSheet() {
         nameSheetEl.classList.add('active');
-        nameInput.value = '';
-        nameSubmitBtn.classList.remove('ready');
+        var savedName = localStorage.getItem('clawschool_name');
+        if (savedName) {
+            nameInput.value = savedName;
+            nameSubmitBtn.classList.add('ready');
+        } else {
+            nameInput.value = '';
+            nameSubmitBtn.classList.remove('ready');
+        }
         document.getElementById('nameError').style.display = 'none';
         setTimeout(function() { nameInput.focus(); }, 400);
     }
@@ -1712,6 +1721,37 @@
     function goToWait() {
         window.location.href = '/wait/' + currentToken;
     }
+
+    // --- Returning user check ---
+    (function() {
+        var savedToken = localStorage.getItem('clawschool_token');
+        var savedName = localStorage.getItem('clawschool_name');
+        if (!savedToken) return;
+
+        // Pre-fill name for next test
+        if (savedName) myLobsterName = savedName;
+
+        fetch('/api/result/' + savedToken).then(function(r) {
+            if (!r.ok) return null;
+            return r.json();
+        }).then(function(result) {
+            if (!result) return;
+            var mainBtn = document.getElementById('heroMainBtn');
+            var resultBtn = document.getElementById('heroResultBtn');
+
+            if (result.status === 'done') {
+                mainBtn.textContent = '再次测试';
+                resultBtn.style.display = '';
+                resultBtn.textContent = '查看测试结果';
+                resultBtn.onclick = function() { window.location.href = '/wait/' + savedToken; };
+            } else {
+                mainBtn.textContent = '再次测试';
+                resultBtn.style.display = '';
+                resultBtn.textContent = '查看进度';
+                resultBtn.onclick = function() { window.location.href = '/wait/' + savedToken; };
+            }
+        }).catch(function() {});
+    })();
 
     // --- Init ---
     loadStats();

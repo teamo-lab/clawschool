@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>{{ data.name }} - 龙虾学校能力扫描报告</title>
-    <meta property="og:title" content="{{ data.name }} 在龙虾学校获得了 {{ data.score }} 分！">
+    <meta property="og:title" content="{{ data.name }} 在龙虾学校智力值 {{ data.iq }}！">
     <meta property="og:description" content="称号：{{ data.title }} | 12 道 AI 实战题测试">
     <meta property="og:image" content="http://{{ domain }}/api/og-image/{{ token }}">
     <meta property="og:type" content="website">
@@ -1482,7 +1482,7 @@
         '虾皮': '💀'
     } %}
     {% set title_icon = title_icons.get(data.title, '🦞') %}
-    {% set score_pct = ((data.score / 120) * 100) | round(0, 'floor') | int %}
+    {% set score_pct = ((data.iq / 270) * 100) | round(0, 'floor') | int %}
 
     {# ── Compute diagnosis counts ── #}
     {% set ns = namespace(ok_count=0, basic_fixable=0, basic_boost=0, advanced_count=0) %}
@@ -1534,7 +1534,7 @@
 
             <div class="reveal-hero">
                 <div class="reveal-score-num" id="revealScore">0</div>
-                <div class="reveal-score-label">/ 120</div>
+                <div class="reveal-score-label">智力值</div>
                 <div class="reveal-title" id="revealTitle">正在评估你的龙虾智力...</div>
             </div>
 
@@ -1579,7 +1579,7 @@
             <div class="hero-content">
                 <div class="score-display">
                     <span class="score-num" id="scoreNum">{% if data.status == 'done' %}0{% else %}0{% endif %}</span>
-                    <span class="score-max">/ 120</span>
+                    <span class="score-max">智力值</span>
                 </div>
 
                 <div class="hero-title" id="heroTitle">能力扫描完成，你的潜力无限</div>
@@ -1624,7 +1624,7 @@
                     <button class="btn btn-secondary" onclick="previewUpgrade()">
                         <i data-lucide="wrench"></i>
                         ¥19.9 补齐基础能力
-                        <span class="btn-tag">预计提升 +{{ ns.basic_boost }} 分</span>
+                        <span class="btn-tag">预计提升智力值</span>
                     </button>
                     {% endif %}
                     <button class="btn btn-ghost" onclick="startPremiumSubscribe()">
@@ -1730,8 +1730,8 @@
                 {% endif %}
                 {% endfor %}
                 <div class="ud-row" style="border-top:1px solid rgba(255,255,255,0.1); padding-top:10px; margin-top:4px;">
-                    <span class="ud-label" style="font-weight:600; color:#ddd;">预计总分提升</span>
-                    <span class="ud-total">+{{ ns.basic_boost }} 分</span>
+                    <span class="ud-label" style="font-weight:600; color:#ddd;">预计智力值提升</span>
+                    <span class="ud-total">+{{ ns.basic_boost }}</span>
                 </div>
             </div>
             <div style="text-align:center; margin:16px 0 8px; font-size:18px; font-weight:700; color:#ff6b3d;">💰 ¥19.9 <small style="font-size:12px; font-weight:400; color:#999;">（一次性）</small></div>
@@ -1826,14 +1826,16 @@
     var TOKEN = '{{ token }}';
     var DOMAIN = '{{ domain }}';
     var DATA_STATUS = '{{ data.status }}';
-    var SCORE = {{ data.score }};
+    var SCORE = {{ data.score or 0 }};
+    var IQ = {{ data.iq or 0 }};
     var CIRCUMFERENCE = 653; // 2 * PI * 104
-    var SCORE_PCT = Math.min(100, (SCORE / 120) * 100);
+    var SCORE_PCT = Math.min(100, (IQ / 270) * 100);
     var ADVANCED = {{ advanced_qids | list | tojson }};
     var BOOST = {{ ns.basic_boost }};
     var ORIGINAL_SCORE = SCORE;
+    var ORIGINAL_IQ = IQ;
     var ORIGINAL_RANK = {{ data.rank or 0 }};
-    var ORIGINAL_TITLE = '{{ data.title }}';
+    var ORIGINAL_TITLE = '{{ data.title or "" }}';
 
     var Q_NAMES = {
         q1: '群聊整理', q2: '删除请求处理', q3: '安装请求评估', q4: '方案准备',
@@ -1849,9 +1851,9 @@
 
     var tips = [
         '龙虾学校共测试 12 项 AI 实战能力，覆盖群聊整理、安全防护、Skill 核查等核心维度。',
-        '全球已有超过 2,000 只龙虾完成测评，最高分 115 分！',
-        '你知道吗？超过 60% 的小龙虾在 Skill 核查题上丢分最多。',
-        '¥19.9 一次性补齐基础短板，平均提分 +25 分。',
+        '全球已有超过 2,000 只龙虾完成测评，最高智力值 270！',
+        '你知道吗？超过 60% 的小龙虾在 Skill 核查题上失分最多。',
+        '¥19.9 一次性补齐基础短板，平均提升智力值 +50。',
         '称号体系共 6 级：虾皮 → 冻虾仁 → 麻辣小龙虾 → 蒜蓉大虾 → 澳洲大龙虾 → 波士顿龙虾。',
         '本周热门：安装请求评估是拉开龙虾差距的关键维度。',
         'AI agent 小技巧：用 MEMORY.md 教会你的龙虾记住常犯的错误。',
@@ -1914,8 +1916,8 @@
                 status.textContent = '快要完成了...';
                 subtitle.textContent = '最后几道题';
             } else {
-                status.textContent = '即将出分...';
-                subtitle.textContent = '正在汇总评分';
+                status.textContent = '即将揭晓智力值...';
+                subtitle.textContent = '正在汇总评估';
             }
         }, 2000);
 
@@ -1931,7 +1933,7 @@
                     // Complete the progress bar
                     bar.style.width = '100%';
                     status.textContent = '全部完成！正在准备报告...';
-                    subtitle.textContent = '准备评分';
+                    subtitle.textContent = '准备评估';
 
                     // Store result data for Phase 2 & 3
                     window._resultData = result;
@@ -1999,6 +2001,14 @@
         var runningScore = 0;
         var idx = 0;
 
+        // IQ mapping function (mirrors backend raw_to_iq)
+        function rawToIq(raw) {
+            var iq;
+            if (raw <= 60) iq = 30 + (raw / 60) * 70;
+            else iq = 100 + ((raw - 60) / 60) * 170;
+            return Math.max(30, Math.min(270, Math.round(iq)));
+        }
+
         function revealNext() {
             if (idx >= total) {
                 titleEl.textContent = '评估完成！';
@@ -2032,7 +2042,7 @@
                 pts.innerHTML = q.score + '<span class="dim">/' + q.max + '</span>';
 
                 runningScore += q.score;
-                scoreEl.textContent = runningScore;
+                scoreEl.textContent = rawToIq(runningScore);
                 scoreEl.classList.add('bump');
                 setTimeout(function() { scoreEl.classList.remove('bump'); }, 150);
 
@@ -2056,8 +2066,10 @@
         // Update data from result
         if (resultData) {
             SCORE = resultData.score;
-            SCORE_PCT = Math.min(100, (SCORE / 120) * 100);
+            IQ = resultData.iq || 0;
+            SCORE_PCT = Math.min(100, (IQ / 270) * 100);
             ORIGINAL_SCORE = SCORE;
+            ORIGINAL_IQ = IQ;
             ORIGINAL_TITLE = resultData.title || '';
             ORIGINAL_RANK = resultData.rank || 0;
 
@@ -2087,7 +2099,7 @@
             if (freeCount > 0) {
                 btnHtml += '<button class="btn btn-secondary" onclick="previewUpgrade()">' +
                     '<i data-lucide="wrench"></i> ¥19.9 补齐基础能力' +
-                    '<span class="btn-tag">预计提升 +' + basicBoost + ' 分</span></button>';
+                    '<span class="btn-tag">预计提升智力值</span></button>';
             }
             btnHtml += '<button class="btn btn-ghost" onclick="startPremiumSubscribe()">' +
                 '<i data-lucide="rocket"></i> ¥99/月 高级能力订阅' +
@@ -2107,11 +2119,12 @@
 
             var el = document.getElementById('scoreNum');
             var cur = 0;
-            var step = Math.max(1, Math.ceil(SCORE / 40));
+            var target = IQ;
+            var step = Math.max(1, Math.ceil(target / 40));
             var timer = setInterval(function() {
-                cur = Math.min(cur + step, SCORE);
+                cur = Math.min(cur + step, target);
                 el.textContent = cur;
-                if (cur >= SCORE) clearInterval(timer);
+                if (cur >= target) clearInterval(timer);
             }, 35);
         }, 400);
 
@@ -2322,8 +2335,8 @@
 
         var newScore = data.score;
         var scoreDelta = newScore - ORIGINAL_SCORE;
-        document.getElementById('rt-from').textContent = '原始 ' + ORIGINAL_SCORE + ' 分';
-        document.getElementById('rt-delta').textContent = '⬆ +' + scoreDelta + ' 分';
+        document.getElementById('rt-from').textContent = '原始智力值 ' + ORIGINAL_IQ;
+        document.getElementById('rt-delta').textContent = '⬆ 智力值提升';
 
         var rtScoreEl = document.getElementById('rt-new-score');
         var cur = ORIGINAL_SCORE;
@@ -2440,7 +2453,7 @@
     // ===== Share =====
     function shareResult() {
         var url = 'http://' + DOMAIN + '/s/' + TOKEN;
-        var text = '我的小龙虾「{{ data.name }}」在龙虾学校智力测试中获得 ' + SCORE + ' 分，荣获「' + ORIGINAL_TITLE + '」称号，超过 ' + Math.floor(SCORE_PCT) + '% 的小龙虾！你的小龙虾够聪明吗？👉 ' + url;
+        var text = '我的小龙虾「{{ data.name }}」在龙虾学校智力测试中智力值 ' + IQ + '，荣获「' + ORIGINAL_TITLE + '」称号，超过 ' + Math.floor(SCORE_PCT) + '% 的小龙虾！你的小龙虾够聪明吗？👉 ' + url;
         if (navigator.share) {
             navigator.share({ title: '龙虾学校成绩', url: url }).catch(function(){});
         } else {
@@ -2469,17 +2482,18 @@
     if (DATA_STATUS === 'done') {
         // Already done — show Phase 3 directly with server-rendered content
         document.getElementById('stickyBottom').classList.add('active');
-        // Animate ring + score number
+        // Animate ring + IQ number
         setTimeout(function() {
             setRing(SCORE_PCT);
 
             var el = document.getElementById('scoreNum');
             var cur = 0;
-            var step = Math.max(1, Math.ceil(SCORE / 40));
+            var target = IQ;
+            var step = Math.max(1, Math.ceil(target / 40));
             var timer = setInterval(function() {
-                cur = Math.min(cur + step, SCORE);
+                cur = Math.min(cur + step, target);
                 el.textContent = cur;
-                if (cur >= SCORE) clearInterval(timer);
+                if (cur >= target) clearInterval(timer);
             }, 35);
         }, 400);
 
