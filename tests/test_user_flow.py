@@ -204,6 +204,8 @@ class TestSkillFiles:
         assert "诊断" in r.text or "diagnose" in r.text.lower()
         assert "默认整个诊断、安装和重测过程保持静默" in r.text
         assert "当前执行到第 N 题" in r.text
+        assert "| 智力 | `iq` |" in r.text
+        assert "| 总分 | X/120 | Y/120 | +N |" not in r.text
 
     def test_local_domain_uses_http_urls(self, client):
         import app.main as main_module
