@@ -1,6 +1,9 @@
 """龙虾学校后端 — FastAPI + Jinja2 SSR + SQLite"""
 
+import hashlib
+import hmac
 import json
+import logging
 import os
 import string
 import random
@@ -19,6 +22,8 @@ from .og_image import generate_og_image
 from .questions import QUESTIONS
 from .repair import generate_repair_skill, ADVANCED_QIDS, BASIC_QIDS
 from .payment import PaymentConfig, WechatPayClient, AlipayClient
+
+logger = logging.getLogger("clawschool")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SKILL_TEMPLATE = BASE_DIR / "public" / "SKILL.md"
@@ -567,6 +572,100 @@ async def upgrade_basic(request: Request):
     }
 
 
+# ─── 腾讯云短信 ───
+
+SMS_SECRET_ID = os.environ.get("TC_SMS_SECRET_ID", "")
+SMS_SECRET_KEY = os.environ.get("TC_SMS_SECRET_KEY", "")
+SMS_SDK_APP_ID = os.environ.get("TC_SMS_SDK_APP_ID", "")
+SMS_SIGN_NAME = os.environ.get("TC_SMS_SIGN_NAME", "龙虾学校")
+SMS_TEMPLATE_ID = os.environ.get("TC_SMS_TEMPLATE_ID", "")
+
+
+def _tc3_sign(secret_key: str, date: str, service: str, string_to_sign: str) -> str:
+    """TC3-HMAC-SHA256 签名。"""
+    def _hmac_sha256(key: bytes, msg: str) -> bytes:
+        return hmac.new(key, msg.encode("utf-8"), hashlib.sha256).digest()
+
+    secret_date = _hmac_sha256(f"TC3{secret_key}".encode("utf-8"), date)
+    secret_service = _hmac_sha256(secret_date, service)
+    secret_signing = _hmac_sha256(secret_service, "tc3_request")
+    return hmac.new(secret_signing, string_to_sign.encode("utf-8"), hashlib.sha256).hexdigest()
+
+
+def _send_sms(phone: str, template_params: list[str]) -> bool:
+    """调用腾讯云 SMS SendSms API 发送短信。成功返回 True，失败返回 False。"""
+    if not all([SMS_SECRET_ID, SMS_SECRET_KEY, SMS_SDK_APP_ID, SMS_TEMPLATE_ID]):
+        logger.warning("SMS 配置不完整，跳过发送 (phone=%s)", phone[-4:])
+        return False
+
+    service = "sms"
+    host = f"{service}.tencentcloudapi.com"
+    action = "SendSms"
+    version = "2021-01-11"
+    region = "ap-guangzhou"
+
+    # 手机号需要 +86 前缀
+    phone_e164 = f"+86{phone}" if not phone.startswith("+") else phone
+
+    payload = {
+        "SmsSdkAppId": SMS_SDK_APP_ID,
+        "SignName": SMS_SIGN_NAME,
+        "TemplateId": SMS_TEMPLATE_ID,
+        "PhoneNumberSet": [phone_e164],
+        "TemplateParamSet": template_params,
+    }
+    payload_str = json.dumps(payload, separators=(",", ":"))
+
+    timestamp = int(datetime.now(timezone.utc).timestamp())
+    date = datetime.fromtimestamp(timestamp, tz=timezone.utc).strftime("%Y-%m-%d")
+
+    # 构造规范请求
+    hashed_payload = hashlib.sha256(payload_str.encode("utf-8")).hexdigest()
+    canonical_request = (
+        f"POST\n/\n\n"
+        f"content-type:application/json; charset=utf-8\n"
+        f"host:{host}\n\n"
+        f"content-type;host\n"
+        f"{hashed_payload}"
+    )
+    hashed_canonical = hashlib.sha256(canonical_request.encode("utf-8")).hexdigest()
+    credential_scope = f"{date}/{service}/tc3_request"
+    string_to_sign = f"TC3-HMAC-SHA256\n{timestamp}\n{credential_scope}\n{hashed_canonical}"
+
+    signature = _tc3_sign(SMS_SECRET_KEY, date, service, string_to_sign)
+    authorization = (
+        f"TC3-HMAC-SHA256 Credential={SMS_SECRET_ID}/{credential_scope}, "
+        f"SignedHeaders=content-type;host, Signature={signature}"
+    )
+
+    req = urllib.request.Request(
+        f"https://{host}",
+        data=payload_str.encode("utf-8"),
+        headers={
+            "Content-Type": "application/json; charset=utf-8",
+            "Host": host,
+            "Authorization": authorization,
+            "X-TC-Action": action,
+            "X-TC-Version": version,
+            "X-TC-Timestamp": str(timestamp),
+            "X-TC-Region": region,
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            result = json.loads(resp.read())
+        send_status = result.get("Response", {}).get("SendStatusSet", [])
+        if send_status and send_status[0].get("Code") == "Ok":
+            logger.info("SMS 发送成功 (phone=%s)", phone[-4:])
+            return True
+        error = result.get("Response", {}).get("Error", {})
+        logger.warning("SMS 发送失败: %s (phone=%s)", error or send_status, phone[-4:])
+        return False
+    except Exception as exc:
+        logger.warning("SMS 发送异常: %s (phone=%s)", exc, phone[-4:])
+        return False
+
+
 # ─── 登录 & 支付 API ───
 
 MVP_VERIFY_CODE = "888888"
@@ -600,9 +699,9 @@ async def send_code(request: Request):
     finally:
         db.close()
 
-    # TODO: 接入腾讯云短信 API 发送真实验证码
-    # MVP 阶段不发真实短信，万能验证码 888888 始终可用
-    return {"success": True, "expires_in": CODE_EXPIRY_SECONDS}
+    # 发送真实短信（失败不阻塞，万能验证码 888888 始终可用）
+    sms_sent = _send_sms(phone, [code, str(CODE_EXPIRY_SECONDS // 60)])
+    return {"success": True, "expires_in": CODE_EXPIRY_SECONDS, "sms_sent": sms_sent}
 
 
 @app.post("/api/login")

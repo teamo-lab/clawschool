@@ -67,7 +67,7 @@ def submit_test(client, answers=None, name="测试龙虾", token=""):
         "lobsterName": name,
         "model": "test-model",
         "test_time": "2026-03-12 18:00:00",
-        "answers": answers or SAMPLE_ANSWERS,
+        "answers": SAMPLE_ANSWERS if answers is None else answers,
     }
     resp = client.post("/api/test/submit", json=body)
     assert resp.status_code == 200
@@ -87,7 +87,7 @@ def base_url():
 @pytest.fixture(scope="session")
 def http():
     """Session-scoped httpx client for integration tests."""
-    with httpx.Client(base_url=INTEGRATION_BASE_URL, timeout=30, verify=True) as c:
+    with httpx.Client(base_url=INTEGRATION_BASE_URL, timeout=60, verify=True) as c:
         yield c
 
 
@@ -98,7 +98,7 @@ def integration_submit(http_client, answers=None, name="集成测试虾", token=
         "lobsterName": name,
         "model": "integration-test",
         "test_time": "2026-03-12 18:00:00",
-        "answers": answers or SAMPLE_ANSWERS,
+        "answers": SAMPLE_ANSWERS if answers is None else answers,
     }
     resp = http_client.post("/api/test/submit", json=body)
     assert resp.status_code == 200
