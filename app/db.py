@@ -99,5 +99,15 @@ def init_db():
     # trade_no 索引放在 ALTER TABLE 之后，确保列已存在
     conn.execute("CREATE INDEX IF NOT EXISTS idx_payments_trade_no ON payments(trade_no)")
 
+    # Waiting List 表（¥99 高级能力等待列表）
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS waitlist (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            phone TEXT NOT NULL,
+            platform TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )
+    """)
+
     conn.commit()
     conn.close()

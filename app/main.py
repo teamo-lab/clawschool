@@ -19,6 +19,7 @@ from .og_image import generate_og_image
 from .questions import QUESTIONS
 from .repair import generate_repair_skill, ADVANCED_QIDS, BASIC_QIDS
 from .payment import PaymentConfig, WechatPayClient, AlipayClient
+from .wechat_jssdk import generate_signature
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SKILL_TEMPLATE = BASE_DIR / "public" / "SKILL.md"
@@ -658,6 +659,48 @@ async def login(request: Request):
         db.close()
 
     return {"success": True, "phone": phone}
+
+
+@app.post("/api/waitlist")
+async def join_waitlist(request: Request):
+    """加入 ¥99 高级能力 Waiting List"""
+    body = await request.json()
+    phone = (body.get("phone") or "").strip()
+    platform = (body.get("platform") or "").strip()
+
+    if not phone or len(phone) != 11 or not phone.isdigit():
+        raise HTTPException(400, "手机号格式不正确")
+    if platform not in ("pc", "mobile"):
+        raise HTTPException(400, "platform 必须为 pc 或 mobile")
+
+    now = _now_iso()
+    db = get_db()
+    try:
+        db.execute(
+            "INSERT INTO waitlist (phone, platform, created_at) VALUES (?, ?, ?)",
+            (phone, platform, now)
+        )
+        db.commit()
+    finally:
+        db.close()
+
+    return {"success": True, "message": "已加入等待列表"}
+
+
+@app.get("/api/wechat/signature")
+async def wechat_signature(url: str):
+    """生成微信 JS-SDK 签名配置"""
+    app_id = PaymentConfig.WECHAT_MP_APP_ID
+    app_secret = PaymentConfig.WECHAT_MP_APP_SECRET
+
+    if not app_id or not app_secret:
+        return {"error": "微信公众号未配置"}
+
+    config = generate_signature(app_id, app_secret, url)
+    if not config:
+        return {"error": "签名生成失败"}
+
+    return config
 
 
 @app.post("/api/payment/create")
