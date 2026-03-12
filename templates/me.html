@@ -358,7 +358,7 @@ body {
   {% set score_pct = ((data.score / 120) * 100) | round(0, 'floor') | int %}
 
   {# ── 统计变量 ── #}
-  {% set free_qs = ['q6', 'q9'] %}
+  {% set free_qs = ['q9', 'q12'] %}
   {% set q_keys = ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11','q12'] %}
   {% set ns = namespace(problems=0, upgraded=0, paid_locks=0, free_boost=0, paid_boost=0) %}
   {% for qid in q_keys %}
@@ -511,10 +511,10 @@ body {
       <div class="pp-title-change">{{ title_icon }} {{ data.title }} → {{ title_icons.get(pred_title, '🦞') }} {{ pred_title }}</div>
     </div>
     <div class="pay-items">
-      <div class="pi-row">✅ 浏览器截图能力（Q2）</div>
-      <div class="pi-row">✅ 代码修复逻辑（Q4）</div>
-      <div class="pi-row">✅ 定时任务配置（Q6）</div>
-      <div class="pi-row">✅ 通知推送能力（Q7）</div>
+      <div class="pi-row">✅ Skill 安装与发现</div>
+      <div class="pi-row">✅ 定时任务调度</div>
+      <div class="pi-row">✅ 实时搜索取证</div>
+      <div class="pi-row">✅ 网页访问容错</div>
       <div class="pi-row">✅ 全面 workspace 优化</div>
     </div>
     <div class="pay-price">💰 ¥99 <small>/ 一次性</small></div>
