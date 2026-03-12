@@ -1473,6 +1473,12 @@
         'q12': '网页访问失败处理'
     } %}
     {% set q_keys = ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11','q12'] %}
+    {% set ability_names = {
+        'q5': '自我优化能力',
+        'q6': '信息总结能力',
+        'q7': '主动执行能力',
+        'q8': '技能安全审查能力'
+    } %}
     {% set title_icons = {
         '波士顿龙虾': '🦞',
         '澳洲大龙虾': '🔴',
@@ -1683,7 +1689,20 @@
                                         </div>
                                     </div>
                                     {% if qd.get('reason') %}
-                                    <div class="scan-reason">{{ qd.get('reason', '') }}</div>
+                                    {% set ability_name = ability_names.get(qid) %}
+                                    <div class="scan-reason">
+                                        {% if ability_name %}
+                                            {% if sc == mx %}
+                                                已具备{{ ability_name }}，且给出了明确检查证据
+                                            {% elif sc == 0 %}
+                                                缺少{{ ability_name }}
+                                            {% else %}
+                                                完成了部分{{ ability_name }}检查
+                                            {% endif %}
+                                        {% else %}
+                                            {{ qd.get('reason', '') }}
+                                        {% endif %}
+                                    </div>
                                     {% endif %}
                                     <div class="scan-bar-wrap">
                                         <div class="scan-bar {% if tag == 'perfect' %}bar-perfect{% elif tag == 'good' %}bar-good{% elif tag == 'free' %}bar-free{% else %}bar-paid{% endif %}" data-pct="{{ (sc / mx * 100) | int }}" style="width:0%"></div>
@@ -1843,11 +1862,25 @@
         q9: '定时任务', q10: '当日新闻整理', q11: '双任务处理', q12: '网页访问失败处理'
     };
     var Q_KEYS = ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11','q12'];
+    var ABILITY_NAMES = {
+        q5: '自我优化能力',
+        q6: '信息总结能力',
+        q7: '主动执行能力',
+        q8: '技能安全审查能力'
+    };
 
     var TITLE_ICONS = {
         '波士顿龙虾': '🦞', '澳洲大龙虾': '🔴', '蒜蓉大虾': '🟠',
         '麻辣小龙虾': '🟡', '冻虾仁': '🔵', '虾皮': '💀'
     };
+
+    function presentReason(qid, score, max, reason) {
+        var ability = ABILITY_NAMES[qid];
+        if (!ability) return reason || '';
+        if (score >= max) return '已具备' + ability + '，且给出了明确检查证据';
+        if (score <= 0) return '缺少' + ability;
+        return '完成了部分' + ability + '检查';
+    }
 
     // IQ mapping function (mirrors backend raw_to_iq)
     function rawToIq(raw) {
@@ -1972,7 +2005,7 @@
             var qd = detail[qid] || {};
             var sc = qd.score || 0;
             var mx = qd.max || 10;
-            var reason = qd.reason || '';
+            var reason = presentReason(qid, sc, mx, qd.reason || '');
             var tag;
             if (sc === 10) tag = 'perfect';
             else if (sc >= 8) tag = 'good';
@@ -2154,7 +2187,7 @@
             var qd = detail[qid] || {};
             var sc = qd.score || 0;
             var mx = qd.max || 10;
-            var reason = qd.reason || '';
+            var reason = presentReason(qid, sc, mx, qd.reason || '');
             var tag;
             if (sc === 10) tag = 'perfect';
             else if (sc >= 8) tag = 'good';
