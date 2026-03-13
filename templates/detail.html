@@ -2273,7 +2273,12 @@
                 </ul>
             </div>
             <p class="tip" id="upgrade-wait-tip">正在等待你的小龙虾完成升级，请确保已将命令发给它...</p>
-            <p class="tip" style="margin-top:8px; font-size:12px; color:rgba(255,255,255,0.35);">如果小龙虾已发回升级结果但此页面未更新，请让它检查是否已调用 POST /api/upgrade/basic 提交重测答案</p>
+            <div id="upgrade-stuck-hint" style="display:none; margin-top:14px; padding:12px 14px; background:rgba(255,150,22,0.1); border:1px solid rgba(255,150,22,0.3); border-radius:10px;">
+                <p style="margin:0 0 8px; font-size:13px; color:var(--brand-orange); font-weight:600;">⚠️ 页面长时间未更新？</p>
+                <p style="margin:0 0 10px; font-size:12px; color:var(--text-body); line-height:1.5;">如果小龙虾已回复升级结果，请复制以下内容发给它，让它提交重测答案：</p>
+                <div class="cmd-box" id="upgrade-remind-cmd" style="font-size:11px; margin-bottom:8px;">请检查你是否已经调用 POST {{ public_base_url }}/api/upgrade/basic 提交了重测答案。如果没有，请立即重新做全部 12 题并将答案提交到该接口。我的 token 是 {{ token }}。</div>
+                <button class="btn-sheet btn-sheet-primary" style="font-size:13px; padding:8px 16px;" onclick="copyUpgradeRemind()">📋 一键复制发给小龙虾</button>
+            </div>
             <button class="btn-sheet btn-sheet-secondary" id="btn-cancel-upgrade" style="display:none; margin-top:12px;" onclick="cancelUpgradeWait()">取消等待</button>
         </div>
     </div>
@@ -3083,11 +3088,26 @@
         document.getElementById('upgrade-step3').classList.add('show');
         simulateUpgradeProgress();
         upgradePoller = setInterval(pollUpgradeResult, 5000);
+        // 60 秒后显示提醒提示
+        setTimeout(function() {
+            var hint = document.getElementById('upgrade-stuck-hint');
+            if (hint) hint.style.display = 'block';
+        }, 60000);
         // 10 分钟后显示取消按钮
         setTimeout(function() {
             var btn = document.getElementById('btn-cancel-upgrade');
             if (btn) btn.style.display = 'block';
         }, 10 * 60 * 1000);
+    }
+
+    function copyUpgradeRemind() {
+        var cmd = document.getElementById('upgrade-remind-cmd').textContent;
+        navigator.clipboard.writeText(cmd).then(function() {
+            var btns = document.querySelectorAll('#upgrade-stuck-hint .btn-sheet-primary');
+            if (btns.length) { btns[0].textContent = '✅ 已复制！发给你的小龙虾'; }
+        }).catch(function() {
+            prompt('复制以下内容发给小龙虾：', cmd);
+        });
     }
 
     function cancelUpgradeWait() {
@@ -3518,9 +3538,10 @@
                             localStorage.removeItem('clawschool_upgrade_' + TOKEN);
                             setTimeout(function() { showStep4(data); }, 800);
                         } else {
-                            // 升级仍在进行中，恢复 step3 轮询
+                            // 升级仍在进行中，恢复 step3 轮询，直接显示提醒
                             setTimeout(function() {
                                 document.getElementById('upgrade-step3').classList.add('show');
+                                document.getElementById('upgrade-stuck-hint').style.display = 'block';
                                 simulateUpgradeProgress();
                                 isUpgrading = true;
                                 window.addEventListener('beforeunload', warnBeforeLeave);
@@ -3531,6 +3552,7 @@
                         // API 失败，恢复轮询
                         setTimeout(function() {
                             document.getElementById('upgrade-step3').classList.add('show');
+                            document.getElementById('upgrade-stuck-hint').style.display = 'block';
                             simulateUpgradeProgress();
                             isUpgrading = true;
                             upgradePoller = setInterval(pollUpgradeResult, 5000);
