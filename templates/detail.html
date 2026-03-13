@@ -2249,7 +2249,7 @@
         <div class="sheet">
             <div class="sheet-handle"></div>
             <h3>📋 复制以下命令发给你的小龙虾</h3>
-            <div class="cmd-box" id="upgrade-cmd">请帮我升级龙虾学校基础能力。用 exec 执行 curl -sS {{ public_base_url }}/skills/diagnose.md 安装诊断 skill，然后按指引操作。我的 token 是 {{ token }}，scope 是 basic。</div>
+            <div class="cmd-box" id="upgrade-cmd">请帮我升级龙虾学校基础能力。用 exec 执行 curl -sS {{ public_base_url }}/skills/diagnose.md 安装诊断 skill，然后按指引操作。我的 token 是 {{ token }}，scope 是 full。</div>
             <button class="btn-sheet btn-sheet-primary" id="btn-copy-upgrade" onclick="copyUpgradeCmd()">📋 一键复制</button>
             <p class="tip">复制后发给你的小龙虾，升级 + 重测约需 5-10 分钟</p>
             <button class="btn-sheet btn-sheet-cta" id="btn-start-wait" style="display:none; margin-top:10px;" onclick="startUpgradeWait()">已发送，开始等待升级结果</button>

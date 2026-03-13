@@ -65,7 +65,7 @@ class TestDetailPage:
         d = submit_test(client)
         r = client.get(f"/wait/{d['token']}")
         assert "skills/diagnose.md" in r.text
-        assert "scope 是 basic" in r.text
+        assert "scope 是 full" in r.text
         assert d["token"] in r.text
         assert "repair-skill" not in r.text
 
@@ -329,7 +329,7 @@ class TestDetailPageIntegration:
         d = integration_submit(http)
         r = http.get(f"/wait/{d['token']}")
         assert "skills/diagnose.md" in r.text
-        assert "scope 是 basic" in r.text
+        assert "scope 是 full" in r.text
         assert d["token"] in r.text
         assert "repair-skill" not in r.text
 
