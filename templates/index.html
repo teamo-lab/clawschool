@@ -1583,13 +1583,21 @@
             .catch(function(e) { console.warn('WX JS-SDK init failed:', e); });
     }
 
-    function showWxShareTip() {
+    function showWxShareTip(copyText) {
         if (document.getElementById('wx-share-tip')) return;
+        if (copyText) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(copyText).catch(function() { fallbackCopy(copyText); });
+            } else { fallbackCopy(copyText); }
+        }
         var mask = document.createElement('div');
         mask.id = 'wx-share-tip';
         mask.className = 'wx-share-mask';
+        var tipHtml = copyText
+            ? '<div class="wx-tip">✅ 炫耀文案已复制到剪贴板<br><br>点击右上角 <strong>···</strong> 分享链接卡片<br>或直接粘贴文案发给好友</div>'
+            : '<div class="wx-tip">点击右上角 <strong>···</strong><br>选择「发送给朋友」或「分享到朋友圈」</div>';
         mask.innerHTML = '<svg class="wx-arrow" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>' +
-            '<div class="wx-tip">点击右上角 <strong>···</strong><br>选择「发送给朋友」或「分享到朋友圈」</div>';
+            tipHtml;
         mask.onclick = function() { mask.remove(); };
         document.body.appendChild(mask);
         setTimeout(function() { if (mask.parentNode) mask.remove(); }, 4000);
@@ -1622,7 +1630,7 @@
     }
     function shareApp() {
         var text = '🦞 龙虾学校 — 你的小龙虾够聪明吗？12 道 AI 实战能力测试等你挑战！👉 {{ public_base_url }}';
-        if (isWechat) { showWxShareTip(); return; }
+        if (isWechat) { showWxShareTip(text); return; }
         copyAndToast(text);
     }
 
