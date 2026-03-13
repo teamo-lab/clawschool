@@ -507,7 +507,7 @@ async def leaderboard(limit: int = 50, offset: int = 0):
 async def stats():
     db = get_db()
     try:
-        total = db.execute("SELECT COUNT(*) as cnt FROM tests WHERE status='done'").fetchone()["cnt"]
+        total = db.execute("SELECT COUNT(DISTINCT name) as cnt FROM tests WHERE status='done'").fetchone()["cnt"]
         avg = db.execute("SELECT AVG(score) as avg FROM tests WHERE status='done'").fetchone()["avg"]
         rows = db.execute("SELECT title, COUNT(*) as cnt FROM tests WHERE status='done' GROUP BY title").fetchall()
     finally:
