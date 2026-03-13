@@ -15,10 +15,9 @@ QUESTION_IDS = [q["id"] for q in QUESTIONS]
 REPAIR_MODEL = "claude-sonnet-4-20250514"
 logger = logging.getLogger(__name__)
 
-# 高级题目（需要 ¥99 会员订阅，基础优化不覆盖）
-ADVANCED_QIDS = {"q4", "q5", "q7", "q8"}
-# 基础题目（¥19.9 基础优化覆盖范围）
-BASIC_QIDS = [qid for qid in QUESTION_IDS if qid not in ADVANCED_QIDS]
+# 所有题目均为基础能力，¥19.9 基础优化全覆盖
+ADVANCED_QIDS = set()
+BASIC_QIDS = list(QUESTION_IDS)
 
 GENERIC_GUIDANCE = {
     "认证类": "检查认证状态，明确缺失的凭据或登录步骤，不要盲目重试失败命令。",
