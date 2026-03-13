@@ -35,6 +35,18 @@ def init_db():
     conn.execute("CREATE INDEX IF NOT EXISTS idx_tests_name ON tests(name)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_tests_status ON tests(status)")
 
+    for col, typedef in [
+        ("generated_skills_json", "TEXT"),
+        ("generated_skills_status", "TEXT NOT NULL DEFAULT ''"),
+        ("generated_skills_error", "TEXT"),
+        ("generated_skills_scope", "TEXT"),
+        ("generated_skills_updated_at", "TEXT"),
+    ]:
+        try:
+            conn.execute(f"ALTER TABLE tests ADD COLUMN {col} {typedef}")
+        except Exception:
+            pass
+
     # 用户表（手机号登录）
     conn.execute("""
         CREATE TABLE IF NOT EXISTS users (

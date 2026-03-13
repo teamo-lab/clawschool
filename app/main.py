@@ -5,11 +5,13 @@ import hmac
 import json
 import logging
 import os
+import threading
 import string
 import random
 import urllib.request
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
+from typing import List, Optional, Tuple
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse, FileResponse, PlainTextResponse, JSONResponse
@@ -192,6 +194,111 @@ def _render_public_skill(path: Path) -> str:
     content = content.replace("http://clawschool.teamolab.com", base_url)
     content = content.replace("{{BASE_URL}}", base_url)
     return content
+
+
+def _load_generated_skills(row) -> Tuple[str, List[dict], str, str]:
+    status = row["generated_skills_status"] if "generated_skills_status" in row.keys() else ""
+    scope = row["generated_skills_scope"] if "generated_skills_scope" in row.keys() else ""
+    error = row["generated_skills_error"] if "generated_skills_error" in row.keys() else ""
+    raw = row["generated_skills_json"] if "generated_skills_json" in row.keys() else ""
+    try:
+        skills = json.loads(raw) if raw else []
+    except Exception:
+        skills = []
+    return status or "", skills, scope or "", error or ""
+
+
+def _save_generated_skills_state(
+    token: str,
+    *,
+    status: str,
+    scope: str,
+    skills: Optional[List[dict]] = None,
+    error: str = "",
+):
+    db = get_db()
+    try:
+        db.execute(
+            """
+            UPDATE tests SET
+                generated_skills_status=?,
+                generated_skills_scope=?,
+                generated_skills_json=?,
+                generated_skills_error=?,
+                generated_skills_updated_at=?,
+                updated_at=?
+            WHERE token=?
+            """,
+            (
+                status,
+                scope,
+                json.dumps(skills or [], ensure_ascii=False),
+                error,
+                _now_iso(),
+                _now_iso(),
+                token,
+            ),
+        )
+        db.commit()
+    finally:
+        db.close()
+
+
+def _fetch_generated_skills(token: str, diagnosis_result: dict) -> List[dict]:
+    CLAUDE_API_URL = os.environ.get("CLAUDE_API_URL", "http://49.51.47.101:8900")
+    payload = json.dumps({"token": token, "diagnosis": diagnosis_result}).encode()
+    req = urllib.request.Request(
+        f"{CLAUDE_API_URL}/api/generate-skills",
+        data=payload,
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        skills_result = json.loads(resp.read())
+    return skills_result.get("skills", [])
+
+
+def _generate_skills_job(token: str, diagnosis_result: dict):
+    try:
+        skills = _fetch_generated_skills(token, diagnosis_result)
+        _save_generated_skills_state(
+            token,
+            status="ready",
+            scope=diagnosis_result["scope"],
+            skills=skills,
+        )
+    except Exception as e:
+        logger.warning("generatedSkills failed for %s: %s", token, e)
+        _save_generated_skills_state(
+            token,
+            status="failed",
+            scope=diagnosis_result["scope"],
+            skills=[],
+            error=str(e),
+        )
+
+
+def _spawn_skill_generation(token: str, diagnosis_result: dict):
+    threading.Thread(
+        target=_generate_skills_job,
+        args=(token, diagnosis_result),
+        daemon=True,
+        name=f"clawschool-skillgen-{token}",
+    ).start()
+
+
+def _ensure_generated_skills(token: str, diagnosis_result: dict, current_status: str, current_scope: str):
+    if current_status == "pending" and current_scope == diagnosis_result["scope"]:
+        return
+    if current_status == "ready" and current_scope == diagnosis_result["scope"]:
+        return
+    _save_generated_skills_state(
+        token,
+        status="pending",
+        scope=diagnosis_result["scope"],
+        skills=[],
+        error="",
+    )
+    _spawn_skill_generation(token, diagnosis_result)
 
 def _get_rank(score: int, token: str):
     """获取指定 token 在排行榜中的排名（同名取最高分去重后排名）"""
@@ -473,6 +580,8 @@ async def test_diagnose(token: str, scope: str = "full"):
             "answerHints": DIAGNOSE_ANSWER_HINTS.get(qid) if d.get("score", 0) < d.get("max", 10) else None,
         })
 
+    status, skills, cached_scope, error = _load_generated_skills(row)
+
     diagnosis_result = {
         "token": token,
         "lobsterName": row["name"],
@@ -483,24 +592,47 @@ async def test_diagnose(token: str, scope: str = "full"):
         "rank": _get_rank(row["score"], token),
         "scope": scope,
         "questionDetails": question_details,
+        "generatedSkillsStatus": status if status and cached_scope == scope else "pending",
+        "generatedSkillsError": error if status == "failed" and cached_scope == scope else "",
+        "generatedSkills": skills if status == "ready" and cached_scope == scope else [],
     }
 
-    # 异步调用美国 Claude Code API 生成 skills（非阻塞，失败不影响诊断结果）
-    CLAUDE_API_URL = os.environ.get("CLAUDE_API_URL", "http://49.51.47.101:8900")
-    try:
-        payload = json.dumps({"token": token, "diagnosis": diagnosis_result}).encode()
-        req = urllib.request.Request(
-            f"{CLAUDE_API_URL}/api/generate-skills",
-            data=payload,
-            headers={"Content-Type": "application/json"},
-        )
-        with urllib.request.urlopen(req, timeout=200) as resp:
-            skills_result = json.loads(resp.read())
-        diagnosis_result["generatedSkills"] = skills_result.get("skills", [])
-    except Exception:
+    if not (status == "ready" and cached_scope == scope):
+        _ensure_generated_skills(token, diagnosis_result, status, cached_scope)
+        diagnosis_result["generatedSkillsStatus"] = "pending"
         diagnosis_result["generatedSkills"] = []
+        diagnosis_result["generatedSkillsError"] = ""
 
     return diagnosis_result
+
+
+@app.get("/api/test/diagnose/skills")
+async def test_diagnose_skills(token: str, scope: str = "full"):
+    db = get_db()
+    try:
+        row = db.execute("SELECT * FROM tests WHERE token=? AND status='done'", (token,)).fetchone()
+    finally:
+        db.close()
+    if not row:
+        raise HTTPException(404, "未找到测试结果，请先完成测试")
+
+    status, skills, cached_scope, error = _load_generated_skills(row)
+    if cached_scope != scope:
+        return {
+            "token": token,
+            "scope": scope,
+            "generatedSkillsStatus": "pending",
+            "generatedSkills": [],
+            "generatedSkillsError": "",
+        }
+
+    return {
+        "token": token,
+        "scope": scope,
+        "generatedSkillsStatus": status or "pending",
+        "generatedSkills": skills if status == "ready" else [],
+        "generatedSkillsError": error if status == "failed" else "",
+    }
 
 
 @app.get("/api/repair-skill/{token}")

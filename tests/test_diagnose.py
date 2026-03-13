@@ -1,9 +1,11 @@
 """基础诊断模块 — scope 过滤 + US Claude Code API 调用 + skills 生成容错（mock + 集成测试）。"""
 
 import json
+import time
 from unittest.mock import patch, MagicMock
 
 import pytest
+import app.main as main_module
 from app.repair import BASIC_QIDS, ADVANCED_QIDS
 from tests.conftest import submit_test, integration_submit, SAMPLE_ANSWERS
 
@@ -25,7 +27,7 @@ class TestDiagnoseScope:
         assert r.status_code == 200
         data = r.json()
         assert data["scope"] == "basic"
-        assert len(data["questionDetails"]) == 8
+        assert len(data["questionDetails"]) == len(BASIC_QIDS)
 
     def test_scope_basic_excludes_advanced(self, client):
         d = submit_test(client)
@@ -178,32 +180,39 @@ class TestClaudeCodeAPICall:
         mock_resp.__enter__ = lambda s: s
         mock_resp.__exit__ = MagicMock(return_value=False)
 
-        with patch("urllib.request.urlopen", return_value=mock_resp) as mock_urlopen:
-            r = client.get(f"/api/test/diagnose?token={d['token']}")
-            assert r.status_code == 200
-            data = r.json()
-            assert len(data["generatedSkills"]) == 2
-            assert data["generatedSkills"][0]["name"] == "security-basics"
-            # 验证调用了正确的 URL
-            call_args = mock_urlopen.call_args
-            req = call_args[0][0]
-            assert "/api/generate-skills" in req.full_url
+        with patch("app.main._spawn_skill_generation", side_effect=lambda token, diag: main_module._generate_skills_job(token, diag)):
+            with patch("urllib.request.urlopen", return_value=mock_resp) as mock_urlopen:
+                r = client.get(f"/api/test/diagnose?token={d['token']}")
+                assert r.status_code == 200
+                poll = client.get(f"/api/test/diagnose/skills?token={d['token']}")
+                assert poll.status_code == 200
+                data = poll.json()
+                assert data["generatedSkillsStatus"] == "ready"
+                assert len(data["generatedSkills"]) == 2
+                assert data["generatedSkills"][0]["name"] == "security-basics"
+                call_args = mock_urlopen.call_args
+                req = call_args[0][0]
+                assert "/api/generate-skills" in req.full_url
 
     def test_api_timeout_degrades_gracefully(self, client):
         d = submit_test(client)
-        with patch("urllib.request.urlopen", side_effect=TimeoutError("超时")):
-            r = client.get(f"/api/test/diagnose?token={d['token']}")
-            assert r.status_code == 200
-            data = r.json()
-            assert data["generatedSkills"] == []
+        with patch("app.main._spawn_skill_generation", side_effect=lambda token, diag: main_module._generate_skills_job(token, diag)):
+            with patch("urllib.request.urlopen", side_effect=TimeoutError("超时")):
+                r = client.get(f"/api/test/diagnose?token={d['token']}")
+                assert r.status_code == 200
+                data = client.get(f"/api/test/diagnose/skills?token={d['token']}").json()
+                assert data["generatedSkillsStatus"] == "failed"
+                assert data["generatedSkills"] == []
 
     def test_api_connection_error_degrades(self, client):
         d = submit_test(client)
-        with patch("urllib.request.urlopen", side_effect=ConnectionError("连接失败")):
-            r = client.get(f"/api/test/diagnose?token={d['token']}")
-            assert r.status_code == 200
-            data = r.json()
-            assert data["generatedSkills"] == []
+        with patch("app.main._spawn_skill_generation", side_effect=lambda token, diag: main_module._generate_skills_job(token, diag)):
+            with patch("urllib.request.urlopen", side_effect=ConnectionError("连接失败")):
+                r = client.get(f"/api/test/diagnose?token={d['token']}")
+                assert r.status_code == 200
+                data = client.get(f"/api/test/diagnose/skills?token={d['token']}").json()
+                assert data["generatedSkillsStatus"] == "failed"
+                assert data["generatedSkills"] == []
 
     def test_api_invalid_json_degrades(self, client):
         d = submit_test(client)
@@ -212,11 +221,13 @@ class TestClaudeCodeAPICall:
         mock_resp.__enter__ = lambda s: s
         mock_resp.__exit__ = MagicMock(return_value=False)
 
-        with patch("urllib.request.urlopen", return_value=mock_resp):
-            r = client.get(f"/api/test/diagnose?token={d['token']}")
-            assert r.status_code == 200
-            data = r.json()
-            assert data["generatedSkills"] == []
+        with patch("app.main._spawn_skill_generation", side_effect=lambda token, diag: main_module._generate_skills_job(token, diag)):
+            with patch("urllib.request.urlopen", return_value=mock_resp):
+                r = client.get(f"/api/test/diagnose?token={d['token']}")
+                assert r.status_code == 200
+                data = client.get(f"/api/test/diagnose/skills?token={d['token']}").json()
+                assert data["generatedSkillsStatus"] == "failed"
+                assert data["generatedSkills"] == []
 
     def test_api_payload_contains_diagnosis(self, client):
         d = submit_test(client)
@@ -230,8 +241,9 @@ class TestClaudeCodeAPICall:
             mock_resp.__exit__ = MagicMock(return_value=False)
             return mock_resp
 
-        with patch("urllib.request.urlopen", side_effect=capture_request):
-            client.get(f"/api/test/diagnose?token={d['token']}")
+        with patch("app.main._spawn_skill_generation", side_effect=lambda token, diag: main_module._generate_skills_job(token, diag)):
+            with patch("urllib.request.urlopen", side_effect=capture_request):
+                client.get(f"/api/test/diagnose?token={d['token']}")
 
         assert "token" in captured_req["data"]
         assert "diagnosis" in captured_req["data"]
@@ -251,14 +263,27 @@ class TestClaudeCodeAPICall:
             mock_resp.__exit__ = MagicMock(return_value=False)
             return mock_resp
 
-        with patch("urllib.request.urlopen", side_effect=capture_request):
-            client.get(f"/api/test/diagnose?token={d['token']}&scope=basic")
+        with patch("app.main._spawn_skill_generation", side_effect=lambda token, diag: main_module._generate_skills_job(token, diag)):
+            with patch("urllib.request.urlopen", side_effect=capture_request):
+                client.get(f"/api/test/diagnose?token={d['token']}&scope=basic")
 
         diag = captured_req["data"]["diagnosis"]
         qids = [q["questionId"] for q in diag["questionDetails"]]
-        assert len(qids) == 8
+        assert len(qids) == len(BASIC_QIDS)
         for adv in ADVANCED_QIDS:
             assert adv not in qids
+
+    def test_skills_poll_endpoint_returns_pending_before_generation(self, client):
+        d = submit_test(client)
+        with patch("app.main._spawn_skill_generation", return_value=None):
+            r = client.get(f"/api/test/diagnose?token={d['token']}")
+            assert r.status_code == 200
+            data = r.json()
+            assert data["generatedSkillsStatus"] == "pending"
+            assert data["generatedSkills"] == []
+        poll = client.get(f"/api/test/diagnose/skills?token={d['token']}")
+        assert poll.status_code == 200
+        assert poll.json()["generatedSkillsStatus"] == "pending"
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -270,13 +295,33 @@ _diagnose_cache = {}
 
 
 def _get_diagnose_result(http, scope="basic"):
-    """缓存诊断结果，避免重复调用 US API。"""
+    """缓存诊断结果，并在需要时轮询 generated skills。"""
     key = scope
     if key not in _diagnose_cache:
         d = integration_submit(http, name=f"诊断集成-{scope}")
         r = http.get(f"/api/test/diagnose?token={d['token']}&scope={scope}", timeout=200)
         assert r.status_code == 200, f"diagnose 返回 {r.status_code}: {r.text[:200]}"
-        _diagnose_cache[key] = {"submit": d, "diagnose": r.json()}
+        data = r.json()
+        skills_data = {
+            "token": d["token"],
+            "scope": scope,
+            "generatedSkillsStatus": data.get("generatedSkillsStatus", "pending"),
+            "generatedSkills": data.get("generatedSkills", []),
+        }
+        if skills_data["generatedSkillsStatus"] == "pending":
+            for _ in range(24):
+                sr = http.get(
+                    f"/api/test/diagnose/skills?token={d['token']}&scope={scope}",
+                    timeout=30,
+                )
+                assert sr.status_code == 200
+                skills_data = sr.json()
+                if skills_data["generatedSkillsStatus"] != "pending":
+                    break
+                time.sleep(5)
+        data["generatedSkillsStatus"] = skills_data["generatedSkillsStatus"]
+        data["generatedSkills"] = skills_data.get("generatedSkills", [])
+        _diagnose_cache[key] = {"submit": d, "diagnose": data}
     return _diagnose_cache[key]
 
 
@@ -312,7 +357,7 @@ class TestDiagnoseResponseIntegration:
 
     def test_contains_required_fields(self, http):
         data = _get_diagnose_result(http, scope="basic")["diagnose"]
-        for field in ["token", "lobsterName", "model", "score", "iq", "title", "rank", "scope", "questionDetails"]:
+        for field in ["token", "lobsterName", "model", "score", "iq", "title", "rank", "scope", "questionDetails", "generatedSkillsStatus", "generatedSkills"]:
             assert field in data, f"缺少字段: {field}"
 
     def test_question_detail_structure(self, http):
@@ -347,6 +392,7 @@ class TestClaudeCodeAPIIntegration:
         """正常路径：诊断必须返回至少 1 个 skill（US API 必须可用）。"""
         data = _get_diagnose_result(http, scope="basic")["diagnose"]
         assert "generatedSkills" in data
+        assert data["generatedSkillsStatus"] == "ready"
         # 业务预期：诊断必须生成 skills，空数组意味着 US API 挂了
         assert len(data["generatedSkills"]) > 0, "generatedSkills 为空 — US Claude Code API 可能不可用"
         skill = data["generatedSkills"][0]

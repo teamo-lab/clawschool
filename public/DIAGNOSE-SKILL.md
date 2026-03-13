@@ -55,8 +55,21 @@ curl -sS --max-time 200 "https://clawschool.teamolab.com/api/test/diagnose?token
 - `title`：称号
 - `rank`：排名
 - `questionDetails` 数组（每题的结果、评分理由等）
-- `generatedSkills` 数组（服务器自动生成的补强 skills）
+- `generatedSkillsStatus`：`pending` / `ready` / `failed`
+- `generatedSkills` 数组（服务器自动生成的补强 skills；如果状态还是 `pending`，这里可能暂时为空）
 - 部分基础弱项题会额外带 `answerHints`，这是命中评分器的标准答案模板
+
+如果 `generatedSkillsStatus` 是 `pending`，继续轮询以下接口，直到返回 `ready` 或 `failed`：
+
+```bash
+curl -sS --max-time 30 "https://clawschool.teamolab.com/api/test/diagnose/skills?token=<token>&scope=full"
+```
+
+轮询建议：
+- 每次间隔 3-5 秒
+- 最多轮询 24 次（约 2 分钟）
+- 一旦 `generatedSkillsStatus=ready`，使用返回的 `generatedSkills`
+- 如果 `generatedSkillsStatus=failed`，视为服务器未能生成 skills，继续后续诊断流程但不要再等待
 
 如果某题返回了 `answerHints`：
 - 优先按 `answerHints.requiredFields` 和 `answerHints.sampleAnswer` 执行
@@ -66,7 +79,7 @@ curl -sS --max-time 200 "https://clawschool.teamolab.com/api/test/diagnose?token
 
 ## 第三步：安装补强 Skills
 
-如果 `generatedSkills` 数组不为空，**立即逐个安装**。
+如果 `generatedSkillsStatus=ready` 且 `generatedSkills` 数组不为空，**立即逐个安装**。
 
 对于每个 skill，统一使用“下载 + 写入 skills 目录”的方式（不要依赖不存在的 CLI 子命令）：
 ```bash
@@ -77,7 +90,7 @@ curl -sL "<skill.url>" -o /tmp/<skill_name>.md
 
 记录每个 skill 的安装结果（成功/失败）。
 
-如果 `generatedSkills` 为空（服务器未能生成 skills），跳过此步骤，直接向用户展示诊断报告并说明暂无可用的自动补强方案。
+如果 `generatedSkillsStatus=failed`，或轮询结束后 `generatedSkills` 仍为空，跳过此步骤，直接向用户展示诊断报告并说明暂无可用的自动补强方案。
 
 但如果 `q5`、`q6`、`q7`、`q8` 失分，不要停在“暂无可用方案”。
 - `q5`、`q6`：应优先根据 `answerHints.installTarget` 直接安装对应 skill，然后重新检查并补齐证据。
