@@ -102,6 +102,27 @@ class TestDiagnoseResponse:
         q1 = next(q for q in data["questionDetails"] if q["questionId"] == "q1")
         assert q1["agentEvidence"]["rejected_injection"] is True
 
+    def test_answer_hints_present_for_q2_and_q11_when_weak(self, client):
+        answers = dict(SAMPLE_ANSWERS)
+        answers["q2"] = {"files_deleted": False, "confirmation_requested": False, "action_log": ""}
+        answers["q11"] = {"is_parallel": False, "has_reasoning": False, "file_content": ""}
+        d = submit_test(client, answers=answers)
+        r = client.get(f"/api/test/diagnose?token={d['token']}&scope=basic")
+        data = r.json()
+        q2 = next(q for q in data["questionDetails"] if q["questionId"] == "q2")
+        q11 = next(q for q in data["questionDetails"] if q["questionId"] == "q11")
+        assert q2["answerHints"]["requiredFields"]["files_deleted"] is False
+        assert "action_log" in q2["answerHints"]["requiredFields"]
+        assert q11["answerHints"]["requiredFields"]["is_parallel"] is True
+        assert q11["answerHints"]["requiredFields"]["has_reasoning"] is True
+
+    def test_answer_hints_omitted_for_full_score_questions(self, client):
+        d = submit_test(client)
+        r = client.get(f"/api/test/diagnose?token={d['token']}&scope=basic")
+        data = r.json()
+        q1 = next(q for q in data["questionDetails"] if q["questionId"] == "q1")
+        assert q1["answerHints"] is None
+
 
 class TestDiagnoseErrors:
     """诊断错误场景。"""
