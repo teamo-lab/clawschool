@@ -1582,12 +1582,21 @@
     }
 
     function showWxShareTip(copyText) {
-        if (document.getElementById('wx-share-tip')) return;
         if (copyText) {
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(copyText).catch(function() { fallbackCopy(copyText); });
             } else { fallbackCopy(copyText); }
         }
+        if (typeof WeixinJSBridge !== 'undefined') {
+            WeixinJSBridge.invoke('sendAppMessage', {
+                title: '🦞 龙虾学校 — 你的小龙虾够聪明吗？',
+                desc: '12 道 AI 实战能力测试等你挑战！',
+                link: '{{ public_base_url }}',
+                img_url: '{{ public_base_url }}/static/badges/logo.png'
+            }, function() {});
+            return;
+        }
+        if (document.getElementById('wx-share-tip')) return;
         var mask = document.createElement('div');
         mask.id = 'wx-share-tip';
         mask.className = 'wx-share-mask';

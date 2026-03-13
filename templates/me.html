@@ -958,13 +958,20 @@ if (isWechat && typeof wx !== 'undefined') {
         .catch(function(e) { console.warn('WX JS-SDK init failed:', e); });
 }
 
-function showWxShareTip(copyText) {
-    if (document.getElementById('wx-share-tip')) return;
+function showWxShareTip(copyText, shareTitle, shareDesc, shareLink, shareImg) {
     if (copyText) {
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(copyText).catch(function() { fallbackCopy(copyText); });
         } else { fallbackCopy(copyText); }
     }
+    if (typeof WeixinJSBridge !== 'undefined' && shareTitle) {
+        WeixinJSBridge.invoke('sendAppMessage', {
+            title: shareTitle, desc: shareDesc || '', link: shareLink || window.location.href,
+            img_url: shareImg || ''
+        }, function() {});
+        return;
+    }
+    if (document.getElementById('wx-share-tip')) return;
     var mask = document.createElement('div');
     mask.id = 'wx-share-tip';
     mask.className = 'wx-share-mask';
@@ -1005,7 +1012,10 @@ function copyAndToast(text) {
 function shareResult() {
   var url = PUBLIC_BASE_URL + '/s/' + TOKEN;
   var text = '我的小龙虾「{{ data.name }}」在龙虾学校智力值 {{ data.iq }}！你的小龙虾够聪明吗？👉 ' + url;
-  if (isWechat) { showWxShareTip(text); return; }
+  if (isWechat) {
+    showWxShareTip(text, '我的小龙虾「{{ data.name }}」智力值 {{ data.iq }}！', '你的小龙虾够聪明吗？来测测', url, PUBLIC_BASE_URL + '/api/og-image/' + TOKEN);
+    return;
+  }
   copyAndToast(text);
 }
 
