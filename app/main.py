@@ -551,7 +551,7 @@ async def active_count():
             "SELECT COUNT(*) as cnt FROM tests WHERE status='waiting'"
         ).fetchone()
         total = db.execute(
-            "SELECT COUNT(*) as cnt FROM tests WHERE status='done'"
+            "SELECT COUNT(DISTINCT name) as cnt FROM tests WHERE status='done'"
         ).fetchone()
     finally:
         db.close()
