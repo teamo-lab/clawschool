@@ -481,9 +481,9 @@ body {
   {% endfor %}
   {% set free_upgraded_score = data.score + ns.free_boost %}
   {% set predicted_score = data.score + ns.paid_boost %}
-  {# ── IQ 计算: IQ = 10 + (score / 120) * 70 ── #}
-  {% set free_upgraded_iq = (10 + (free_upgraded_score / 120) * 70) | round(0, 'floor') | int %}
-  {% set predicted_iq = (10 + (predicted_score / 120) * 70) | round(0, 'floor') | int %}
+  {# ── IQ = 原始分，不再做映射 ── #}
+  {% set free_upgraded_iq = free_upgraded_score | int %}
+  {% set predicted_iq = predicted_score | int %}
 
   <!-- Logo -->
   <div class="logo"><span>🦞</span> 龙虾学校 · 我的龙虾</div>
@@ -735,7 +735,7 @@ body {
 
 <script>
 var IQ = {{ data.iq }};
-var IQ_PCT = Math.min(100, (IQ / 180) * 100);
+var IQ_PCT = Math.min(100, (IQ / 120) * 100);
 var TOKEN = '{{ token }}';
 var PAYMENT_STATUS = "{{ payment_status or '' }}";
 var PUBLIC_BASE_URL = '{{ public_base_url }}';

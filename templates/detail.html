@@ -1938,7 +1938,7 @@
         '虾皮': '💀'
     } %}
     {% set title_icon = title_icons.get(data.title, '🦞') %}
-    {% set score_pct = ((data.iq / 180) * 100) | round(0, 'floor') | int %}
+    {% set score_pct = ((data.iq / 120) * 100) | round(0, 'floor') | int %}
 
     {# ── Compute diagnosis counts ── #}
     {% set ns = namespace(ok_count=0, basic_fixable=0, basic_boost=0, advanced_count=0) %}
@@ -2393,7 +2393,7 @@
     var SCORE = {{ data.score or 0 }};
     var IQ = {{ data.iq or 0 }};
     var CIRCUMFERENCE = 653; // 2 * PI * 104
-    var SCORE_PCT = Math.min(100, (IQ / 180) * 100);
+    var SCORE_PCT = Math.min(100, (IQ / 120) * 100);
     var ADVANCED = {{ advanced_qids | list | tojson }};
     var BOOST = {{ ns.basic_boost }};
     var BOOST_IQ = {{ basic_iq_boost }};
@@ -2429,10 +2429,9 @@
         return '完成了部分' + ability + '检查';
     }
 
-    // IQ mapping function (mirrors backend raw_to_iq)
+    // IQ = raw score directly, no conversion
     function rawToIq(raw) {
-        var iq = 10 + (raw / 120) * 70;
-        return Math.max(10, Math.min(80, Math.round(iq)));
+        return Math.max(0, Math.min(120, Math.round(raw)));
     }
 
     function renderQR(canvasId, text) {
@@ -2446,7 +2445,7 @@
 
     var tips = [
         '龙虾学校共测试 12 项 AI 实战能力，覆盖安全防护、模型能力、技能诊断等核心维度。',
-        '全球已有超过 2,000 只龙虾完成测评，最高智力值 180！',
+        '全球已有超过 2,000 只龙虾完成测评，满分智力值 120！',
         '你知道吗？超过 60% 的小龙虾在技能诊断上失分最多。',
         '¥19.9 一次性补齐基础短板，平均提升智力值 +50。',
         '称号体系共 6 级：虾皮 → 冻虾仁 → 麻辣小龙虾 → 蒜蓉大虾 → 澳洲大龙虾 → 波士顿龙虾。',
@@ -2697,12 +2696,12 @@
     // ===== PHASE 3: Result =====
     // ===== Coin badge mapping =====
     var COIN_MAP = [
-        { min: 80, src: '/static/badges/波士顿龙虾.png', glow: 'coin-glow--legend', stage: [255, 200, 50]  },
-        { min: 65, src: '/static/badges/澳洲大龙虾.png', glow: 'coin-glow--adv',    stage: [220, 40, 40]   },
-        { min: 50, src: '/static/badges/蒜蓉大虾.png',   glow: 'coin-glow--silver', stage: [180, 190, 220] },
-        { min: 30, src: '/static/badges/麻辣小龙虾.png',   glow: 'coin-glow--bronze', stage: [205, 127, 50]  },
-        { min: 15, src: '/static/badges/冻虾仁.png',     glow: 'coin-glow--iron',   stage: [120, 140, 180] },
-        { min: 0,  src: '/static/badges/虾皮.png',       glow: 'coin-glow--iron',   stage: [80, 80, 100]   },
+        { min: 120, src: '/static/badges/波士顿龙虾.png', glow: 'coin-glow--legend', stage: [255, 200, 50]  },
+        { min: 105, src: '/static/badges/澳洲大龙虾.png', glow: 'coin-glow--adv',    stage: [220, 40, 40]   },
+        { min: 90,  src: '/static/badges/蒜蓉大虾.png',   glow: 'coin-glow--silver', stage: [180, 190, 220] },
+        { min: 75,  src: '/static/badges/麻辣小龙虾.png', glow: 'coin-glow--bronze', stage: [205, 127, 50]  },
+        { min: 30,  src: '/static/badges/冻虾仁.png',     glow: 'coin-glow--iron',   stage: [120, 140, 180] },
+        { min: 0,   src: '/static/badges/虾皮.png',       glow: 'coin-glow--iron',   stage: [80, 80, 100]   },
     ];
 
     function setCoinBadge(iq) {
@@ -2762,7 +2761,7 @@
         if (resultData) {
             SCORE = resultData.score;
             IQ = resultData.iq || 0;
-            SCORE_PCT = Math.min(100, (IQ / 180) * 100);
+            SCORE_PCT = Math.min(100, (IQ / 120) * 100);
             ORIGINAL_SCORE = SCORE;
             ORIGINAL_IQ = IQ;
             ORIGINAL_TITLE = resultData.title || '';
@@ -2868,12 +2867,12 @@
 
     // ===== Leaderboard =====
     var BADGE_MAP = [
-      { min: 80, src: '/static/badges/波士顿龙虾.png', alt: '波士顿龙虾' },
-      { min: 65, src: '/static/badges/澳洲大龙虾.png', alt: '澳洲大龙虾' },
-      { min: 50, src: '/static/badges/蒜蓉大虾.png',   alt: '蒜蓉大虾' },
-      { min: 30, src: '/static/badges/麻辣小龙虾.png',   alt: '麻辣小龙虾' },
-      { min: 15, src: '/static/badges/冻虾仁.png',     alt: '冻虾仁' },
-      { min: 0,  src: '/static/badges/虾皮.png',       alt: '虾皮' },
+      { min: 120, src: '/static/badges/波士顿龙虾.png', alt: '波士顿龙虾' },
+      { min: 105, src: '/static/badges/澳洲大龙虾.png', alt: '澳洲大龙虾' },
+      { min: 90,  src: '/static/badges/蒜蓉大虾.png',   alt: '蒜蓉大虾' },
+      { min: 75,  src: '/static/badges/麻辣小龙虾.png', alt: '麻辣小龙虾' },
+      { min: 30,  src: '/static/badges/冻虾仁.png',     alt: '冻虾仁' },
+      { min: 0,   src: '/static/badges/虾皮.png',       alt: '虾皮' },
     ];
     function badgeImg(iq) {
       for (var i = 0; i < BADGE_MAP.length; i++) {
@@ -2959,7 +2958,7 @@
         // 预览阶段按原始分补齐后的目标 IQ 展示
         var targetRaw = Math.min(SCORE + BOOST, 120);
         var targetIQ = rawToIq(targetRaw);
-        var targetPct = Math.min(100, (targetIQ / 180) * 100);
+        var targetPct = Math.min(100, (targetIQ / 120) * 100);
         var numEl = document.getElementById('scoreNum');
         window.scrollTo({ top: 0, behavior: 'smooth' });
         setTimeout(function() {
@@ -3455,11 +3454,11 @@
     }
 
     function getBadgeUrl() {
-        if (IQ >= 80) return window.location.origin + '/static/badges/波士顿龙虾.png';
-        if (IQ >= 65) return window.location.origin + '/static/badges/澳洲大龙虾.png';
-        if (IQ >= 50) return window.location.origin + '/static/badges/蒜蓉大虾.png';
-        if (IQ >= 30) return window.location.origin + '/static/badges/麻辣小龙虾.png';
-        if (IQ >= 15) return window.location.origin + '/static/badges/冻虾仁.png';
+        if (IQ >= 120) return window.location.origin + '/static/badges/波士顿龙虾.png';
+        if (IQ >= 105) return window.location.origin + '/static/badges/澳洲大龙虾.png';
+        if (IQ >= 90)  return window.location.origin + '/static/badges/蒜蓉大虾.png';
+        if (IQ >= 75)  return window.location.origin + '/static/badges/麻辣小龙虾.png';
+        if (IQ >= 30)  return window.location.origin + '/static/badges/冻虾仁.png';
         return window.location.origin + '/static/badges/虾皮.png';
     }
 

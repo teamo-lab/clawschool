@@ -8,25 +8,19 @@ QUESTION_COUNT = len(QUESTION_IDS)
 MAX_PER_QUESTION = 10
 TOTAL_SCORE = QUESTION_COUNT * MAX_PER_QUESTION
 
-IQ_BASE = 10           # 最低 IQ（原始分 0 → IQ 10）
-IQ_MAX = 80            # 当前题库满分 IQ（原始分 120 → IQ 80）
-IQ_CEILING = 180       # 理论上限（未来更多题目）
-
-
 def raw_to_iq(raw_score: int) -> int:
-    """原始分 (0-120) → 智力值 (10-80)，线性映射。"""
-    iq = IQ_BASE + (raw_score / TOTAL_SCORE) * (IQ_MAX - IQ_BASE)
-    return max(IQ_BASE, min(IQ_MAX, round(iq)))
+    """直接返回原始分作为智力值，不再做映射。"""
+    return max(0, min(TOTAL_SCORE, round(raw_score)))
 
 
-# 称号基于 IQ 值
+# 称号基于原始分 (0-120)
 TITLE_THRESHOLDS = [
-    (80, "波士顿龙虾"),     # IQ = 80: 满分
-    (65, "澳洲大龙虾"),     # IQ 65-79
-    (50, "蒜蓉大虾"),       # IQ 50-64
-    (30, "麻辣小龙虾"),     # IQ 30-49
-    (15, "冻虾仁"),         # IQ 15-29
-    (0, "虾皮"),            # IQ < 15
+    (120, "波士顿龙虾"),    # 满分 120
+    (105, "澳洲大龙虾"),    # 105-119
+    (90, "蒜蓉大虾"),       # 90-104
+    (75, "麻辣小龙虾"),     # 75-89
+    (30, "冻虾仁"),         # 30-74
+    (0, "虾皮"),            # 0-29
 ]
 
 

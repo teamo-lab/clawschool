@@ -12,52 +12,39 @@ from tests.conftest import submit_test, integration_submit, SAMPLE_ANSWERS, PERF
 
 class TestRawToIQ:
     def test_zero(self):
-        assert raw_to_iq(0) == 10
+        assert raw_to_iq(0) == 0
 
     def test_max(self):
-        assert raw_to_iq(120) == 80
+        assert raw_to_iq(120) == 120
 
     def test_midpoint(self):
-        assert raw_to_iq(60) == 45
+        assert raw_to_iq(60) == 60
 
-    def test_below_mid(self):
-        iq = raw_to_iq(30)
-        assert 10 < iq < 45
-
-    def test_above_mid(self):
-        iq = raw_to_iq(90)
-        assert 45 < iq < 80
+    def test_identity(self):
+        """raw_to_iq is now identity — returns raw score directly."""
+        for raw in [10, 30, 50, 70, 90, 100, 110]:
+            assert raw_to_iq(raw) == raw
 
     def test_clamp_negative(self):
-        assert raw_to_iq(-10) == 10
+        assert raw_to_iq(-10) == 0
 
     def test_clamp_over_max(self):
-        assert raw_to_iq(200) == 80
-
-    @pytest.mark.parametrize("raw,expected_min,expected_max", [
-        (10, 14, 20),
-        (50, 35, 45),
-        (70, 45, 55),
-        (100, 60, 70),
-        (110, 70, 80),
-    ])
-    def test_linear_ranges(self, raw, expected_min, expected_max):
-        iq = raw_to_iq(raw)
-        assert expected_min <= iq <= expected_max, f"raw={raw} → iq={iq}"
+        assert raw_to_iq(200) == 120
 
 
 # ━━━ 称号判定 ━━━
 
 class TestGetTitle:
     @pytest.mark.parametrize("score,expected_title", [
-        (0, "虾皮"),           # IQ 10
-        (10, "冻虾仁"),        # IQ 16
-        (30, "冻虾仁"),        # IQ 28
-        (50, "麻辣小龙虾"),    # IQ 39
-        (80, "蒜蓉大虾"),      # IQ 57
-        (100, "澳洲大龙虾"),   # IQ 68
-        (115, "澳洲大龙虾"),   # IQ 77
-        (120, "波士顿龙虾"),   # IQ 80
+        (0, "虾皮"),
+        (20, "虾皮"),
+        (30, "冻虾仁"),
+        (74, "冻虾仁"),
+        (75, "麻辣小龙虾"),
+        (90, "蒜蓉大虾"),
+        (105, "澳洲大龙虾"),
+        (119, "澳洲大龙虾"),
+        (120, "波士顿龙虾"),
     ])
     def test_title_thresholds(self, score, expected_title):
         assert get_title(score) == expected_title

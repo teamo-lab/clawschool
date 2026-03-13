@@ -653,23 +653,23 @@
         {% else %}
 
         {# ── Badge mapping by IQ ── #}
-        {% if data.iq >= 80 %}
+        {% if data.iq >= 120 %}
             {% set badge_img = '/static/badges/波士顿龙虾.png' %}
             {% set glow_class = 'coin-glow--legend' %}
             {% set stage_rgb = [255, 200, 50] %}
-        {% elif data.iq >= 65 %}
+        {% elif data.iq >= 105 %}
             {% set badge_img = '/static/badges/澳洲大龙虾.png' %}
             {% set glow_class = 'coin-glow--adv' %}
             {% set stage_rgb = [220, 40, 40] %}
-        {% elif data.iq >= 50 %}
+        {% elif data.iq >= 90 %}
             {% set badge_img = '/static/badges/蒜蓉大虾.png' %}
             {% set glow_class = 'coin-glow--silver' %}
             {% set stage_rgb = [180, 190, 220] %}
-        {% elif data.iq >= 30 %}
+        {% elif data.iq >= 75 %}
             {% set badge_img = '/static/badges/麻辣小龙虾.png' %}
             {% set glow_class = 'coin-glow--bronze' %}
             {% set stage_rgb = [205, 127, 50] %}
-        {% elif data.iq >= 15 %}
+        {% elif data.iq >= 30 %}
             {% set badge_img = '/static/badges/冻虾仁.png' %}
             {% set glow_class = 'coin-glow--iron' %}
             {% set stage_rgb = [120, 140, 180] %}
@@ -738,7 +738,7 @@
                 <div class="ability-grid" id="abilityList">
                     {% for grp in ability_groups %}
                         {% set ns = namespace(total_sc=0, total_mx=0) %}
-                        {% for qid in grp.keys %}
+                        {% for qid in grp['keys'] %}
                             {% set qd = data.detail.get(qid, {}) %}
                             {% set ns.total_sc = ns.total_sc + (qd.get('score', 0) | int) %}
                             {% set ns.total_mx = ns.total_mx + (qd.get('max', 10) | int) %}
@@ -829,11 +829,11 @@
     var SHARER_NAME = {{ data.name | tojson }};
 
     function getBadgeForIQ(iq) {
-        if (iq >= 80) return '/static/badges/波士顿龙虾.png';
-        if (iq >= 65) return '/static/badges/澳洲大龙虾.png';
-        if (iq >= 50) return '/static/badges/蒜蓉大虾.png';
-        if (iq >= 30) return '/static/badges/麻辣小龙虾.png';
-        if (iq >= 15) return '/static/badges/冻虾仁.png';
+        if (iq >= 120) return '/static/badges/波士顿龙虾.png';
+        if (iq >= 105) return '/static/badges/澳洲大龙虾.png';
+        if (iq >= 90) return '/static/badges/蒜蓉大虾.png';
+        if (iq >= 75) return '/static/badges/麻辣小龙虾.png';
+        if (iq >= 30) return '/static/badges/冻虾仁.png';
         return '/static/badges/虾皮.png';
     }
 
