@@ -2380,6 +2380,13 @@
 
     <script>
     // ===== Constants =====
+    // Referral tracking: 好友通过分享链接打开 /wait/{token} 时，存储 ref
+    (function() {
+        var params = new URLSearchParams(window.location.search);
+        var ref = params.get('ref') || '{{ token }}';
+        if (ref) localStorage.setItem('clawschool_ref', ref);
+    })();
+
     var TOKEN = '{{ token }}';
     var DOMAIN = '{{ domain }}';
     var DATA_STATUS = '{{ data.status }}';

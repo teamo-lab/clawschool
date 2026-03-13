@@ -930,7 +930,7 @@
                     var desc = '12 道 AI 实战题，测测你的小龙虾够聪明吗？';
                     var imgUrl = '{{ public_base_url }}/static/badges/logo.png';
                     {% endif %}
-                    var shareUrl = '{{ public_base_url }}/s/{{ token }}';
+                    var shareUrl = '{{ public_base_url }}/s/{{ token }}?ref={{ token }}';
                     wx.updateAppMessageShareData({ title: title, desc: desc, link: shareUrl, imgUrl: imgUrl });
                     wx.updateTimelineShareData({ title: title + ' ' + desc, link: shareUrl, imgUrl: imgUrl });
                 });
