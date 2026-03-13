@@ -1377,7 +1377,7 @@
         }
         .global-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     </style>
-    <script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
+    <script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js" defer></script>
 </head>
 
 <body>
@@ -2001,10 +2001,9 @@
     })();
     </script>
 
-    <!-- Three.js -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <!-- Three.js (async, non-blocking) -->
     <script>
-    (function() {
+    function initThreeBackground() {
         var canvas = document.getElementById('hero-bg-canvas');
         var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -2156,8 +2155,9 @@
             renderer.render(scene, camera);
         }
         animate();
-    })();
+    }
     </script>
+    <script src="https://registry.npmmirror.com/three/0.128.0/files/build/three.min.js" async onload="initThreeBackground()"></script>
 
     <!-- 禁止双指缩放 + 双击缩放 -->
     <script>
