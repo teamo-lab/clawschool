@@ -3599,7 +3599,14 @@
             });
     }
 
+    var BASIC_FIXABLE = {{ ns.basic_fixable }};
+
     function startFreeUpgrade() {
+        if (BASIC_FIXABLE === 0) {
+            showToast('🎉 你已经是满分，无需升级');
+            document.getElementById('share-upgrade-modal').classList.remove('show');
+            return;
+        }
         // 跳过支付，直接进入升级流程（复制命令发给龙虾）
         // 先在后端记录免费升级资格
         fetch('/api/payment/create', {
