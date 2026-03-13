@@ -2273,6 +2273,7 @@
                 </ul>
             </div>
             <p class="tip" id="upgrade-wait-tip">正在等待你的小龙虾完成升级，请确保已将命令发给它...</p>
+            <button class="btn-sheet btn-sheet-secondary" id="btn-cancel-upgrade" style="display:none; margin-top:12px;" onclick="cancelUpgradeWait()">取消等待</button>
         </div>
     </div>
 
@@ -3081,6 +3082,20 @@
         document.getElementById('upgrade-step3').classList.add('show');
         simulateUpgradeProgress();
         upgradePoller = setInterval(pollUpgradeResult, 5000);
+        // 30 秒后显示取消按钮
+        setTimeout(function() {
+            var btn = document.getElementById('btn-cancel-upgrade');
+            if (btn) btn.style.display = 'block';
+        }, 30000);
+    }
+
+    function cancelUpgradeWait() {
+        if (upgradePoller) { clearInterval(upgradePoller); upgradePoller = null; }
+        if (window._crawlTimer) { clearInterval(window._crawlTimer); }
+        isUpgrading = false;
+        window.removeEventListener('beforeunload', warnBeforeLeave);
+        localStorage.removeItem('clawschool_upgrade_' + TOKEN);
+        document.getElementById('upgrade-step3').classList.remove('show');
     }
 
     function simulateUpgradeProgress() {
