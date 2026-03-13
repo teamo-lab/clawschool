@@ -3543,7 +3543,7 @@
                 } else if (d.verified) {
                     statusEl.style.background = 'rgba(74,222,128,0.1)';
                     statusEl.style.border = '1px solid rgba(74,222,128,0.3)';
-                    statusEl.innerHTML = '✅ 验证通过！好友已完成测试，你获得了免费升级资格';
+                    statusEl.innerHTML = '✅ 验证通过！好友已开始测试，你获得了免费升级资格';
                     btn.textContent = '好友已测试';
                     btn.disabled = false;
                     // 2 秒后自动跳转到升级流程
@@ -3554,11 +3554,11 @@
                 } else {
                     statusEl.style.background = 'rgba(255,100,100,0.1)';
                     statusEl.style.border = '1px solid rgba(255,100,100,0.3)';
-                    var msg = '❌ 暂未检测到好友完成测试';
+                    var msg = '❌ 暂未检测到好友开始测试';
                     if (d.referrals && d.referrals.length > 0) {
-                        msg += '<br><span style="color:#999; font-size:12px;">已邀请 ' + d.referrals.length + ' 人，但尚无人完成测试</span>';
+                        msg += '<br><span style="color:#999; font-size:12px;">已邀请 ' + d.referrals.length + ' 人，但尚无人开始测试</span>';
                     } else {
-                        msg += '<br><span style="color:#999; font-size:12px;">请先分享链接给好友，好友完成测试后再来验证</span>';
+                        msg += '<br><span style="color:#999; font-size:12px;">请先分享链接给好友，好友开始测试后再来验证</span>';
                     }
                     statusEl.innerHTML = msg;
                     btn.textContent = '好友已测试';

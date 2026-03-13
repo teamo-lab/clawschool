@@ -924,10 +924,10 @@ async def payment_create(request: Request):
     if plan_type == "referral_free":
         db = get_db()
         try:
-            # 验证确实有好友完成了测试
+            # 验证确实有好友开始了测试（创建 token 即算）
             ref_ok = db.execute("""
                 SELECT 1 FROM referrals r JOIN tests t ON r.referee_token = t.token
-                WHERE r.sharer_token = ? AND t.status = 'done'
+                WHERE r.sharer_token = ?
             """, (token,)).fetchone()
             already = db.execute(
                 "SELECT 1 FROM payments WHERE token=? AND plan_type='referral_free'", (token,)
@@ -1345,10 +1345,10 @@ async def referral_bind(request: Request):
 
 @app.get("/api/referral/check/{token}")
 async def referral_check(token: str):
-    """检查分享者是否有好友已完成测试，返回验证结果"""
+    """检查分享者是否有好友已开始测试（创建 token 即算），返回验证结果"""
     db = get_db()
     try:
-        # 查找该 token 邀请的好友中是否有已完成测试的
+        # 查找该 token 邀请的好友（只要 referral 记录存在即说明好友已创建 token）
         rows = db.execute("""
             SELECT r.referee_token, r.referee_name, r.status, t.status as test_status, t.name
             FROM referrals r
@@ -1358,17 +1358,16 @@ async def referral_check(token: str):
         """, (token,)).fetchall()
 
         referrals = []
-        has_completed = False
+        has_started = False
         for row in rows:
             entry = {
                 "referee_name": row["referee_name"] or row["name"] or "",
                 "status": row["status"],
-                "test_done": row["test_status"] == "done",
+                "test_started": row["test_status"] is not None,
             }
             referrals.append(entry)
-            if row["test_status"] == "done":
-                has_completed = True
-                # 更新 referral 状态为 completed
+            if row["test_status"] is not None:
+                has_started = True
                 if row["status"] != "completed":
                     db.execute(
                         "UPDATE referrals SET status='completed', completed_at=? WHERE sharer_token=? AND referee_token=?",
@@ -1385,7 +1384,7 @@ async def referral_check(token: str):
         db.close()
 
     return {
-        "verified": has_completed and not already_used,
+        "verified": has_started and not already_used,
         "already_used": already_used,
         "referrals": referrals,
     }
