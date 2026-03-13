@@ -1032,8 +1032,8 @@ async def join_waitlist(request: Request):
     db = get_db()
     try:
         db.execute(
-            "INSERT INTO waitlist (phone, platform) VALUES (?, ?)",
-            (phone, platform),
+            "INSERT INTO waitlist (phone, platform, created_at) VALUES (?, ?, ?)",
+            (phone, platform, _now_iso()),
         )
         db.commit()
     finally:
