@@ -769,7 +769,7 @@
             var eased = 1 - Math.pow(1 - progress, 3);
             current = Math.round(eased * target);
             el.textContent = current;
-            setRing((current / 270) * 100);
+            setRing((current / 180) * 100);
             if (progress < 1) requestAnimationFrame(step);
         }
         requestAnimationFrame(step);

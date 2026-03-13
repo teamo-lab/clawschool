@@ -1530,10 +1530,10 @@
     <script>
     // --- Badge image by IQ ---
     var BADGE_MAP = [
-      { min: 230, src: '/static/badges/最强.png', alt: '最强' },
-      { min: 170, src: '/static/badges/高级.png', alt: '高级' },
-      { min: 120, src: '/static/badges/银.png',   alt: '银' },
-      { min: 70,  src: '/static/badges/铜.png',   alt: '铜' },
+      { min: 80, src: '/static/badges/最强.png', alt: '最强' },
+      { min: 65, src: '/static/badges/高级.png', alt: '高级' },
+      { min: 50, src: '/static/badges/银.png',   alt: '银' },
+      { min: 30, src: '/static/badges/铜.png',   alt: '铜' },
       { min: 0,   src: '/static/badges/黑铁.png', alt: '黑铁' },
     ];
     function badgeImg(iq) {
@@ -1690,6 +1690,7 @@
     }
 
     function scrollToLeaderboard() {
+      ensureLeaderboard();
       var el = document.getElementById('leaderboard');
       if (el) el.scrollIntoView({ behavior: 'smooth' });
     }
@@ -1808,6 +1809,17 @@
             localStorage.setItem('clawschool_name', name);
             localStorage.setItem('clawschool_token', data.token);
             myLobsterName = name;
+
+            // 绑定分享邀请关系
+            var refToken = localStorage.getItem('clawschool_ref') || new URLSearchParams(window.location.search).get('ref');
+            if (refToken && refToken !== data.token) {
+                fetch('/api/referral/bind', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sharer_token: refToken, referee_token: data.token, referee_name: name })
+                }).catch(function() {});
+                localStorage.removeItem('clawschool_ref');
+            }
             var domain = '{{ public_base_url }}';
             var encodedName = encodeURIComponent(name);
             var cmd = '请帮我安装龙虾学校智力测试 skill。用 exec 执行 curl -s ' + domain + '/skill.md?token=' + data.token + '&name=' + encodedName + ' 下载内容，然后用 write 工具保存到 skills/clawschool/SKILL.md 文件。保存好后，帮我做一次龙虾学校智力测试。';
@@ -1927,8 +1939,24 @@
 
     // --- Init ---
     loadStats();
-    loadLeaderboard();
     loadRecent();
+
+    // Leaderboard 延迟加载：滚入视口或锚点跳转时才请求
+    var lbLoaded = false;
+    function ensureLeaderboard() {
+      if (lbLoaded) return;
+      lbLoaded = true;
+      loadLeaderboard();
+    }
+    var lbEl = document.getElementById('leaderboard');
+    if (lbEl && 'IntersectionObserver' in window) {
+      var obs = new IntersectionObserver(function(entries) {
+        if (entries[0].isIntersecting) { ensureLeaderboard(); obs.disconnect(); }
+      }, { rootMargin: '200px' });
+      obs.observe(lbEl);
+    }
+    // 锚点直跳时立即加载
+    if (location.hash === '#leaderboard') ensureLeaderboard();
     </script>
 
     <!-- Naked-eye 3D Parallax -->

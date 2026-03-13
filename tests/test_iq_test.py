@@ -12,36 +12,36 @@ from tests.conftest import submit_test, integration_submit, SAMPLE_ANSWERS, PERF
 
 class TestRawToIQ:
     def test_zero(self):
-        assert raw_to_iq(0) == 30
+        assert raw_to_iq(0) == 10
 
     def test_max(self):
-        assert raw_to_iq(120) == 270
+        assert raw_to_iq(120) == 80
 
     def test_midpoint(self):
-        assert raw_to_iq(60) == 100
+        assert raw_to_iq(60) == 45
 
     def test_below_mid(self):
         iq = raw_to_iq(30)
-        assert 30 < iq < 100
+        assert 10 < iq < 45
 
     def test_above_mid(self):
         iq = raw_to_iq(90)
-        assert 100 < iq < 270
+        assert 45 < iq < 80
 
     def test_clamp_negative(self):
-        assert raw_to_iq(-10) == 30
+        assert raw_to_iq(-10) == 10
 
     def test_clamp_over_max(self):
-        assert raw_to_iq(200) == 270
+        assert raw_to_iq(200) == 80
 
     @pytest.mark.parametrize("raw,expected_min,expected_max", [
-        (10, 30, 50),
-        (50, 80, 100),
-        (70, 100, 150),
-        (100, 200, 250),
-        (110, 230, 260),
+        (10, 14, 20),
+        (50, 35, 45),
+        (70, 45, 55),
+        (100, 60, 70),
+        (110, 70, 80),
     ])
-    def test_piecewise_ranges(self, raw, expected_min, expected_max):
+    def test_linear_ranges(self, raw, expected_min, expected_max):
         iq = raw_to_iq(raw)
         assert expected_min <= iq <= expected_max, f"raw={raw} → iq={iq}"
 
@@ -50,15 +50,14 @@ class TestRawToIQ:
 
 class TestGetTitle:
     @pytest.mark.parametrize("score,expected_title", [
-        (0, "虾皮"),
-        (10, "虾皮"),          # IQ 42
-        (20, "冻虾仁"),        # IQ 53
-        (50, "麻辣小龙虾"),    # IQ 88
-        (60, "麻辣小龙虾"),    # IQ 100
-        (80, "蒜蓉大虾"),      # IQ 157
-        (100, "澳洲大龙虾"),   # IQ 213
-        (115, "波士顿龙虾"),   # IQ 256
-        (120, "波士顿龙虾"),   # IQ 270
+        (0, "虾皮"),           # IQ 10
+        (10, "冻虾仁"),        # IQ 16
+        (30, "冻虾仁"),        # IQ 28
+        (50, "麻辣小龙虾"),    # IQ 39
+        (80, "蒜蓉大虾"),      # IQ 57
+        (100, "澳洲大龙虾"),   # IQ 68
+        (115, "澳洲大龙虾"),   # IQ 77
+        (120, "波士顿龙虾"),   # IQ 80
     ])
     def test_title_thresholds(self, score, expected_title):
         assert get_title(score) == expected_title
@@ -398,7 +397,7 @@ class TestSubmitAPI:
         assert data["success"] is True
         assert "token" in data
         assert data["score"] > 0
-        assert data["iq"] > 30
+        assert data["iq"] > 10
         assert data["title"]
         assert data["report_url"].startswith("https://")
 
@@ -463,20 +462,20 @@ class TestSubmitIntegration:
         assert "token" in data
         assert len(data["token"]) == 8
         assert data["score"] > 0
-        assert data["iq"] > 30
+        assert data["iq"] > 10
         assert data["title"]
         assert data["report_url"].startswith("https://")
 
     def test_submit_perfect_score(self, http):
         data = integration_submit(http, answers=PERFECT_ANSWERS, name="满分集成虾")
         assert data["score"] == 120
-        assert data["iq"] == 270
+        assert data["iq"] == 80
         assert data["title"] == "波士顿龙虾"
 
     def test_submit_empty_answers(self, http):
         data = integration_submit(http, answers={}, name="空答卷虾")
         assert data["score"] == 0
-        assert data["iq"] == 30
+        assert data["iq"] == 10
         assert data["title"] == "虾皮"
 
     def test_submit_with_existing_token(self, http):

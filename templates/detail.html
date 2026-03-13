@@ -2188,10 +2188,36 @@
 
     <!-- Sticky Bottom -->
     <div class="sticky-bottom" id="stickyBottom">
+        {% if ns.basic_fixable > 0 %}
+        <button class="btn btn-primary" onclick="openShareUpgrade()" style="position:relative;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>
+            分享成绩免费升级
+            <span style="margin-left:6px; font-size:12px; text-decoration:line-through; opacity:0.6;">¥19.9</span>
+            <span style="font-size:13px; font-weight:700; color:#4ade80;"> ¥0</span>
+        </button>
+        {% else %}
         <button class="btn btn-primary" onclick="shareResult()">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>
             炫耀我的成绩
         </button>
+        {% endif %}
+    </div>
+
+    <!-- ===== Share Upgrade Modal ===== -->
+    <div class="overlay" id="share-upgrade-modal" onclick="if(event.target===this)this.classList.remove('show')">
+        <div class="sheet">
+            <div class="sheet-handle"></div>
+            <h3>🎁 分享成绩，免费升级</h3>
+            <p style="color:#bbb; margin-bottom:16px; line-height:1.6;">分享你的成绩，成功邀请好友参加测试后，<br>可<strong style="color:#4ade80;">免费</strong>补齐基础能力。</p>
+            <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:20px;">
+                <span style="font-size:22px; text-decoration:line-through; color:#666;">¥19.9</span>
+                <span style="font-size:28px; font-weight:800; color:#4ade80;">¥0</span>
+            </div>
+            <button class="btn-sheet btn-sheet-primary" id="btn-go-share" onclick="doShareForUpgrade()">去分享</button>
+            <button class="btn-sheet btn-sheet-secondary" id="btn-check-referral" style="display:none;" onclick="checkReferral()">好友已测试</button>
+            <div id="referral-status" style="display:none; margin-top:12px; padding:10px 14px; border-radius:10px; font-size:13px; line-height:1.5;"></div>
+            <button class="btn-sheet btn-sheet-secondary" style="margin-top:8px;" onclick="document.getElementById('share-upgrade-modal').classList.remove('show')">稍后再说</button>
+        </div>
     </div>
 
     <!-- ===== Upgrade Overlays ===== -->
@@ -3479,6 +3505,94 @@
             fallbackCopy(text);
             showToast('炫耀链接已复制到剪贴板');
         }
+    }
+
+    // ===== Share Upgrade =====
+    function openShareUpgrade() {
+        document.getElementById('share-upgrade-modal').classList.add('show');
+    }
+
+    function doShareForUpgrade() {
+        var url = window.location.origin + '/s/' + TOKEN + '?ref=' + TOKEN;
+        var text = '我的小龙虾「{{ data.name }}」在龙虾学校智力测试中智力值 ' + IQ + '，荣获「' + ORIGINAL_TITLE + '」称号！你的小龙虾够聪明吗？👉 ' + url;
+        if (isWechat) {
+            showWxShareTip(text);
+        } else {
+            copyAndToast(text);
+        }
+        // 分享后显示"好友已测试"按钮
+        document.getElementById('btn-go-share').textContent = '再次分享';
+        document.getElementById('btn-check-referral').style.display = '';
+    }
+
+    function checkReferral() {
+        var btn = document.getElementById('btn-check-referral');
+        var statusEl = document.getElementById('referral-status');
+        btn.textContent = '验证中...';
+        btn.disabled = true;
+        fetch('/api/referral/check/' + TOKEN)
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                statusEl.style.display = '';
+                if (d.already_used) {
+                    statusEl.style.background = 'rgba(255,150,22,0.1)';
+                    statusEl.style.border = '1px solid rgba(255,150,22,0.3)';
+                    statusEl.innerHTML = '⚠️ 你已使用过免费升级资格';
+                    btn.textContent = '好友已测试';
+                    btn.disabled = false;
+                } else if (d.verified) {
+                    statusEl.style.background = 'rgba(74,222,128,0.1)';
+                    statusEl.style.border = '1px solid rgba(74,222,128,0.3)';
+                    statusEl.innerHTML = '✅ 验证通过！好友已完成测试，你获得了免费升级资格';
+                    btn.textContent = '好友已测试';
+                    btn.disabled = false;
+                    // 2 秒后自动跳转到升级流程
+                    setTimeout(function() {
+                        document.getElementById('share-upgrade-modal').classList.remove('show');
+                        startFreeUpgrade();
+                    }, 1500);
+                } else {
+                    statusEl.style.background = 'rgba(255,100,100,0.1)';
+                    statusEl.style.border = '1px solid rgba(255,100,100,0.3)';
+                    var msg = '❌ 暂未检测到好友完成测试';
+                    if (d.referrals && d.referrals.length > 0) {
+                        msg += '<br><span style="color:#999; font-size:12px;">已邀请 ' + d.referrals.length + ' 人，但尚无人完成测试</span>';
+                    } else {
+                        msg += '<br><span style="color:#999; font-size:12px;">请先分享链接给好友，好友完成测试后再来验证</span>';
+                    }
+                    statusEl.innerHTML = msg;
+                    btn.textContent = '好友已测试';
+                    btn.disabled = false;
+                }
+            })
+            .catch(function() {
+                statusEl.style.display = '';
+                statusEl.style.background = 'rgba(255,100,100,0.1)';
+                statusEl.style.border = '1px solid rgba(255,100,100,0.3)';
+                statusEl.innerHTML = '❌ 网络错误，请重试';
+                btn.textContent = '好友已测试';
+                btn.disabled = false;
+            });
+    }
+
+    function startFreeUpgrade() {
+        // 跳过支付，直接进入升级流程（复制命令发给龙虾）
+        // 先在后端记录免费升级资格
+        fetch('/api/payment/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: TOKEN, plan_type: 'referral_free', channel: 'referral' })
+        }).then(function(r) { return r.json(); }).then(function(d) {
+            // 直接显示升级步骤2（复制命令）
+            showUpgradeStep2();
+        }).catch(function() {
+            // 即使记录失败也允许升级（MVP 阶段）
+            showUpgradeStep2();
+        });
+    }
+
+    function showUpgradeStep2() {
+        document.getElementById('upgrade-step2').classList.add('show');
     }
 
     // ===== Share =====

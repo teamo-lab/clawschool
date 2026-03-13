@@ -919,6 +919,35 @@ async def payment_create(request: Request):
 
     if not token:
         raise HTTPException(400, "缺少 token")
+
+    # 分享免费升级：验证 referral 后直接标记 paid
+    if plan_type == "referral_free":
+        db = get_db()
+        try:
+            # 验证确实有好友完成了测试
+            ref_ok = db.execute("""
+                SELECT 1 FROM referrals r JOIN tests t ON r.referee_token = t.token
+                WHERE r.sharer_token = ? AND t.status = 'done'
+            """, (token,)).fetchone()
+            already = db.execute(
+                "SELECT 1 FROM payments WHERE token=? AND plan_type='referral_free'", (token,)
+            ).fetchone()
+            if already:
+                return {"success": True, "order_id": "FREE", "already_used": True}
+            if not ref_ok:
+                raise HTTPException(400, "尚未有好友完成测试，无法免费升级")
+            order_id = "FREE" + _gen_token(12)
+            now = _now_iso()
+            db.execute(
+                """INSERT INTO payments (order_id, phone, token, amount, plan_type, channel, status, created_at, paid_at)
+                   VALUES (?, '', ?, 0, 'referral_free', 'referral', 'paid', ?, ?)""",
+                (order_id, token, now, now),
+            )
+            db.commit()
+        finally:
+            db.close()
+        return {"success": True, "order_id": order_id, "plan_type": "referral_free", "amount": 0}
+
     if plan_type not in {"basic", "premium"}:
         raise HTTPException(400, "plan_type 仅支持 basic 或 premium")
     if channel not in VALID_CHANNELS:
@@ -1273,6 +1302,93 @@ async def me_page(request: Request, token: str):
         "advanced_qids": ADVANCED_QIDS, "basic_qids": BASIC_QIDS,
         "expire_date": expire_date,
     })
+
+
+@app.post("/api/referral/bind")
+async def referral_bind(request: Request):
+    """被邀请人创建 token 后绑定到分享者"""
+    body = await request.json()
+    sharer_token = (body.get("sharer_token") or "").strip()
+    referee_token = (body.get("referee_token") or "").strip()
+    referee_name = (body.get("referee_name") or "").strip()
+    if not sharer_token or not referee_token:
+        raise HTTPException(400, "缺少必要参数")
+    if sharer_token == referee_token:
+        raise HTTPException(400, "不能邀请自己")
+
+    now = _now_iso()
+    db = get_db()
+    try:
+        # 检查分享者 token 是否存在且已完成测试
+        sharer = db.execute("SELECT token FROM tests WHERE token=? AND status='done'", (sharer_token,)).fetchone()
+        if not sharer:
+            raise HTTPException(400, "分享者 token 无效")
+        # 检查被邀请人 token 是否存在
+        referee = db.execute("SELECT token FROM tests WHERE token=?", (referee_token,)).fetchone()
+        if not referee:
+            raise HTTPException(400, "被邀请人 token 无效")
+        # 防重复绑定
+        existing = db.execute(
+            "SELECT id FROM referrals WHERE sharer_token=? AND referee_token=?",
+            (sharer_token, referee_token)
+        ).fetchone()
+        if not existing:
+            db.execute(
+                "INSERT INTO referrals (sharer_token, referee_token, referee_name, status, created_at) VALUES (?, ?, ?, 'shared', ?)",
+                (sharer_token, referee_token, referee_name, now)
+            )
+            db.commit()
+    finally:
+        db.close()
+    return {"success": True}
+
+
+@app.get("/api/referral/check/{token}")
+async def referral_check(token: str):
+    """检查分享者是否有好友已完成测试，返回验证结果"""
+    db = get_db()
+    try:
+        # 查找该 token 邀请的好友中是否有已完成测试的
+        rows = db.execute("""
+            SELECT r.referee_token, r.referee_name, r.status, t.status as test_status, t.name
+            FROM referrals r
+            LEFT JOIN tests t ON r.referee_token = t.token
+            WHERE r.sharer_token = ?
+            ORDER BY r.created_at DESC
+        """, (token,)).fetchall()
+
+        referrals = []
+        has_completed = False
+        for row in rows:
+            entry = {
+                "referee_name": row["referee_name"] or row["name"] or "",
+                "status": row["status"],
+                "test_done": row["test_status"] == "done",
+            }
+            referrals.append(entry)
+            if row["test_status"] == "done":
+                has_completed = True
+                # 更新 referral 状态为 completed
+                if row["status"] != "completed":
+                    db.execute(
+                        "UPDATE referrals SET status='completed', completed_at=? WHERE sharer_token=? AND referee_token=?",
+                        (_now_iso(), token, row["referee_token"])
+                    )
+                    db.commit()
+
+        # 检查该 token 是否已经用过免费升级
+        already_used = db.execute(
+            "SELECT 1 FROM payments WHERE token=? AND plan_type='referral_free'",
+            (token,)
+        ).fetchone() is not None
+    finally:
+        db.close()
+
+    return {
+        "verified": has_completed and not already_used,
+        "already_used": already_used,
+        "referrals": referrals,
+    }
 
 
 @app.get("/leaderboard")

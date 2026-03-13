@@ -95,6 +95,21 @@ def init_db():
     """)
     conn.execute("CREATE INDEX IF NOT EXISTS idx_waitlist_phone ON waitlist(phone)")
 
+    # 分享邀请表（分享成绩免费升级）
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS referrals (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sharer_token TEXT NOT NULL,
+            referee_token TEXT,
+            referee_name TEXT,
+            status TEXT NOT NULL DEFAULT 'shared',
+            created_at TEXT NOT NULL,
+            completed_at TEXT
+        )
+    """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_referrals_sharer ON referrals(sharer_token)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_referrals_referee ON referrals(referee_token)")
+
     # 兼容旧表：增量添加新列（已有 DB 不会重建表）
     for col, typedef in [
         ("plan_type", "TEXT NOT NULL DEFAULT 'basic'"),

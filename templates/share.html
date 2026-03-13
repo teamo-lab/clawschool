@@ -652,19 +652,19 @@
         {% else %}
 
         {# ── Badge mapping by IQ ── #}
-        {% if data.iq >= 230 %}
+        {% if data.iq >= 80 %}
             {% set badge_img = '/static/badges/最强.png' %}
             {% set glow_class = 'coin-glow--legend' %}
             {% set stage_rgb = [255, 200, 50] %}
-        {% elif data.iq >= 170 %}
+        {% elif data.iq >= 65 %}
             {% set badge_img = '/static/badges/高级.png' %}
             {% set glow_class = 'coin-glow--adv' %}
             {% set stage_rgb = [220, 40, 40] %}
-        {% elif data.iq >= 120 %}
+        {% elif data.iq >= 50 %}
             {% set badge_img = '/static/badges/银.png' %}
             {% set glow_class = 'coin-glow--silver' %}
             {% set stage_rgb = [180, 190, 220] %}
-        {% elif data.iq >= 70 %}
+        {% elif data.iq >= 30 %}
             {% set badge_img = '/static/badges/铜.png' %}
             {% set glow_class = 'coin-glow--bronze' %}
             {% set stage_rgb = [205, 127, 50] %}
@@ -790,7 +790,7 @@
     {% if data.status == 'done' %}
     <!-- 悬浮底部按钮 -->
     <div class="sticky-bottom" id="stickyBottom">
-        <button class="btn-challenge" onclick="window.location.href='/'">
+        <button class="btn-challenge" onclick="goChallenge()">
             <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
             开始挑战
         </button>
@@ -798,6 +798,18 @@
     {% endif %}
 
     <script>
+    // ===== Referral tracking =====
+    (function() {
+        var params = new URLSearchParams(window.location.search);
+        var ref = params.get('ref') || '{{ token }}';
+        if (ref) localStorage.setItem('clawschool_ref', ref);
+    })();
+
+    function goChallenge() {
+        var ref = localStorage.getItem('clawschool_ref') || '{{ token }}';
+        window.location.href = '/?ref=' + encodeURIComponent(ref);
+    }
+
     {% if data.status == 'done' %}
     // ===== IQ Score counter animation =====
     (function() {
@@ -817,10 +829,10 @@
     var SHARER_NAME = {{ data.name | tojson }};
 
     function getBadgeForIQ(iq) {
-        if (iq >= 230) return '/static/badges/最强.png';
-        if (iq >= 170) return '/static/badges/高级.png';
-        if (iq >= 120) return '/static/badges/银.png';
-        if (iq >= 70)  return '/static/badges/铜.png';
+        if (iq >= 80) return '/static/badges/最强.png';
+        if (iq >= 65) return '/static/badges/高级.png';
+        if (iq >= 50) return '/static/badges/银.png';
+        if (iq >= 30) return '/static/badges/铜.png';
         return '/static/badges/黑铁.png';
     }
 
