@@ -323,7 +323,7 @@
 
         .ability-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 0;
         }
         .ability-item {
@@ -333,11 +333,12 @@
             padding: 9px 10px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.03);
         }
-        .ability-item:nth-child(odd) {
+        .ability-item:nth-child(3n+1),
+        .ability-item:nth-child(3n+2) {
             border-right: 1px solid rgba(255, 255, 255, 0.03);
         }
-        /* 最后两个去底边 */
-        .ability-item:nth-last-child(-n+2) {
+        /* 最后一行去底边 */
+        .ability-item:nth-last-child(-n+3) {
             border-bottom: none;
         }
         .ability-item-name {
@@ -678,13 +679,15 @@
             {% set stage_rgb = [80, 80, 100] %}
         {% endif %}
 
-        {# ── Question names mapping ── #}
-        {% set q_names = {
-            'q1': '注入防御', 'q2': '删除防护', 'q3': '恶意插件', 'q4': 'Skill搜索',
-            'q5': '技能诊断A', 'q6': '技能诊断B', 'q7': '技能诊断C', 'q8': '技能诊断D',
-            'q9': '定时任务', 'q10': '实时搜索', 'q11': '并行执行', 'q12': '网页容错'
-        } %}
-        {% set q_keys = ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11','q12'] %}
+        {# ── 6 ability groups (each merges 2 questions) ── #}
+        {% set ability_groups = [
+            {'name': '安全防护', 'keys': ['q1', 'q2']},
+            {'name': '风险预判', 'keys': ['q3', 'q8']},
+            {'name': '学习进化', 'keys': ['q4', 'q5']},
+            {'name': '自我修复', 'keys': ['q6', 'q7']},
+            {'name': '定时任务', 'keys': ['q9', 'q10']},
+            {'name': '并行处理', 'keys': ['q11', 'q12']},
+        ] %}
 
         {# ── Compute percentile ── #}
         {% if total_done and total_done > 0 and data.rank %}
@@ -692,14 +695,6 @@
         {% else %}
             {% set percentile = 0 %}
         {% endif %}
-
-        {# ── Count valid questions ── #}
-        {% set valid_count = [] %}
-        {% for qid in q_keys %}
-            {% if data.detail.get(qid) %}
-                {% if valid_count.append(1) %}{% endif %}
-            {% endif %}
-        {% endfor %}
 
         <main class="share-page" id="sharePage"
               style="--stage-r: {{ stage_rgb[0] }}; --stage-g: {{ stage_rgb[1] }}; --stage-b: {{ stage_rgb[2] }};">
@@ -731,7 +726,6 @@
                     <div class="hero-pill">排名 <strong>#{{ data.rank }}</strong></div>
                     {% endif %}
                     <div class="hero-pill">超越 <strong>{{ percentile }}%</strong> 龙虾</div>
-                    <div class="hero-pill">原始分 <strong>{{ data.score }}/120</strong></div>
                 </div>
             </div>
 
@@ -739,15 +733,18 @@
             <div class="ability-card">
                 <div class="ability-header">
                     <div class="ability-header-title">能力概览</div>
-                    <div class="ability-header-count">{{ valid_count | length }} 项</div>
+                    <div class="ability-header-count">{{ ability_groups | length }} 项</div>
                 </div>
                 <div class="ability-grid" id="abilityList">
-                    {% for qid in q_keys %}
-                        {% set qd = data.detail.get(qid, {}) %}
-                        {% set sc = qd.get('score', 0) | int %}
-                        {% set mx = qd.get('max', 10) | int %}
-                        {% if mx > 0 %}
-                            {% set pct = (sc / mx * 100) | int %}
+                    {% for grp in ability_groups %}
+                        {% set ns = namespace(total_sc=0, total_mx=0) %}
+                        {% for qid in grp.keys %}
+                            {% set qd = data.detail.get(qid, {}) %}
+                            {% set ns.total_sc = ns.total_sc + (qd.get('score', 0) | int) %}
+                            {% set ns.total_mx = ns.total_mx + (qd.get('max', 10) | int) %}
+                        {% endfor %}
+                        {% if ns.total_mx > 0 %}
+                            {% set pct = (ns.total_sc / ns.total_mx * 100) | int %}
                         {% else %}
                             {% set pct = 0 %}
                         {% endif %}
@@ -759,8 +756,7 @@
                             {% set item_cls = '' %}
                         {% endif %}
                         <div class="ability-item {{ item_cls }}">
-                            <span class="ability-item-name">{{ q_names.get(qid, qid) }}</span>
-                            <span class="ability-item-score">{{ sc }}/{{ mx }}</span>
+                            <span class="ability-item-name">{{ grp.name }}</span>
                         </div>
                     {% endfor %}
                 </div>
@@ -796,7 +792,7 @@
     <div class="sticky-bottom" id="stickyBottom">
         <button class="btn-challenge" onclick="goChallenge()">
             <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-            开始挑战
+            立即测试
         </button>
     </div>
     {% endif %}
