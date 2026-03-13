@@ -958,20 +958,13 @@ if (isWechat && typeof wx !== 'undefined') {
         .catch(function(e) { console.warn('WX JS-SDK init failed:', e); });
 }
 
-function showWxShareTip(copyText, shareTitle, shareDesc, shareLink, shareImg) {
-    if (copyText) {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(copyText).catch(function() { fallbackCopy(copyText); });
-        } else { fallbackCopy(copyText); }
-    }
+function showWxShareTip() {
     // 微信内：蒙层引导用户点右上角「···」分享
     if (document.getElementById('wx-share-tip')) return;
     var mask = document.createElement('div');
     mask.id = 'wx-share-tip';
     mask.className = 'wx-share-mask';
-    var tipHtml = copyText
-        ? '<div class="wx-tip">✅ 炫耀文案已复制到剪贴板<br><br>点击右上角 <strong>···</strong> 分享链接卡片<br>或直接粘贴文案发给好友</div>'
-        : '<div class="wx-tip">点击右上角 <strong>···</strong><br>选择「发送给朋友」或「分享到朋友圈」</div>';
+    var tipHtml = '<div class="wx-tip">点击右上角 <strong>···</strong><br>选择「发送给朋友」或「分享到朋友圈」</div>';
     mask.innerHTML = '<svg class="wx-arrow" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>' +
         tipHtml;
     mask.onclick = function() { mask.remove(); };
@@ -1007,7 +1000,7 @@ function shareResult() {
   var url = PUBLIC_BASE_URL + '/s/' + TOKEN;
   var text = '我的小龙虾「{{ data.name }}」在龙虾学校智力值 {{ data.iq }}！你的小龙虾够聪明吗？👉 ' + url;
   if (isWechat) {
-    showWxShareTip(text, '我的小龙虾「{{ data.name }}」智力值 {{ data.iq }}！', '你的小龙虾够聪明吗？来测测', url, PUBLIC_BASE_URL + '/api/og-image/' + TOKEN);
+    showWxShareTip();
     return;
   }
   copyAndToast(text);
