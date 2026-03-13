@@ -848,7 +848,7 @@
         var table = document.getElementById('lbTable');
         if (!table) return;
 
-        fetch('/api/leaderboard?limit=20')
+        fetch('/api/leaderboard?limit=100')
             .then(function(resp) { return resp.json(); })
             .then(function(data) {
                 if (!data.entries || data.entries.length === 0) {
@@ -856,20 +856,44 @@
                     return;
                 }
 
-                table.innerHTML = data.entries.map(function(e) {
+                var all = data.entries;
+                var picks = [];
+                if (all.length <= 3) {
+                    picks = all;
+                } else {
+                    var midIdx = Math.floor(all.length / 2);
+                    picks = [
+                        { entry: all[0], gap: false },
+                        { entry: null, gap: true },
+                        { entry: all[midIdx], gap: false },
+                        { entry: null, gap: true },
+                        { entry: all[all.length - 1], gap: false }
+                    ];
+                }
+
+                function renderRow(e) {
                     var isSelf = e.name === SHARER_NAME;
                     var cls = isSelf ? 'lb-row lb-self' : 'lb-row';
                     var rc = rankClass(e.rank);
                     var badge = getBadgeForIQ(e.iq || 0);
                     var avatar = '<div class="lb-avatar"><img src="' + badge + '" alt=""></div>';
                     var scoreCls = e.rank === 1 ? ' lb-score-top' : '';
-
                     return '<div class="' + cls + '">' +
                         '<div class="lb-rank ' + rc + '">' + e.rank + '</div>' +
                         '<div class="lb-name">' + avatar + '<span class="lb-name-text">' + e.name + '</span></div>' +
                         '<div class="lb-score' + scoreCls + '">' + (e.iq || e.score) + '</div>' +
                         '</div>';
-                }).join('');
+                }
+
+                var ellipsisRow = '<div class="lb-row" style="justify-content: center; padding: 4px 14px; min-height: 0; border-bottom: 1px solid rgba(255,255,255,0.03);"><span style="color: var(--text-muted); font-size: 14px; letter-spacing: 2px;">···</span></div>';
+
+                if (all.length <= 3) {
+                    table.innerHTML = all.map(renderRow).join('');
+                } else {
+                    table.innerHTML = picks.map(function(p) {
+                        return p.gap ? ellipsisRow : renderRow(p.entry);
+                    }).join('');
+                }
             })
             .catch(function() {
                 table.innerHTML = '<div class="lb-row" style="justify-content: center; color: var(--text-muted); font-size: 12px; padding: 20px;">加载失败</div>';
