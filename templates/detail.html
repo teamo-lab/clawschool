@@ -3302,8 +3302,8 @@
         if (isWechat) {
             if (wxReady) {
                 var newIq = document.querySelector('.score-number') ? document.querySelector('.score-number').textContent : IQ;
-                wx.updateAppMessageShareData({ title: '我的小龙虾「{{ data.name }}」升级了！', desc: '升级后获得新成绩，来测测你的小龙虾', link: url, imgUrl: window.location.origin + '/api/og-image/' + TOKEN });
-                wx.updateTimelineShareData({ title: '我的小龙虾「{{ data.name }}」升级后获得新成绩！来测测你的', link: url, imgUrl: window.location.origin + '/api/og-image/' + TOKEN });
+                wx.updateAppMessageShareData({ title: '「{{ data.name }}」升级后龙虾智力 ' + newIq + '！', desc: '来测测你的小龙虾够聪明吗？', link: url + '?ref=' + TOKEN, imgUrl: getBadgeUrl() });
+                wx.updateTimelineShareData({ title: '「{{ data.name }}」升级后龙虾智力 ' + newIq + '！来测测你的', link: url + '?ref=' + TOKEN, imgUrl: getBadgeUrl() });
             }
             showWxShareTip(text); return;
         }
@@ -3447,12 +3447,21 @@
             .catch(function(e) { console.warn('WX JS-SDK init failed:', e); });
     }
 
+    function getBadgeUrl() {
+        if (IQ >= 80) return window.location.origin + '/static/badges/波士顿龙虾.png';
+        if (IQ >= 65) return window.location.origin + '/static/badges/澳洲大龙虾.png';
+        if (IQ >= 50) return window.location.origin + '/static/badges/蒜蓉大虾.png';
+        if (IQ >= 30) return window.location.origin + '/static/badges/麻辣小龙虾.png';
+        if (IQ >= 15) return window.location.origin + '/static/badges/冻虾仁.png';
+        return window.location.origin + '/static/badges/虾皮.png';
+    }
+
     function updateWxShareData() {
         if (!wxReady) return;
-        var shareUrl = window.location.origin + '/s/' + TOKEN;
-        var title = '我的小龙虾「{{ data.name }}」智力值 ' + IQ + '！';
-        var desc = '称号：' + ORIGINAL_TITLE + ' | 超过 ' + Math.floor(SCORE_PCT) + '% 的龙虾 | 来测测你的';
-        var imgUrl = window.location.origin + '/api/og-image/' + TOKEN;
+        var shareUrl = window.location.origin + '/s/' + TOKEN + '?ref=' + TOKEN;
+        var title = '「{{ data.name }}」龙虾智力 ' + IQ + '，' + ORIGINAL_TITLE + '！';
+        var desc = '超过 ' + Math.floor(SCORE_PCT) + '% 的小龙虾 | 你的小龙虾够聪明吗？来测测';
+        var imgUrl = getBadgeUrl();
         wx.updateAppMessageShareData({ title: title, desc: desc, link: shareUrl, imgUrl: imgUrl });
         wx.updateTimelineShareData({ title: title + ' ' + desc, link: shareUrl, imgUrl: imgUrl });
     }
@@ -3467,10 +3476,10 @@
         // 尝试通过 WeixinJSBridge 直接唤起原生分享面板
         if (typeof WeixinJSBridge !== 'undefined') {
             WeixinJSBridge.invoke('sendAppMessage', {
-                title: '我的小龙虾「{{ data.name }}」在龙虾学校智力测试中智力值 ' + IQ,
-                desc: '荣获「' + ORIGINAL_TITLE + '」称号！你的小龙虾够聪明吗？',
+                title: '「{{ data.name }}」龙虾智力 ' + IQ + '，' + ORIGINAL_TITLE + '！',
+                desc: '超过 ' + Math.floor(SCORE_PCT) + '% 的小龙虾 | 你的小龙虾够聪明吗？来测测',
                 link: window.location.origin + '/s/' + TOKEN + '?ref=' + TOKEN,
-                img_url: window.location.origin + '/api/og-image/' + TOKEN
+                img_url: getBadgeUrl()
             }, function(res) {
                 // 分享完成或取消，不做额外处理
             });

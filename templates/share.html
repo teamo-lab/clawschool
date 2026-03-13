@@ -922,9 +922,9 @@
                 });
                 wx.ready(function() {
                     {% if data.status == 'done' %}
-                    var title = '「{{ data.name }}」在龙虾学校智力值 {{ data.iq }}！';
-                    var desc = '称号：{{ data.title }} | 你的小龙虾够聪明吗？来测测';
-                    var imgUrl = '{{ public_base_url }}/api/og-image/{{ token }}';
+                    var title = '「{{ data.name }}」龙虾智力 {{ data.iq }}，{{ data.title }}！';
+                    var desc = '你的小龙虾够聪明吗？来测测';
+                    var imgUrl = '{{ public_base_url }}/static/badges/{{ data.title }}.png';
                     {% else %}
                     var title = '龙虾学校 — AI Agent 能力测试';
                     var desc = '12 道 AI 实战题，测测你的小龙虾够聪明吗？';
