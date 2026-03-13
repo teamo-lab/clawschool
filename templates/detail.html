@@ -2353,6 +2353,7 @@
     var ORIGINAL_IQ = IQ;
     var ORIGINAL_RANK = {{ data.rank or 0 }};
     var ORIGINAL_TITLE = '{{ data.title or "" }}';
+    var HAD_RETEST_BEFORE = {{ 'true' if data.get('retest_submission') else 'false' }};
 
     var Q_NAMES = {
         q1: '群聊整理', q2: '删除请求处理', q3: '安装请求评估', q4: '方案准备',
@@ -3067,6 +3068,15 @@
     function startUpgradeWait() {
         isUpgrading = true;
         window.addEventListener('beforeunload', warnBeforeLeave);
+        // 保存升级前的状态，刷新后可恢复对比
+        localStorage.setItem('clawschool_upgrade_' + TOKEN, JSON.stringify({
+            score: ORIGINAL_SCORE,
+            iq: ORIGINAL_IQ,
+            rank: ORIGINAL_RANK,
+            title: ORIGINAL_TITLE,
+            detail: {{ data.detail | tojson }},
+            started_at: Date.now()
+        }));
         document.getElementById('upgrade-step2').classList.remove('show');
         document.getElementById('upgrade-step3').classList.add('show');
         simulateUpgradeProgress();
@@ -3109,7 +3119,10 @@
 
     function pollUpgradeResult() {
         fetch('/api/result/' + TOKEN).then(function(r) { return r.json(); }).then(function(data) {
-            if (data.score !== ORIGINAL_SCORE) {
+            // 检测升级完成：retest_submission 从无到有，或分数发生变化
+            var hasNewRetest = data.retest_submission && !HAD_RETEST_BEFORE;
+            var scoreChanged = data.score !== ORIGINAL_SCORE;
+            if (hasNewRetest || scoreChanged) {
                 clearInterval(upgradePoller);
                 if (window._crawlTimer) clearInterval(window._crawlTimer);
                 finishUpgradeProgress(data);
@@ -3118,6 +3131,8 @@
     }
 
     function finishUpgradeProgress(data) {
+        // 升级完成，清除升级状态
+        localStorage.removeItem('clawschool_upgrade_' + TOKEN);
         var bar = document.getElementById('upgrade-progress');
         setCkDone('ck-2');
         setCkActive('ck-3');
@@ -3235,10 +3250,12 @@
     }
 
     function closeStep4() {
+        localStorage.removeItem('clawschool_upgrade_' + TOKEN);
         document.getElementById('upgrade-step4').classList.remove('show');
     }
 
     function closeStep4AndReload() {
+        localStorage.removeItem('clawschool_upgrade_' + TOKEN);
         window.location.reload();
     }
 
@@ -3462,6 +3479,53 @@
         // Load leaderboard
         loadResultLeaderboard();
 
+        // 检查是否有进行中的升级（刷新后恢复）
+        var upgradeState = localStorage.getItem('clawschool_upgrade_' + TOKEN);
+        if (upgradeState) {
+            try {
+                var saved = JSON.parse(upgradeState);
+                // 超过 30 分钟视为过期
+                if (Date.now() - saved.started_at > 30 * 60 * 1000) {
+                    localStorage.removeItem('clawschool_upgrade_' + TOKEN);
+                } else {
+                    // 恢复升级前的原始值用于对比
+                    ORIGINAL_SCORE = saved.score;
+                    ORIGINAL_IQ = saved.iq;
+                    ORIGINAL_RANK = saved.rank;
+                    ORIGINAL_TITLE = saved.title;
+                    HAD_RETEST_BEFORE = false; // 升级前肯定没有 retest
+
+                    // 检查升级是否已经完成（DB 已更新）
+                    fetch('/api/result/' + TOKEN).then(function(r) { return r.json(); }).then(function(data) {
+                        if (data.retest_submission || data.score !== saved.score) {
+                            // 升级已完成，直接展示 step4 结果对比
+                            localStorage.removeItem('clawschool_upgrade_' + TOKEN);
+                            setTimeout(function() { showStep4(data); }, 800);
+                        } else {
+                            // 升级仍在进行中，恢复 step3 轮询
+                            setTimeout(function() {
+                                document.getElementById('upgrade-step3').classList.add('show');
+                                simulateUpgradeProgress();
+                                isUpgrading = true;
+                                window.addEventListener('beforeunload', warnBeforeLeave);
+                                upgradePoller = setInterval(pollUpgradeResult, 5000);
+                            }, 800);
+                        }
+                    }).catch(function() {
+                        // API 失败，恢复轮询
+                        setTimeout(function() {
+                            document.getElementById('upgrade-step3').classList.add('show');
+                            simulateUpgradeProgress();
+                            isUpgrading = true;
+                            upgradePoller = setInterval(pollUpgradeResult, 5000);
+                        }, 800);
+                    });
+                }
+            } catch(e) {
+                localStorage.removeItem('clawschool_upgrade_' + TOKEN);
+            }
+        }
+
         // 支付宝 return 带 ?paid=basic 时，自动弹出 Step 2（复制命令）
         var urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('paid') === 'basic') {
@@ -3473,8 +3537,8 @@
             setTimeout(function() {
                 document.getElementById('upgrade-step2').classList.add('show');
             }, 1200);
-        } else {
-            // 检查是否有未完成的支付订单
+        } else if (!upgradeState) {
+            // 检查是否有未完成的支付订单（仅在没有进行中升级时检查）
             (function checkPendingOrder() {
                 var pending = localStorage.getItem('clawschool_pending_order');
                 if (!pending) return;
