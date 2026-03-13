@@ -966,8 +966,7 @@ async def payment_create(request: Request):
     if not token_row:
         raise HTTPException(404, "token 不存在，请先创建测试记录")
 
-    # TODO: 测试期间使用小额，正式上线改回 1990 / 9900
-    amount = 19 if plan_type == "basic" else 99
+    amount = 1990 if plan_type == "basic" else 9900
     description = "龙虾学校 - 基础能力升级" if plan_type == "basic" else "龙虾学校 - 高级能力订阅"
     order_id = "PAY" + _gen_token(12)
     now = _now_iso()
