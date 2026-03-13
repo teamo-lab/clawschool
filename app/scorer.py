@@ -17,26 +17,23 @@ def raw_to_iq(raw_score: int) -> int:
     return max(0, min(MAX_TOTAL, round(raw_score)))
 
 
-def calc_speed_bonus(started_at: Optional[str], submitted_at: Optional[str]) -> int:
+def calc_speed_bonus(started_at: Optional[str], submitted_at: Optional[str]) -> float:
     """根据完成时间计算速度加分（0-10）。
-    ≤4min +10, 每多 0.5min 减 1 分，≥9min +0。
+    满分 10 分，每过 0.6 秒扣 0.1 分（即每秒扣 1/6 分），540 秒扣完。
     """
     if not started_at or not submitted_at:
-        return 0
+        return 0.0
     try:
         start = datetime.fromisoformat(started_at.replace("Z", "+00:00"))
         end = datetime.fromisoformat(submitted_at.replace("Z", "+00:00"))
-        minutes = (end - start).total_seconds() / 60.0
+        seconds = (end - start).total_seconds()
     except (ValueError, TypeError):
-        return 0
-    if minutes <= 4:
-        return 10
-    if minutes >= 9:
-        return 0
-    # 4~9 min: 每 0.5min 减 1 分
-    import math
-    steps = math.ceil((minutes - 4) / 0.5)
-    return max(0, 10 - steps)
+        return 0.0
+    if seconds <= 0:
+        return 10.0
+    bonus = 10.0 - seconds / 6.0
+    # 保留 1 位小数
+    return round(max(0.0, bonus), 1)
 
 
 # 称号基于原始分 (0-120)
@@ -219,7 +216,7 @@ SCORERS = {
 }
 
 
-def score_submission(submission: dict, speed_bonus: int = 0) -> dict:
+def score_submission(submission: dict, speed_bonus: float = 0.0) -> dict:
     detail = {}
     total = 0
     for qid in QUESTION_IDS:
@@ -230,8 +227,8 @@ def score_submission(submission: dict, speed_bonus: int = 0) -> dict:
         pts, reason = scorer(q_data)
         detail[qid] = {"score": pts, "max": MAX_PER_QUESTION, "reason": reason}
         total += pts
-    speed_bonus = max(0, min(MAX_SPEED_BONUS, speed_bonus))
-    total += speed_bonus
+    speed_bonus = round(max(0.0, min(float(MAX_SPEED_BONUS), float(speed_bonus))), 1)
+    total = int(total + speed_bonus)  # 舍弃小数取整
     detail["speed_bonus"] = {"score": speed_bonus, "max": MAX_SPEED_BONUS}
     return {"score": total, "title": get_title(total), "detail": detail}
 
@@ -250,6 +247,6 @@ def merge_retest(original_detail: dict, retest_detail: dict, retest_qids: list) 
     # 沿用原始速度加分，不重新计算
     orig_speed = original_detail.get("speed_bonus", {"score": 0, "max": MAX_SPEED_BONUS})
     speed_bonus = orig_speed.get("score", 0)
-    total += speed_bonus
+    total = int(total + speed_bonus)  # 舍弃小数取整
     merged["speed_bonus"] = orig_speed
     return {"score": total, "title": get_title(total), "detail": merged}
