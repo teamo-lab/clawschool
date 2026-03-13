@@ -2214,7 +2214,7 @@
                 <span style="font-size:28px; font-weight:800; color:#4ade80;">¥0</span>
             </div>
             <button class="btn-sheet btn-sheet-primary" id="btn-go-share" onclick="doShareForUpgrade()">去分享</button>
-            <button class="btn-sheet btn-sheet-secondary" id="btn-check-referral" style="display:none;" onclick="checkReferral()">好友已测试</button>
+            <button class="btn-sheet" id="btn-check-referral" style="display:none; background:linear-gradient(135deg,#4ade80,#22c55e); color:#fff; font-weight:700; margin-bottom:10px;" onclick="checkReferral()">✅ 好友已测试，验证领取</button>
             <div id="referral-status" style="display:none; margin-top:12px; padding:10px 14px; border-radius:10px; font-size:13px; line-height:1.5;"></div>
             <button class="btn-sheet btn-sheet-secondary" style="margin-top:8px;" onclick="document.getElementById('share-upgrade-modal').classList.remove('show')">稍后再说</button>
         </div>
@@ -3531,8 +3531,11 @@
         } else {
             copyAndToast(text);
         }
-        // 分享后显示"好友已测试"按钮
-        document.getElementById('btn-go-share').textContent = '再次分享';
+        // 分享后：降级"去分享"，突出"验证领取"
+        var goBtn = document.getElementById('btn-go-share');
+        goBtn.textContent = '再次分享';
+        goBtn.className = 'btn-sheet btn-sheet-secondary';
+        goBtn.style.cssText = 'font-size:14px;';
         document.getElementById('btn-check-referral').style.display = '';
     }
 
