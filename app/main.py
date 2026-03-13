@@ -1242,12 +1242,24 @@ async def wait_page(request: Request, token: str):
 
     data["iq"] = raw_to_iq(data["score"]) if data["status"] == "done" else 0
 
+    # 查询是否有分享邀请记录（用于显示"免费升级"入口）
+    db2 = get_db()
+    try:
+        has_referral = db2.execute(
+            "SELECT 1 FROM referrals WHERE sharer_token=? LIMIT 1", (token,)
+        ).fetchone() is not None
+    except Exception:
+        has_referral = False
+    finally:
+        db2.close()
+
     return templates.TemplateResponse("detail.html", {
         "request": request,
         "domain": DOMAIN,
         "public_base_url": _public_base_url(),
         "data": data,
         "token": token,
+        "has_referral": has_referral,
         "advanced_qids": ADVANCED_QIDS, "basic_qids": BASIC_QIDS, "raw_to_iq": raw_to_iq,
     })
 
