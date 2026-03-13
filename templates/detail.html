@@ -11,10 +11,12 @@
     <meta property="og:image" content="{{ public_base_url }}/api/og-image/{{ token }}">
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ public_base_url }}/r/{{ token }}">
+    <link rel="preconnect" href="https://fonts.googleapis.cn" crossorigin>
     <link
         href="https://fonts.googleapis.cn/css2?family=Outfit:wght@300;400;500;700;800;900&family=Inter:wght@400;500;600&display=swap"
-        rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+        rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.cn/css2?family=Outfit:wght@300;400;500;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" async></script>
 
     <style>
         :root {

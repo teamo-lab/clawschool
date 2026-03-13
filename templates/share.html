@@ -12,9 +12,11 @@
     <meta property="og:image" content="{{ public_base_url }}/api/og-image/{{ token }}">
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ public_base_url }}/s/{{ token }}">
+    <link rel="preconnect" href="https://fonts.googleapis.cn" crossorigin>
     <link
         href="https://fonts.googleapis.cn/css2?family=Outfit:wght@300;400;500;700;800;900&family=Inter:wght@400;500;600&display=swap"
-        rel="stylesheet">
+        rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.cn/css2?family=Outfit:wght@300;400;500;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
 
     <style>
         :root {
