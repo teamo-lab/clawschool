@@ -136,13 +136,20 @@ def _render_public_skill(path: Path) -> str:
     return content
 
 def _get_rank(score: int, token: str):
-    """获取指定 token 在排行榜中的排名"""
+    """获取指定 token 在排行榜中的排名（同名取最高分去重后排名）"""
     db = get_db()
     try:
-        row = db.execute(
-            "SELECT COUNT(*) as rank FROM tests WHERE status='done' AND (score > ? OR (score = ? AND token < ?))",
-            (score, score, token)
-        ).fetchone()
+        # 先查当前 token 对应的 name
+        name_row = db.execute("SELECT name FROM tests WHERE token=?", (token,)).fetchone()
+        if not name_row:
+            return None
+        name = name_row["name"]
+        # 同名取最高分去重，计算有多少个不同名字的最高分 > 当前分数
+        row = db.execute("""
+            SELECT COUNT(*) as rank FROM (
+                SELECT name, MAX(score) as best_score FROM tests WHERE status='done' GROUP BY name
+            ) t WHERE t.best_score > ? OR (t.best_score = ? AND t.name < ?)
+        """, (score, score, name)).fetchone()
         return (row["rank"] + 1) if row else None
     finally:
         db.close()
@@ -1106,7 +1113,7 @@ async def share_page(request: Request, token: str):
 
     db = get_db()
     try:
-        total = db.execute("SELECT COUNT(*) as cnt FROM tests WHERE status='done'").fetchone()
+        total = db.execute("SELECT COUNT(DISTINCT name) as cnt FROM tests WHERE status='done'").fetchone()
         total_done = total["cnt"] if total else 0
     finally:
         db.close()
@@ -1172,7 +1179,7 @@ async def me_page(request: Request, token: str):
             (token,)
         ).fetchone()
         total_done = db.execute(
-            "SELECT COUNT(*) as cnt FROM tests WHERE status='done'"
+            "SELECT COUNT(DISTINCT name) as cnt FROM tests WHERE status='done'"
         ).fetchone()["cnt"]
     finally:
         db.close()
