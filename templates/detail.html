@@ -2032,7 +2032,7 @@
             <div class="score-coin-wrap">
                 <div class="coin-grid"></div>
                 <div class="coin-glow" id="coinGlow"></div>
-                <img id="rankCoin" class="rank-coin" src="/static/badges/黑铁.png" alt="等级徽章">
+                <img id="rankCoin" class="rank-coin" src="/static/badges/虾皮.png" alt="等级徽章">
                 <div class="coin-specular" id="coinSpecular"></div>
             </div>
 
@@ -2690,11 +2690,12 @@
     // ===== PHASE 3: Result =====
     // ===== Coin badge mapping =====
     var COIN_MAP = [
-        { min: 80, src: '/static/badges/最强.png', glow: 'coin-glow--legend', stage: [255, 200, 50]  },
-        { min: 65, src: '/static/badges/高级.png', glow: 'coin-glow--adv',    stage: [220, 40, 40]   },
-        { min: 50, src: '/static/badges/银.png',   glow: 'coin-glow--silver', stage: [180, 190, 220] },
-        { min: 30, src: '/static/badges/铜.png',   glow: 'coin-glow--bronze', stage: [205, 127, 50]  },
-        { min: 0,  src: '/static/badges/黑铁.png', glow: 'coin-glow--iron',   stage: [80, 80, 100]   },
+        { min: 80, src: '/static/badges/波士顿龙虾.png', glow: 'coin-glow--legend', stage: [255, 200, 50]  },
+        { min: 65, src: '/static/badges/澳洲大龙虾.png', glow: 'coin-glow--adv',    stage: [220, 40, 40]   },
+        { min: 50, src: '/static/badges/蒜蓉大虾.png',   glow: 'coin-glow--silver', stage: [180, 190, 220] },
+        { min: 30, src: '/static/badges/麻辣小龙虾.png',   glow: 'coin-glow--bronze', stage: [205, 127, 50]  },
+        { min: 15, src: '/static/badges/冻虾仁.png',     glow: 'coin-glow--iron',   stage: [120, 140, 180] },
+        { min: 0,  src: '/static/badges/虾皮.png',       glow: 'coin-glow--iron',   stage: [80, 80, 100]   },
     ];
 
     function setCoinBadge(iq) {
@@ -2860,17 +2861,18 @@
 
     // ===== Leaderboard =====
     var BADGE_MAP = [
-      { min: 80, src: '/static/badges/最强.png', alt: '最强' },
-      { min: 65, src: '/static/badges/高级.png', alt: '高级' },
-      { min: 50, src: '/static/badges/银.png',   alt: '银' },
-      { min: 30, src: '/static/badges/铜.png',   alt: '铜' },
-      { min: 0,  src: '/static/badges/黑铁.png', alt: '黑铁' },
+      { min: 80, src: '/static/badges/波士顿龙虾.png', alt: '波士顿龙虾' },
+      { min: 65, src: '/static/badges/澳洲大龙虾.png', alt: '澳洲大龙虾' },
+      { min: 50, src: '/static/badges/蒜蓉大虾.png',   alt: '蒜蓉大虾' },
+      { min: 30, src: '/static/badges/麻辣小龙虾.png',   alt: '麻辣小龙虾' },
+      { min: 15, src: '/static/badges/冻虾仁.png',     alt: '冻虾仁' },
+      { min: 0,  src: '/static/badges/虾皮.png',       alt: '虾皮' },
     ];
     function badgeImg(iq) {
       for (var i = 0; i < BADGE_MAP.length; i++) {
         if (iq >= BADGE_MAP[i].min) return '<img src="' + BADGE_MAP[i].src + '" alt="' + BADGE_MAP[i].alt + '">';
       }
-      return '<img src="/static/badges/黑铁.png" alt="黑铁">';
+      return '<img src="/static/badges/虾皮.png" alt="黑铁">';
     }
     function escHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 

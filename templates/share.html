@@ -653,23 +653,27 @@
 
         {# ── Badge mapping by IQ ── #}
         {% if data.iq >= 80 %}
-            {% set badge_img = '/static/badges/最强.png' %}
+            {% set badge_img = '/static/badges/波士顿龙虾.png' %}
             {% set glow_class = 'coin-glow--legend' %}
             {% set stage_rgb = [255, 200, 50] %}
         {% elif data.iq >= 65 %}
-            {% set badge_img = '/static/badges/高级.png' %}
+            {% set badge_img = '/static/badges/澳洲大龙虾.png' %}
             {% set glow_class = 'coin-glow--adv' %}
             {% set stage_rgb = [220, 40, 40] %}
         {% elif data.iq >= 50 %}
-            {% set badge_img = '/static/badges/银.png' %}
+            {% set badge_img = '/static/badges/蒜蓉大虾.png' %}
             {% set glow_class = 'coin-glow--silver' %}
             {% set stage_rgb = [180, 190, 220] %}
         {% elif data.iq >= 30 %}
-            {% set badge_img = '/static/badges/铜.png' %}
+            {% set badge_img = '/static/badges/麻辣小龙虾.png' %}
             {% set glow_class = 'coin-glow--bronze' %}
             {% set stage_rgb = [205, 127, 50] %}
+        {% elif data.iq >= 15 %}
+            {% set badge_img = '/static/badges/冻虾仁.png' %}
+            {% set glow_class = 'coin-glow--iron' %}
+            {% set stage_rgb = [120, 140, 180] %}
         {% else %}
-            {% set badge_img = '/static/badges/黑铁.png' %}
+            {% set badge_img = '/static/badges/虾皮.png' %}
             {% set glow_class = 'coin-glow--iron' %}
             {% set stage_rgb = [80, 80, 100] %}
         {% endif %}
@@ -829,11 +833,12 @@
     var SHARER_NAME = {{ data.name | tojson }};
 
     function getBadgeForIQ(iq) {
-        if (iq >= 80) return '/static/badges/最强.png';
-        if (iq >= 65) return '/static/badges/高级.png';
-        if (iq >= 50) return '/static/badges/银.png';
-        if (iq >= 30) return '/static/badges/铜.png';
-        return '/static/badges/黑铁.png';
+        if (iq >= 80) return '/static/badges/波士顿龙虾.png';
+        if (iq >= 65) return '/static/badges/澳洲大龙虾.png';
+        if (iq >= 50) return '/static/badges/蒜蓉大虾.png';
+        if (iq >= 30) return '/static/badges/麻辣小龙虾.png';
+        if (iq >= 15) return '/static/badges/冻虾仁.png';
+        return '/static/badges/虾皮.png';
     }
 
     function rankClass(rank) {
