@@ -3082,11 +3082,11 @@
         document.getElementById('upgrade-step3').classList.add('show');
         simulateUpgradeProgress();
         upgradePoller = setInterval(pollUpgradeResult, 5000);
-        // 30 秒后显示取消按钮
+        // 10 分钟后显示取消按钮
         setTimeout(function() {
             var btn = document.getElementById('btn-cancel-upgrade');
             if (btn) btn.style.display = 'block';
-        }, 30000);
+        }, 10 * 60 * 1000);
     }
 
     function cancelUpgradeWait() {
@@ -3094,7 +3094,7 @@
         if (window._crawlTimer) { clearInterval(window._crawlTimer); }
         isUpgrading = false;
         window.removeEventListener('beforeunload', warnBeforeLeave);
-        localStorage.removeItem('clawschool_upgrade_' + TOKEN);
+        // 不清除 localStorage：下次刷新页面时自动检测 agent 是否已完成升级
         document.getElementById('upgrade-step3').classList.remove('show');
     }
 
