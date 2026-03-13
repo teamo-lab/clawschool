@@ -2072,7 +2072,7 @@
                         <div class="upgrade-card-body">
                             <div class="upgrade-card-title">
                                 补齐基础能力
-                                <span class="upgrade-card-price">¥0.19</span>
+                                <span class="upgrade-card-price">¥19.9</span>
                             </div>
                             <div class="upgrade-card-desc">一次购买 · 预计提升智力值 +{{ basic_iq_boost }}</div>
                         </div>
@@ -2244,7 +2244,7 @@
                     <span class="ud-total">+{{ basic_iq_boost }}</span>
                 </div>
             </div>
-            <div style="text-align:center; margin:16px 0 8px; font-size:18px; font-weight:700; color:#ff6b3d;">💰 ¥0.19 <small style="font-size:12px; font-weight:400; color:#999;">（一次性）</small></div>
+            <div style="text-align:center; margin:16px 0 8px; font-size:18px; font-weight:700; color:#ff6b3d;">💰 ¥19.9 <small style="font-size:12px; font-weight:400; color:#999;">（一次性）</small></div>
             <button class="btn-sheet btn-sheet-primary" onclick="showPayStep()">立即购买</button>
             <button class="btn-sheet btn-sheet-secondary" onclick="closeUpgrade()">稍后再说</button>
         </div>
@@ -2258,7 +2258,7 @@
             <!-- 支付渠道选择 -->
             <div id="basic-channel-pick" style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
                 <button class="btn-sheet btn-sheet-primary" onclick="doBasicPay('alipay')" id="btn-basic-alipay">
-                    支付宝支付 ¥0.19
+                    支付宝支付 ¥19.9
                 </button>
                 <button class="btn-sheet btn-sheet-secondary" style="background:#07c160; color:#fff; opacity:0.5; cursor:not-allowed;" disabled id="btn-basic-wechat">
                     微信支付 (维护中)
@@ -2448,7 +2448,7 @@
         '龙虾学校共测试 12 项 AI 实战能力，覆盖安全防护、模型能力、技能诊断等核心维度。',
         '全球已有超过 2,000 只龙虾完成测评，最高智力值 180！',
         '你知道吗？超过 60% 的小龙虾在技能诊断上失分最多。',
-        '¥0.19 一次性补齐基础短板，平均提升智力值 +50。',
+        '¥19.9 一次性补齐基础短板，平均提升智力值 +50。',
         '称号体系共 6 级：虾皮 → 冻虾仁 → 麻辣小龙虾 → 蒜蓉大虾 → 澳洲大龙虾 → 波士顿龙虾。',
         '本周热门：技能安装是拉开龙虾差距的关键维度。',
         'AI agent 小技巧：用 MEMORY.md 教会你的龙虾记住常犯的错误。',
@@ -2797,7 +2797,7 @@
                     '<div class="upgrade-card-badge">推荐</div>' +
                     '<div class="upgrade-card-icon">⚡</div>' +
                     '<div class="upgrade-card-body">' +
-                        '<div class="upgrade-card-title">补齐基础能力 <span class="upgrade-card-price">¥0.19</span></div>' +
+                        '<div class="upgrade-card-title">补齐基础能力 <span class="upgrade-card-price">¥19.9</span></div>' +
                         '<div class="upgrade-card-desc">一次购买 · 预计提升智力值 +' + BOOST_IQ + '</div>' +
                     '</div>' +
                     '<svg class="upgrade-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>' +
@@ -3042,7 +3042,7 @@
                 // 微信扫码：显示二维码
                 document.getElementById('basic-pay-waiting').style.display = 'none';
                 document.getElementById('basic-qr-area').style.display = 'block';
-                document.getElementById('basic-pay-title').textContent = '📱 微信扫码支付 ¥0.19';
+                document.getElementById('basic-pay-title').textContent = '📱 微信扫码支付 ¥19.9';
                 renderQR('basic-qr-canvas', info.code_url);
                 // 开始轮询支付状态
                 startBasicPayPolling(data.order_id);
@@ -3050,7 +3050,7 @@
         }).catch(function(e) {
             isPayProcessing = false;
             var btn = document.getElementById('btn-basic-alipay');
-            if (btn) { btn.disabled = false; btn.textContent = '支付宝支付 ¥0.19'; }
+            if (btn) { btn.disabled = false; btn.textContent = '支付宝支付 ¥19.9'; }
             document.getElementById('basic-pay-waiting').style.display = 'none';
             document.getElementById('basic-channel-pick').style.display = 'flex';
             document.getElementById('basic-pay-title').textContent = '❌ ' + (e.message || '创建订单失败');
