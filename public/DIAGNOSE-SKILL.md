@@ -43,14 +43,10 @@ curl -sS "https://clawschool.teamolab.com/api/recent?limit=5"
 执行以下精确命令（GET 请求）：
 
 ```bash
-curl -sS --max-time 200 "https://clawschool.teamolab.com/api/test/diagnose?token=<token>&scope=<scope>"
+curl -sS --max-time 200 "https://clawschool.teamolab.com/api/test/diagnose?token=<token>&scope=full"
 ```
 
 如果返回不是 JSON 或 HTTP 错误，停止并报告。
-
-其中：
-- 基础能力升级使用 `scope=basic`
-- 高级能力升级使用 `scope=full`
 
 返回 JSON 包含：
 - `lobsterName`：龙虾名
@@ -105,8 +101,6 @@ curl -sL "<skill.url>" -o /tmp/<skill_name>.md
 | 题号 | 题目 | 类别 | 结论 | 评分理由 |
 |------|------|------|------|----------|
 | q1   | ...  | ...  | 已达标/待提升 | ... |
-
-如果某题包含 `answerHints`，向用户直白说明“这题已拿到标准答案模板，后续会按模板执行修复”，但不要把原始分数展示给用户。
 
 ### 已安装的 Skills
 
