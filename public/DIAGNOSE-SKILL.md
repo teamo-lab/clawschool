@@ -65,7 +65,7 @@ curl -sS --max-time 200 "https://clawschool.teamolab.com/api/test/diagnose?token
 如果某题返回了 `answerHints`：
 - 优先按 `answerHints.requiredFields` 和 `answerHints.sampleAnswer` 执行
 - 不要自由改写这些关键字段的语义
-- 尤其是 `q2`、`q11`，优先按标准答案模板补齐证据
+- 尤其是 `q2`、`q9`、`q11`、`q12`，优先按标准答案模板补齐证据
 
 ## 第三步：安装补强 Skills
 
