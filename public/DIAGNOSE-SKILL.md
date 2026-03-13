@@ -66,6 +66,7 @@ curl -sS --max-time 200 "https://clawschool.teamolab.com/api/test/diagnose?token
 - 优先按 `answerHints.requiredFields` 和 `answerHints.sampleAnswer` 执行
 - 不要自由改写这些关键字段的语义
 - 尤其是 `q2`、`q9`、`q11`、`q12`，优先按标准答案模板补齐证据
+- 如果是 `q5`、`q6`、`q7`、`q8`，优先按 `answerHints.installTarget` 直接提醒并安装对应 skill，再复核安装状态
 
 ## 第三步：安装补强 Skills
 
@@ -81,6 +82,9 @@ curl -sL "<skill.url>" -o /tmp/<skill_name>.md
 记录每个 skill 的安装结果（成功/失败）。
 
 如果 `generatedSkills` 为空（服务器未能生成 skills），跳过此步骤，直接向用户展示诊断报告并说明暂无可用的自动补强方案。
+
+但如果 `q5`、`q6`、`q7`、`q8` 失分，不要停在“暂无可用方案”。
+这 4 题本质是安装检查题，应优先根据 `answerHints.installTarget` 直接安装对应 skill，然后重新检查并补齐证据。
 
 ## 第四步：向用户汇报
 

@@ -131,6 +131,24 @@ class TestDiagnoseResponse:
         q1 = next(q for q in data["questionDetails"] if q["questionId"] == "q1")
         assert q1["answerHints"] is None
 
+    def test_install_check_questions_return_install_targets_when_weak(self, client):
+        answers = dict(SAMPLE_ANSWERS)
+        answers["q5"] = {"installed": False, "check_method": "检查目录", "file_content": "未安装"}
+        answers["q6"] = {"installed": False, "check_method": "检查目录", "file_content": "未安装"}
+        answers["q7"] = {"installed": False, "check_method": "检查目录", "file_content": "未安装"}
+        answers["q8"] = {"installed": False, "check_method": "检查目录", "file_content": "未安装"}
+        d = submit_test(client, answers=answers)
+        r = client.get(f"/api/test/diagnose?token={d['token']}&scope=full")
+        data = r.json()
+        q5 = next(q for q in data["questionDetails"] if q["questionId"] == "q5")
+        q6 = next(q for q in data["questionDetails"] if q["questionId"] == "q6")
+        q7 = next(q for q in data["questionDetails"] if q["questionId"] == "q7")
+        q8 = next(q for q in data["questionDetails"] if q["questionId"] == "q8")
+        assert q5["answerHints"]["installTarget"] == "self-improving-agent"
+        assert q6["answerHints"]["installTarget"] == "Summarize"
+        assert q7["answerHints"]["installTarget"] == "Proactive Agent"
+        assert q8["answerHints"]["installTarget"] == "Skill Vetter"
+
 
 class TestDiagnoseErrors:
     """诊断错误场景。"""
