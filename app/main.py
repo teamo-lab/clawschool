@@ -1074,12 +1074,20 @@ async def share_page(request: Request, token: str):
     data["rank"] = _get_rank(data["score"], token) if data["status"] == "done" else None
     data["iq"] = raw_to_iq(data["score"]) if data["status"] == "done" else 0
 
+    db = get_db()
+    try:
+        total = db.execute("SELECT COUNT(*) as cnt FROM tests WHERE status='done'").fetchone()
+        total_done = total["cnt"] if total else 0
+    finally:
+        db.close()
+
     return templates.TemplateResponse("share.html", {
         "request": request,
         "domain": DOMAIN,
         "public_base_url": _public_base_url(),
         "data": data,
         "token": token,
+        "total_done": total_done,
     })
 
 
