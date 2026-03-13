@@ -418,27 +418,19 @@ class TestMergeRetest:
 # ━━━ 速度加分 ━━━
 
 class TestCalcSpeedBonus:
-    """满分10, 每0.6秒扣0.1分, 540秒扣完"""
+    """满分10, 每5.4秒扣0.1分, 540秒扣完。公式: 10 - seconds/54"""
 
     def test_instant(self):
         """0秒 → 满分10"""
         assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:00:00+00:00") == 10.0
 
-    def test_6_seconds(self):
-        """6秒 → 扣1分 → 9.0"""
-        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:00:06+00:00") == 9.0
+    def test_54_seconds(self):
+        """54秒 → 扣1分 → 9.0"""
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:00:54+00:00") == 9.0
 
-    def test_60_seconds(self):
-        """60秒 → 扣10分 → 0.0"""
-        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:01:00+00:00") == 0.0
-
-    def test_3_seconds(self):
-        """3秒 → 扣0.5 → 9.5"""
-        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:00:03+00:00") == 9.5
-
-    def test_30_seconds(self):
-        """30秒 → 扣5 → 5.0"""
-        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:00:30+00:00") == 5.0
+    def test_270_seconds(self):
+        """270秒(4.5min) → 扣5分 → 5.0"""
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:04:30+00:00") == 5.0
 
     def test_540_seconds(self):
         """540秒(9min) → 刚好扣完 → 0.0"""
@@ -447,6 +439,18 @@ class TestCalcSpeedBonus:
     def test_over_540_seconds(self):
         """超过540秒 → 不再扣，仍然0"""
         assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:15:00+00:00") == 0.0
+
+    def test_27_seconds(self):
+        """27秒 → 扣0.5 → 9.5"""
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:00:27+00:00") == 9.5
+
+    def test_120_seconds(self):
+        """120秒(2min) → 10-120/54=7.78 → round=7.8"""
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:02:00+00:00") == 7.8
+
+    def test_300_seconds(self):
+        """300秒(5min) → 10-300/54=4.44 → round=4.4"""
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:05:00+00:00") == 4.4
 
     def test_no_started_at(self):
         assert calc_speed_bonus(None, "2026-03-12T10:05:00+00:00") == 0.0

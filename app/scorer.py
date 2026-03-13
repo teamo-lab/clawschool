@@ -19,7 +19,8 @@ def raw_to_iq(raw_score: int) -> int:
 
 def calc_speed_bonus(started_at: Optional[str], submitted_at: Optional[str]) -> float:
     """根据完成时间计算速度加分（0-10）。
-    满分 10 分，每过 0.6 秒扣 0.1 分（即每秒扣 1/6 分），540 秒扣完。
+    满分 10 分，每过 5.4 秒扣 0.1 分，540 秒扣完。
+    公式：bonus = 10 - seconds / 54
     """
     if not started_at or not submitted_at:
         return 0.0
@@ -31,7 +32,7 @@ def calc_speed_bonus(started_at: Optional[str], submitted_at: Optional[str]) -> 
         return 0.0
     if seconds <= 0:
         return 10.0
-    bonus = 10.0 - seconds / 6.0
+    bonus = 10.0 - seconds / 54.0
     # 保留 1 位小数
     return round(max(0.0, bonus), 1)
 
