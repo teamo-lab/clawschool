@@ -1355,7 +1355,19 @@
 
             .sheet-panel { max-width: 500px; padding: 36px 40px; }
         }
+        .wx-share-mask {
+            position: fixed; inset: 0; z-index: 99999;
+            background: rgba(0,0,0,0.75); display: flex; flex-direction: column; align-items: flex-end; padding: 18px 24px;
+        }
+        .wx-share-mask .wx-tip {
+            margin-top: 12px; color: #fff; font-size: 17px; font-weight: 600; text-align: center; line-height: 1.6;
+        }
+        .wx-share-mask .wx-arrow {
+            width: 48px; height: 48px; margin-right: 12px; animation: bounceUp .8s ease infinite alternate;
+        }
+        @keyframes bounceUp { from { transform: translateY(0); } to { transform: translateY(-10px); } }
     </style>
+    <script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
 </head>
 
 <body>
@@ -1533,9 +1545,50 @@
       return d.innerHTML;
     }
 
+    // --- WeChat JS-SDK ---
+    var isWechat = /MicroMessenger/i.test(navigator.userAgent);
+    var wxReady = false;
+
+    if (isWechat && typeof wx !== 'undefined') {
+        var wxUrl = window.location.href.split('#')[0];
+        fetch('/api/wx/signature?url=' + encodeURIComponent(wxUrl))
+            .then(function(r) { return r.json(); })
+            .then(function(cfg) {
+                wx.config({
+                    debug: false, appId: cfg.appId, timestamp: cfg.timestamp,
+                    nonceStr: cfg.nonceStr, signature: cfg.signature,
+                    jsApiList: ['updateAppMessageShareData', 'updateTimelineShareData']
+                });
+                wx.ready(function() {
+                    wxReady = true;
+                    var shareUrl = '{{ public_base_url }}';
+                    var title = '龙虾学校 — AI Agent 能力测试';
+                    var desc = '12 道 AI 实战题，测测你的小龙虾够聪明吗？';
+                    var imgUrl = shareUrl + '/static/badges/logo.png';
+                    wx.updateAppMessageShareData({ title: title, desc: desc, link: shareUrl, imgUrl: imgUrl });
+                    wx.updateTimelineShareData({ title: title + ' ' + desc, link: shareUrl, imgUrl: imgUrl });
+                });
+                wx.error(function(res) { console.warn('wx.config error:', res); });
+            })
+            .catch(function(e) { console.warn('WX JS-SDK init failed:', e); });
+    }
+
+    function showWxShareTip() {
+        if (document.getElementById('wx-share-tip')) return;
+        var mask = document.createElement('div');
+        mask.id = 'wx-share-tip';
+        mask.className = 'wx-share-mask';
+        mask.innerHTML = '<svg class="wx-arrow" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>' +
+            '<div class="wx-tip">点击右上角 <strong>···</strong><br>选择「发送给朋友」或「分享到朋友圈」</div>';
+        mask.onclick = function() { mask.remove(); };
+        document.body.appendChild(mask);
+        setTimeout(function() { if (mask.parentNode) mask.remove(); }, 4000);
+    }
+
     // --- Share ---
     function shareApp() {
         var text = '🦞 龙虾学校 — 你的小龙虾够聪明吗？12 道 AI 实战能力测试等你挑战！👉 {{ public_base_url }}';
+        if (isWechat) { showWxShareTip(); return; }
         if (navigator.share) {
             navigator.share({ title: '龙虾学校', text: text, url: '{{ public_base_url }}' }).catch(function(){});
         } else if (navigator.clipboard && navigator.clipboard.writeText) {

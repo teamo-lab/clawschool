@@ -22,6 +22,7 @@ from .og_image import generate_og_image
 from .questions import QUESTIONS
 from .repair import generate_repair_skill, ADVANCED_QIDS, BASIC_QIDS
 from .payment import PaymentConfig, WechatPayClient, AlipayClient
+from .wechat_jssdk import get_wx_signature_data
 
 logger = logging.getLogger("clawschool")
 
@@ -491,6 +492,17 @@ async def active_count():
         "active": row["cnt"] if row else 0,
         "total_done": total["cnt"] if total else 0,
     }
+
+
+@app.get("/api/wx/signature")
+async def wx_signature(url: str = ""):
+    """微信 JS-SDK 签名"""
+    if not url:
+        raise HTTPException(400, "缺少 url 参数")
+    data = get_wx_signature_data(url)
+    if not data:
+        raise HTTPException(500, "微信签名生成失败")
+    return data
 
 
 @app.get("/api/og-image/{token}")

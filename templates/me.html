@@ -1,1017 +1,1007 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>{{ data.name }} · 龙虾档案</title>
-    <meta property="og:title" content="{{ data.name }} 的龙虾档案 · 智力值 {{ data.iq }}">
-    <meta property="og:description" content="称号：{{ data.title }} · 龙虾学校 AI 能力档案">
-    <meta property="og:type" content="website">
-    <link
-        href="https://fonts.googleapis.cn/css2?family=Outfit:wght@300;400;500;700;800;900&family=Inter:wght@400;500;600&display=swap"
-        rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>我的龙虾 · 龙虾学校</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #0a0a1a;
+  color: #fff;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.container { max-width: 480px; width: 100%; padding: 24px 16px 48px; }
 
-    <style>
-        :root {
-            --bg-base: #0a0a0b;
-            --brand-red: #CC0F14;
-            --brand-orange: #FF9616;
-            --text-h1: #FFFFFF;
-            --text-body: rgba(255, 255, 255, 0.55);
-            --text-muted: rgba(255, 255, 255, 0.35);
-            --color-perfect: #10B981;
-            --color-warn: #F59E0B;
-            --color-fail: #EF4444;
-            --font-display: 'Outfit', sans-serif;
-            --font-ui: 'Inter', sans-serif;
-            --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.15);
-            --ease-fluid: cubic-bezier(0.4, 0, 0.2, 1);
-        }
+.logo { font-size: 14px; color: #888; margin-bottom: 20px; }
+.logo span { font-size: 18px; }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+/* ── 成绩卡片 ── */
+.score-hero {
+  text-align: center;
+  padding: 32px 20px 28px;
+  background: linear-gradient(160deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 20px;
+  border: 1px solid #262640;
+  margin-bottom: 24px;
+}
+.score-hero .name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ddd;
+  margin-bottom: 16px;
+}
+.score-ring-wrap {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  margin: 0 auto 16px;
+}
+.score-ring-wrap svg {
+  transform: rotate(-90deg);
+  width: 180px;
+  height: 180px;
+}
+.ring-bg { fill: none; stroke: #262640; stroke-width: 10; }
+.ring-fg {
+  fill: none;
+  stroke: url(#ring-gradient);
+  stroke-width: 10;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1.2s ease;
+}
+.score-ring-inner {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+.score-ring-inner .score-num {
+  font-size: 52px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #ff2d55, #ff6b3d);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1;
+}
+.score-ring-inner .score-unit { font-size: 16px; color: #555; }
+.title-badge {
+  display: inline-block;
+  padding: 6px 18px;
+  background: linear-gradient(135deg, #ff2d55, #ff6b3d);
+  border-radius: 20px;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.rank-info { font-size: 14px; color: #aaa; margin-bottom: 4px; }
+.model-info { color: #555; font-size: 12px; margin-top: 6px; }
 
-        body {
-            font-family: var(--font-ui);
-            background-color: var(--bg-base);
-            color: var(--text-body);
-            display: flex;
-            justify-content: center;
-            min-height: 100vh;
-            overflow-x: hidden;
-            position: relative;
-        }
+/* ── 提升轨迹 ── */
+.track-card {
+  background: #1a1a2e;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid #262640;
+}
+.track-card .card-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+.track-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 16px;
+}
+.track-node {
+  text-align: center;
+}
+.track-node .tn-score {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
+}
+.track-node .tn-label {
+  font-size: 11px;
+  color: #888;
+  margin-top: 4px;
+}
+.track-node.track-current .tn-score {
+  background: linear-gradient(135deg, #ff2d55, #ff6b3d);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.track-node.track-future {
+  opacity: 0.45;
+}
+.track-node.track-future .tn-score {
+  border-bottom: 2px dashed #666;
+}
+.track-arrow { color: #555; font-size: 20px; }
 
-        .noise-overlay {
-            position: fixed; inset: 0;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-            opacity: 0.03; mix-blend-mode: overlay; z-index: 1; pointer-events: none;
-        }
+/* ── 诊断总结 ── */
+.diagnosis {
+  background: #1a1a2e;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid #262640;
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+}
+.diag-item .diag-num { font-size: 24px; font-weight: 800; }
+.diag-item .diag-label { font-size: 12px; color: #888; margin-top: 2px; }
+.diag-problems .diag-num { color: #ff4444; }
+.diag-upgraded .diag-num { color: #4caf50; }
+.diag-paid .diag-num { color: #888; }
 
-        .app-container {
-            width: 100%; max-width: 480px;
-            position: relative; display: flex; flex-direction: column;
-        }
+/* ── 升级状态 ── */
+.upgrade-status {
+  background: linear-gradient(160deg, #1a2e1a 0%, #16213e 100%);
+  border: 1px solid #2a4a2a;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+.upgrade-status .us-icon { font-size: 32px; margin-bottom: 8px; }
+.upgrade-status .us-text { font-size: 16px; font-weight: 600; color: #4caf50; }
+.upgrade-status .us-sub { font-size: 13px; color: #888; margin-top: 4px; }
 
-        /* ===== Top Nav ===== */
-        .top-nav {
-            position: relative; z-index: 3;
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 20px 24px 0;
-            animation: fadeIn 1s var(--ease-fluid) both;
-        }
-        .nav-brand {
-            font-family: var(--font-ui); font-size: 16px; font-weight: 500;
-            color: var(--text-body); letter-spacing: 3px;
-        }
-        .nav-share {
-            padding: 8px 16px; border-radius: 100px;
-            border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04);
-            color: var(--text-body); font-size: 13px; font-weight: 500;
-            cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;
-            text-decoration: none;
-        }
-        .nav-share:active { transform: scale(0.95); }
-        .nav-share svg { width: 14px; height: 14px; }
+/* ── CTA 按钮 ── */
+.btn-stack { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+.btn {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  color: #fff;
+  transition: opacity 0.2s;
+}
+.btn:active { opacity: 0.85; }
+.btn-primary-cta {
+  background: linear-gradient(135deg, #ff2d55, #ff6b3d);
+}
+.btn-primary-cta .btn-sub {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  opacity: 0.8;
+  margin-top: 2px;
+}
+.btn-share { background: #262640; border: 1px solid #333; color: #ddd; }
+.btn-retest { background: transparent; border: 1px solid #333; color: #666; }
 
-        /* ===== Profile Section ===== */
-        .profile-section {
-            position: relative; z-index: 2;
-            padding: 32px 24px 0;
-            animation: slideUp 0.8s var(--ease-fluid) 0.1s both;
-        }
+/* ── Bottom Sheet ── */
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 200;
+  justify-content: center;
+  align-items: flex-end;
+}
+.overlay.show { display: flex; }
+.sheet {
+  background: #1a1a2e;
+  border-radius: 20px 20px 0 0;
+  padding: 24px 20px;
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+  max-width: 480px;
+  width: 100%;
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.sheet-handle {
+  width: 40px; height: 4px;
+  background: #444;
+  border-radius: 2px;
+  margin: 0 auto 20px;
+}
+.sheet h3 { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+.sheet p { font-size: 14px; color: #aaa; margin-bottom: 12px; line-height: 1.6; }
+.sheet .btn-sheet {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.2s;
+}
+.sheet .btn-sheet:active { opacity: 0.85; }
+.sheet .btn-primary {
+  background: linear-gradient(135deg, #ff2d55, #ff6b3d);
+  color: #fff;
+  margin-bottom: 10px;
+}
+.sheet .btn-secondary {
+  background: transparent;
+  color: #666;
+  font-size: 14px;
+}
 
-        .profile-section::before {
-            content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-            width: 420px; height: 420px;
-            background: radial-gradient(circle, rgba(204,15,20,0.08) 0%, rgba(255,150,22,0.04) 40%, transparent 70%);
-            border-radius: 50%; pointer-events: none; z-index: 0;
-        }
+/* 登录表单 */
+.login-form { margin-bottom: 16px; }
+.login-form .form-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.login-form input {
+  flex: 1;
+  width: 100%;
+  background: #0a0a1a;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #fff;
+  font-size: 15px;
+  outline: none;
+  margin-bottom: 12px;
+}
+.login-form .form-row input { margin-bottom: 0; }
+.login-form input::placeholder { color: #555; }
+.login-form input:focus { border-color: #ff2d55; }
+.login-form .btn-send-code {
+  background: #262640;
+  border: 1px solid #444;
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #ddd;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.login-form .btn-send-code:disabled { color: #555; cursor: not-allowed; }
+.form-tip { font-size: 12px; color: #555; text-align: center; margin-top: 8px; }
+.form-error { color: #ff4444; font-size: 13px; text-align: center; margin-bottom: 8px; display: none; }
 
-        .profile-card {
-            position: relative; z-index: 2;
-            display: flex; align-items: center; gap: 20px;
-        }
+/* 付费弹窗 */
+.pay-preview {
+  text-align: center;
+  padding: 16px 0;
+}
+.pay-preview .pp-current { font-size: 14px; color: #888; }
+.pay-preview .pp-arrow { font-size: 20px; color: #ff2d55; margin: 8px 0; }
+.pay-preview .pp-target { font-size: 28px; font-weight: 800; color: #ff2d55; }
+.pay-preview .pp-title-change { font-size: 14px; color: #aaa; margin-top: 8px; }
+.pay-items {
+  background: #262640;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.pay-items .pi-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 14px;
+  color: #ddd;
+}
+.pay-price {
+  text-align: center;
+  font-size: 32px;
+  font-weight: 800;
+  color: #ff2d55;
+  margin-bottom: 16px;
+}
+.pay-price small { font-size: 14px; color: #888; font-weight: 400; }
 
-        .profile-avatar {
-            width: 88px; height: 88px; border-radius: 50%;
-            overflow: hidden; position: relative; flex-shrink: 0;
-            border: 2px solid rgba(255,255,255,0.08);
-        }
-        .profile-avatar-glow {
-            position: absolute; inset: -16px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(204,15,20,0.2) 0%, transparent 70%);
-            filter: blur(12px); animation: breathe 3s ease-in-out infinite;
-        }
-        .profile-avatar img {
-            position: absolute; inset: -24px;
-            width: calc(100% + 48px); height: calc(100% + 48px);
-            object-fit: cover; filter: contrast(1.08) brightness(1.06);
-            mix-blend-mode: screen;
-        }
+/* ── 技能面板 ── */
+.skill-panel {
+  background: #1a1a2e;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid #262640;
+}
+.skill-panel .panel-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.skill-section {
+  margin-bottom: 16px;
+}
+.skill-section:last-child { margin-bottom: 0; }
+.skill-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #888;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.skill-section-title .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.skill-section-title .dot-active { background: #4caf50; }
+.skill-section-title .dot-inactive { background: #ff9800; }
+.skill-section-title .dot-coming { background: #666; }
+.skill-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.skill-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.skill-tag-active {
+  background: rgba(76, 175, 80, 0.15);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  color: #4caf50;
+}
+.skill-tag-active::before {
+  content: '✓';
+  font-size: 11px;
+}
+.skill-tag-inactive {
+  background: rgba(255, 152, 0, 0.1);
+  border: 1px solid rgba(255, 152, 0, 0.25);
+  color: #ff9800;
+}
+.skill-tag-inactive::before {
+  content: '🔒';
+  font-size: 10px;
+}
+.skill-tag-coming {
+  background: rgba(100, 100, 100, 0.1);
+  border: 1px solid rgba(100, 100, 100, 0.25);
+  color: #888;
+}
+.skill-tag-coming::before {
+  content: '🕐';
+  font-size: 10px;
+}
 
-        @keyframes breathe {
-            0%, 100% { transform: scale(1); opacity: 0.6; }
-            50% { transform: scale(1.1); opacity: 1; }
-        }
-
-        .profile-info { flex: 1; min-width: 0; }
-        .profile-name {
-            font-family: var(--font-display); font-size: 22px; font-weight: 800;
-            color: var(--text-h1); margin-bottom: 4px;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .profile-title {
-            font-size: 14px; font-weight: 600; color: var(--brand-orange); margin-bottom: 6px;
-        }
-        .profile-meta {
-            display: flex; gap: 12px; font-size: 12px; color: var(--text-muted); flex-wrap: wrap;
-        }
-        .profile-meta span { display: flex; align-items: center; gap: 4px; }
-        .profile-meta svg { width: 12px; height: 12px; }
-
-        /* ===== IQ Display ===== */
-        .iq-section {
-            position: relative; z-index: 2;
-            display: flex; flex-direction: column; align-items: center;
-            padding: 28px 24px 0;
-            animation: slideUp 0.8s var(--ease-fluid) 0.2s both;
-        }
-
-        .score-unit {
-            position: relative; width: 180px; height: 180px; margin-bottom: 16px;
-        }
-        .ring-svg {
-            position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg);
-        }
-        .ring-bg { fill: none; stroke: rgba(255,255,255,0.04); stroke-width: 6; }
-        .ring-progress {
-            fill: none; stroke-width: 6; stroke-linecap: round; stroke: url(#ringGrad);
-            filter: drop-shadow(0 0 10px rgba(255,100,50,0.35));
-            transition: stroke-dashoffset 1.8s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-        .ring-lobster {
-            position: absolute; inset: 12px; border-radius: 50%; overflow: hidden;
-        }
-        .ring-lobster-glow {
-            position: absolute; inset: -16px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(204,15,20,0.2) 0%, rgba(255,150,22,0.08) 50%, transparent 70%);
-            filter: blur(14px);
-        }
-        .ring-lobster-img {
-            position: absolute; inset: -24px;
-            width: calc(100% + 48px); height: calc(100% + 48px);
-            object-fit: cover; filter: contrast(1.08) brightness(1.06); mix-blend-mode: screen;
-            mask-image: radial-gradient(circle at center, black 50%, transparent 72%);
-            -webkit-mask-image: radial-gradient(circle at center, black 50%, transparent 72%);
-        }
-
-        .score-display {
-            display: flex; align-items: baseline; gap: 4px; margin-bottom: 4px;
-        }
-        .score-num {
-            font-family: var(--font-display); font-size: 52px; font-weight: 900;
-            color: var(--text-h1); line-height: 1; letter-spacing: -3px;
-        }
-        .score-label {
-            font-family: var(--font-display); font-size: 16px; font-weight: 400;
-            color: var(--text-muted);
-        }
-
-        /* ===== Membership Card ===== */
-        .membership-section {
-            position: relative; z-index: 2; padding: 24px 24px 0;
-            animation: slideUp 0.8s var(--ease-fluid) 0.35s both;
-        }
-        .section-title {
-            font-family: var(--font-display); font-size: 18px; font-weight: 700;
-            color: var(--text-h1); display: flex; align-items: center; gap: 8px;
-            margin-bottom: 16px;
-        }
-        .section-title svg { width: 18px; height: 18px; color: var(--brand-orange); }
-
-        .member-card {
-            padding: 20px; border-radius: 20px;
-            background: linear-gradient(135deg, rgba(204,15,20,0.06) 0%, rgba(255,150,22,0.04) 100%);
-            border: 1px solid rgba(255,150,22,0.12);
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-        }
-        .member-card.locked {
-            background: rgba(255,255,255,0.02);
-            border-color: rgba(255,255,255,0.06);
-        }
-        .member-header {
-            display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
-        }
-        .member-plan {
-            font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--text-h1);
-        }
-        .member-badge {
-            font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 8px;
-            letter-spacing: 0.3px;
-        }
-        .badge-active { background: rgba(16,185,129,0.12); color: var(--color-perfect); }
-        .badge-locked { background: rgba(255,255,255,0.06); color: var(--text-muted); }
-        .member-stats {
-            display: flex; gap: 20px; font-size: 13px;
-        }
-        .member-stat { display: flex; flex-direction: column; gap: 2px; }
-        .member-stat-label { font-size: 11px; color: var(--text-muted); }
-        .member-stat-value { font-weight: 600; color: var(--text-h1); }
-        .member-cta {
-            display: block; width: 100%; margin-top: 16px; padding: 14px;
-            border-radius: 14px; border: none;
-            background: linear-gradient(135deg, #ff2d55, #ff6b3d);
-            color: #fff; font-family: var(--font-display); font-size: 15px; font-weight: 700;
-            text-align: center; cursor: pointer; transition: transform 0.2s var(--ease-spring);
-        }
-        .member-cta:active { transform: scale(0.97); }
-        .member-cta-renew {
-            background: linear-gradient(135deg, rgba(255,150,22,0.9), rgba(255,120,0,0.9));
-        }
-
-        /* Pricing toggle */
-        .pricing-toggle {
-            display: flex; justify-content: center; gap: 0; margin-bottom: 20px;
-            background: rgba(255,255,255,0.04); border-radius: 12px; padding: 4px;
-        }
-        .pricing-toggle-btn {
-            flex: 1; padding: 10px 16px; border: none; border-radius: 10px;
-            font-family: var(--font-display); font-size: 14px; font-weight: 600;
-            cursor: pointer; transition: all 0.2s; background: transparent; color: var(--text-muted);
-            position: relative;
-        }
-        .pricing-toggle-btn.active {
-            background: rgba(255,255,255,0.08); color: var(--text-h1);
-        }
-        .pricing-discount {
-            position: absolute; top: -8px; right: -4px;
-            font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 4px;
-            background: var(--color-perfect); color: #000; pointer-events: none;
-        }
-
-        /* Activate confirm sheet */
-        .activate-warning {
-            background: rgba(255,150,22,0.06); border: 1px solid rgba(255,150,22,0.12);
-            border-radius: 12px; padding: 16px; margin: 16px 0;
-            font-size: 14px; color: var(--text-body); line-height: 1.6;
-        }
-        .activate-warning strong { color: var(--text-h1); }
-        .btn-sheet-confirm {
-            background: var(--brand-orange); color: #000; margin-bottom: 10px;
-        }
-
-        /* ===== Skills Grid ===== */
-        .skills-section {
-            position: relative; z-index: 2; padding: 24px 24px 0;
-            animation: slideUp 0.8s var(--ease-fluid) 0.4s both;
-        }
-        .skills-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
-        }
-        .skill-card {
-            display: flex; flex-direction: column; align-items: center; gap: 8px;
-            padding: 16px 8px; border-radius: 16px;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.06);
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            text-align: center; transition: border-color 0.2s;
-        }
-        .skill-card.active { border-color: rgba(16,185,129,0.15); }
-        .skill-card.locked {
-            opacity: 0.5; cursor: pointer;
-            transition: opacity 0.2s, border-color 0.2s, transform 0.2s;
-        }
-        .skill-card.locked:hover {
-            opacity: 0.8; border-color: rgba(255,150,22,0.25);
-            transform: translateY(-2px);
-        }
-        .skill-card.locked .skill-unlock-hint, .skill-card.inactive .skill-unlock-hint {
-            font-size: 8px; color: var(--brand-orange); margin-top: 2px;
-            opacity: 0; transition: opacity 0.2s;
-        }
-        .skill-card.locked:hover .skill-unlock-hint, .skill-card.inactive:hover .skill-unlock-hint { opacity: 1; }
-        .skill-card.inactive {
-            cursor: pointer;
-            transition: opacity 0.2s, border-color 0.2s, transform 0.2s;
-        }
-        .skill-card.inactive:hover {
-            border-color: rgba(255,150,22,0.25); transform: translateY(-2px);
-        }
-        .skill-icon {
-            width: 36px; height: 36px; border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .skill-icon svg { width: 18px; height: 18px; }
-        .skill-icon.si-active { background: rgba(16,185,129,0.1); color: var(--color-perfect); }
-        .skill-icon.si-locked { background: rgba(255,255,255,0.04); color: var(--text-muted); }
-        .skill-name { font-size: 11px; font-weight: 600; color: var(--text-h1); line-height: 1.3; }
-        .skill-card.locked .skill-name { color: var(--text-muted); }
-        .skill-status {
-            font-size: 9px; font-weight: 500; padding: 2px 6px; border-radius: 4px;
-        }
-        .ss-active { background: rgba(16,185,129,0.1); color: var(--color-perfect); }
-        .ss-locked { background: rgba(255,255,255,0.04); color: var(--text-muted); }
-
-        /* ===== CTA Buttons ===== */
-        .cta-section {
-            position: relative; z-index: 2; padding: 32px 24px;
-            animation: slideUp 0.8s var(--ease-fluid) 0.45s both;
-        }
-        .cta-group { display: flex; gap: 12px; }
-        .btn-cta {
-            flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
-            padding: 18px 16px; border-radius: 100px; border: none;
-            font-family: var(--font-display); font-size: 15px; font-weight: 700;
-            cursor: pointer; transition: transform 0.2s var(--ease-spring);
-        }
-        .btn-cta:active { transform: scale(0.97); }
-        .btn-cta svg { width: 18px; height: 18px; flex-shrink: 0; }
-        .btn-cta-primary {
-            background: var(--brand-orange); color: #000;
-            box-shadow: 0 8px 24px rgba(255,150,22,0.3);
-        }
-        .btn-cta-secondary {
-            background: rgba(255,255,255,0.06); color: var(--text-body);
-            border: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-        }
-
-        /* ===== Overlay / Sheet ===== */
-        .overlay {
-            display: none; position: fixed; inset: 0;
-            background: rgba(0,0,0,0.7); z-index: 200;
-            justify-content: center; align-items: flex-end;
-        }
-        .overlay.show { display: flex; }
-        .sheet {
-            background: #1a1a2e; border-radius: 20px 20px 0 0;
-            padding: 24px 20px; padding-bottom: max(24px, env(safe-area-inset-bottom));
-            max-width: 480px; width: 100%;
-            animation: sheetSlideUp 0.3s ease;
-            max-height: 90vh; overflow-y: auto;
-        }
-        @keyframes sheetSlideUp {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
-        }
-        .sheet-handle {
-            width: 40px; height: 4px; background: #444;
-            border-radius: 2px; margin: 0 auto 20px;
-        }
-        .sheet h3 {
-            font-family: var(--font-display); font-size: 20px; font-weight: 800;
-            color: var(--text-h1); margin-bottom: 6px;
-        }
-        .sheet .sheet-subtitle {
-            font-size: 14px; color: var(--text-body); margin-bottom: 20px;
-        }
-
-        .perk-group { margin-bottom: 18px; }
-        .perk-group-title {
-            font-size: 12px; font-weight: 700; letter-spacing: 0.5px;
-            margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
-        }
-        .pgt-fire { color: var(--brand-orange); }
-        .pgt-bolt { color: #60A5FA; }
-        .pgt-shield { color: var(--color-perfect); }
-
-        .perk-list { list-style: none; }
-        .perk-item {
-            display: flex; align-items: center; gap: 10px;
-            padding: 8px 0; font-size: 14px; color: var(--text-body);
-        }
-        .perk-icon {
-            width: 28px; height: 28px; border-radius: 8px;
-            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-        }
-        .perk-icon svg { width: 14px; height: 14px; }
-        .perk-icon.pi-fire { background: rgba(255,150,22,0.1); color: var(--brand-orange); }
-        .perk-icon.pi-bolt { background: rgba(96,165,250,0.1); color: #60A5FA; }
-        .perk-icon.pi-shield { background: rgba(16,185,129,0.1); color: var(--color-perfect); }
-
-        .sheet-divider {
-            height: 1px; background: rgba(255,255,255,0.06); margin: 20px 0;
-        }
-        .sheet-price {
-            text-align: center; margin-bottom: 16px;
-        }
-        .sheet-price-num {
-            font-family: var(--font-display); font-size: 36px; font-weight: 900;
-            color: var(--text-h1);
-        }
-        .sheet-price-unit {
-            font-size: 14px; color: var(--text-muted); font-weight: 400;
-        }
-        .btn-sheet {
-            display: block; width: 100%; padding: 16px; border-radius: 14px;
-            font-family: var(--font-display); font-size: 16px; font-weight: 700;
-            text-align: center; cursor: pointer; border: none; transition: opacity 0.2s;
-        }
-        .btn-sheet:active { opacity: 0.85; }
-        .btn-sheet-cta {
-            background: linear-gradient(135deg, #ff2d55, #ff6b3d);
-            color: #fff; margin-bottom: 10px;
-        }
-        .btn-sheet-secondary {
-            background: transparent; color: var(--text-muted); font-size: 14px;
-        }
-
-        /* Payment sheet */
-        .pay-qr-placeholder {
-            width: 200px; height: 200px; margin: 20px auto;
-            background: rgba(255,255,255,0.04); border: 1px dashed rgba(255,255,255,0.12);
-            border-radius: 16px;
-            display: flex; align-items: center; justify-content: center;
-            color: var(--text-muted); font-size: 13px; text-align: center;
-        }
-        .pay-hint {
-            text-align: center; font-size: 13px; color: var(--text-muted); margin-bottom: 16px;
-        }
-
-        /* ===== Animations ===== */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes slideUp {
-            from { transform: translateY(24px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        /* ===== Desktop (≥768px) ===== */
-        @media (min-width: 768px) {
-            .app-container { max-width: 860px; }
-            .top-nav { padding: 28px 32px 0; }
-
-            .desktop-grid {
-                display: grid; grid-template-columns: 1fr 1fr;
-                gap: 0 32px; padding: 0 32px;
-            }
-            .profile-section { padding: 32px 0 0; grid-column: 1; }
-            .iq-section { padding: 24px 0 0; grid-column: 1; }
-            .membership-section { padding: 32px 0 0; grid-column: 2; grid-row: 1 / 3; }
-            .skills-section { padding: 24px 32px 0; }
-            .cta-section { padding: 32px 32px; }
-
-            .skills-grid { grid-template-columns: repeat(5, 1fr); }
-
-            .overlay { align-items: center; }
-            .sheet {
-                border-radius: 20px; max-width: 520px;
-                margin-bottom: 0;
-            }
-        }
-
-        /* ===== Large Desktop (≥1200px) ===== */
-        @media (min-width: 1200px) {
-            .app-container { max-width: 960px; }
-        }
-
-        /* ===== Small Screen (≤360px) ===== */
-        @media (max-width: 360px) {
-            .profile-name { font-size: 18px; }
-            .score-num { font-size: 42px; }
-            .score-unit { width: 150px; height: 150px; }
-            .skills-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-            .skill-card { padding: 12px 6px; }
-            .skill-name { font-size: 10px; }
-            .cta-group { flex-direction: column; }
-        }
-    </style>
+/* QR 弹窗 */
+.qr-wrap {
+  text-align: center;
+  padding: 20px 0;
+}
+.qr-wrap img {
+  width: 200px;
+  height: 200px;
+  border-radius: 12px;
+  background: #fff;
+  margin-bottom: 16px;
+}
+.qr-wrap .qr-placeholder {
+  width: 200px; height: 200px;
+  margin: 0 auto 16px;
+  background: #fff;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #333;
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
+<style>
+.wx-share-mask {
+    position: fixed; inset: 0; z-index: 99999;
+    background: rgba(0,0,0,0.75); display: flex; flex-direction: column; align-items: flex-end; padding: 18px 24px;
+}
+.wx-share-mask .wx-tip {
+    margin-top: 12px; color: #fff; font-size: 17px; font-weight: 600; text-align: center; line-height: 1.6;
+}
+.wx-share-mask .wx-arrow {
+    width: 48px; height: 48px; margin-right: 12px; animation: bounceUp .8s ease infinite alternate;
+}
+@keyframes bounceUp { from { transform: translateY(0); } to { transform: translateY(-10px); } }
+</style>
 </head>
-
 <body>
-    <div class="noise-overlay"></div>
-    <div class="app-container">
+<div class="container">
 
-        <!-- Top Nav -->
-        <div class="top-nav">
-            <span class="nav-brand">龙 虾 学 校</span>
-            <a class="nav-share" href="/s/{{ token }}">
-                <i data-lucide="share-2"></i>
-                炫耀成绩
-            </a>
-        </div>
+  {% if data.status != 'done' %}
+  <div style="text-align:center; padding:60px 0;">
+    <div style="font-size:60px; margin-bottom:20px;">🦞</div>
+    <h2 style="font-size:20px; margin-bottom:12px;">{{ data.name }} 正在测试中...</h2>
+    <p style="color:#888;">测试完成后这里会显示成绩</p>
+  </div>
+  {% else %}
 
-        <div class="desktop-grid">
+  {# ── 称号图标映射 ── #}
+  {% set title_icons = {
+    '波士顿龙虾': '🦞',
+    '澳洲大龙虾': '🔴',
+    '蒜蓉大虾': '🟠',
+    '麻辣小龙虾': '🟡',
+    '冻虾仁': '🔵',
+    '虾皮': '💀'
+  } %}
+  {% set title_icon = title_icons.get(data.title, '🦞') %}
+  {% set iq_pct = ((data.iq / 270) * 100) | round(0, 'floor') | int %}
 
-        <!-- Profile Card -->
-        <div class="profile-section">
-            <div class="profile-card">
-                <div class="profile-avatar">
-                    <div class="profile-avatar-glow"></div>
-                    <img src="/static/3d_cyber_lobster.png" alt="龙虾头像">
-                </div>
-                <div class="profile-info">
-                    <div class="profile-name">{{ data.name }}</div>
-                    <div class="profile-title">{{ data.title }}</div>
-                    <div class="profile-meta">
-                        <span><i data-lucide="trophy"></i>#{{ data.rank or '-' }}</span>
-                        <span><i data-lucide="cpu"></i>{{ data.model or 'unknown' }}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+  {# ── 统计变量 ── #}
+  {% set free_qs = ['q9', 'q12'] %}
+  {% set q_keys = ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11','q12'] %}
+  {% set ns = namespace(problems=0, upgraded=0, paid_locks=0, free_boost=0, paid_boost=0) %}
+  {% for qid in q_keys %}
+    {% set qd = data.detail.get(qid, {}) %}
+    {% set sc = qd.get('score', 0) | int %}
+    {% if sc < 8 %}
+      {% set ns.problems = ns.problems + 1 %}
+      {% if qid in free_qs %}
+        {% set ns.upgraded = ns.upgraded + 1 %}
+        {% set ns.free_boost = ns.free_boost + (10 - sc) %}
+      {% else %}
+        {% set ns.paid_locks = ns.paid_locks + 1 %}
+        {% set ns.paid_boost = ns.paid_boost + (10 - sc) %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+  {% set free_upgraded_score = data.score + ns.free_boost %}
+  {% set predicted_score = data.score + ns.paid_boost %}
+  {# ── IQ 计算: IQ = 30 + (score / 120) * 240 ── #}
+  {% set free_upgraded_iq = (30 + (free_upgraded_score / 120) * 240) | round(0, 'floor') | int %}
+  {% set predicted_iq = (30 + (predicted_score / 120) * 240) | round(0, 'floor') | int %}
 
-        <!-- IQ Ring -->
-        <div class="iq-section">
-            <div class="score-unit">
-                <svg class="ring-svg" viewBox="0 0 180 180">
-                    <defs>
-                        <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stop-color="var(--brand-red)" />
-                            <stop offset="100%" stop-color="var(--brand-orange)" />
-                        </linearGradient>
-                    </defs>
-                    <circle class="ring-bg" cx="90" cy="90" r="85" />
-                    <circle class="ring-progress" id="ringProgress" cx="90" cy="90" r="85"
-                        stroke-dasharray="534" stroke-dashoffset="534" />
-                </svg>
-                <div class="ring-lobster">
-                    <div class="ring-lobster-glow"></div>
-                    <img src="/static/3d_cyber_lobster.png" class="ring-lobster-img" alt="">
-                </div>
-            </div>
-            <div class="score-display">
-                <span class="score-num" id="scoreNum">0</span>
-                <span class="score-label">智力值</span>
-            </div>
-        </div>
+  <!-- Logo -->
+  <div class="logo"><span>🦞</span> 龙虾学校 · 我的龙虾</div>
 
-        <!-- Membership Card -->
-        <div class="membership-section">
-            <div class="section-title">
-                <i data-lucide="crown"></i>
-                会员权益
-            </div>
-            {% if payment_status == 'submitted' %}
-            <div class="member-card">
-                <div class="member-header">
-                    <span class="member-plan">¥99/月 高级能力</span>
-                    <span class="member-badge badge-active">生效中</span>
-                </div>
-                <div class="member-stats">
-                    <div class="member-stat">
-                        <span class="member-stat-label">本月剩余体检</span>
-                        <span class="member-stat-value">20/20 次</span>
-                    </div>
-                    <div class="member-stat">
-                        <span class="member-stat-label">可用技能</span>
-                        <span class="member-stat-value"><span id="installedCount">0</span>/12+ <span style="font-size:9px;color:var(--text-muted);font-weight:400">不断更新</span></span>
-                    </div>
-                    <div class="member-stat">
-                        <span class="member-stat-label">到期时间</span>
-                        <span class="member-stat-value" id="expireDate">{{ expire_date or '—' }}</span>
-                    </div>
-                </div>
-                <button class="member-cta member-cta-renew" onclick="openRenew()">续费</button>
-            </div>
-            {% else %}
-            <div class="member-card locked">
-                <div class="member-header">
-                    <span class="member-plan">¥99/月 高级能力</span>
-                    <span class="member-badge badge-locked">未开通</span>
-                </div>
-                <div class="member-stats">
-                    <div class="member-stat">
-                        <span class="member-stat-label">每月体检次数</span>
-                        <span class="member-stat-value">20 次</span>
-                    </div>
-                    <div class="member-stat">
-                        <span class="member-stat-label">可解锁技能</span>
-                        <span class="member-stat-value">12+ <span style="font-size:9px;color:var(--text-muted);font-weight:400">不断更新</span></span>
-                    </div>
-                </div>
-                <button class="member-cta" onclick="openSubscribe()">开通学院会员</button>
-            </div>
-            {% endif %}
-        </div>
+  <!-- 成绩卡片 -->
+  <div class="score-hero">
+    <div class="name">「{{ data.name }}」</div>
+    <div class="score-ring-wrap">
+      <svg viewBox="0 0 180 180">
+        <defs>
+          <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#ff2d55"/>
+            <stop offset="100%" stop-color="#ff6b3d"/>
+          </linearGradient>
+        </defs>
+        <circle class="ring-bg" cx="90" cy="90" r="80"/>
+        <circle class="ring-fg" id="score-ring" cx="90" cy="90" r="80"
+          stroke-dasharray="502.65"
+          stroke-dashoffset="502.65"/>
+      </svg>
+      <div class="score-ring-inner">
+        <div class="score-num" id="score-num">{{ data.iq }}</div>
+        <div class="score-unit">智力值</div>
+      </div>
+    </div>
+    <div class="title-badge">{{ title_icon }} {{ data.title }}</div>
+    {% if data.rank %}
+    <div class="rank-info">#{{ data.rank }} / {{ total_done }} 名</div>
+    {% endif %}
+    <div class="model-info">{{ data.model or '未知模型' }}{% if data.test_time %} · {{ data.test_time }}{% endif %}</div>
+  </div>
 
-        </div><!-- end desktop-grid -->
+  <!-- 提升轨迹 -->
+  <div class="track-card">
+    <div class="card-title">📈 智力提升轨迹</div>
+    <div class="track-row">
+      <div class="track-node track-current">
+        <div class="tn-score">{{ data.iq }}</div>
+        <div class="tn-label">当前智力</div>
+      </div>
+      {% if ns.free_boost > 0 %}
+      <div class="track-arrow">→</div>
+      <div class="track-node track-current">
+        <div class="tn-score">{{ free_upgraded_iq }}</div>
+        <div class="tn-label">🎁 免费升级</div>
+      </div>
+      {% endif %}
+      {% if ns.paid_boost > 0 %}
+      <div class="track-arrow">→</div>
+      <div class="track-node track-future">
+        <div class="tn-score">{{ predicted_iq }}+</div>
+        <div class="tn-label">付费升级后</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
 
-        <!-- Skills Grid -->
-        <div class="skills-section">
-            <div class="section-title">
-                <i data-lucide="puzzle"></i>
-                技能面板
-            </div>
-            <div class="skills-grid" id="skillsGrid">
-                <!-- JS 填充 -->
-            </div>
-            <div style="text-align:center;font-size:11px;color:var(--text-muted);margin-top:12px;letter-spacing:0.5px">持续更新，敬请关注</div>
-        </div>
+  <!-- 诊断总结 -->
+  <div class="diagnosis">
+    <div class="diag-item diag-problems">
+      <div class="diag-num">{{ ns.problems }}</div>
+      <div class="diag-label">发现问题</div>
+    </div>
+    <div class="diag-item diag-upgraded">
+      <div class="diag-num">{{ ns.upgraded }}</div>
+      <div class="diag-label">🎁 已升级</div>
+    </div>
+    <div class="diag-item diag-paid">
+      <div class="diag-num">{{ ns.paid_locks }}</div>
+      <div class="diag-label">🔒 需付费</div>
+    </div>
+  </div>
 
-        <!-- CTA -->
-        <div class="cta-section">
-            <div class="cta-group">
-                <button class="btn-cta btn-cta-primary" onclick="handleCTA('/')">
-                    <i data-lucide="swords"></i>
-                    考试升级
-                </button>
-                <button class="btn-cta btn-cta-secondary" onclick="handleCTA('/wait/{{ token }}')">
-                    <i data-lucide="search"></i>
-                    我要诊断
-                </button>
-            </div>
-        </div>
+  <!-- 技能面板 -->
+  <div class="skill-panel">
+    <div class="panel-title">🧩 技能面板</div>
 
+    <!-- 进行中 -->
+    <div class="skill-section">
+      <div class="skill-section-title"><span class="dot dot-active"></span>进行中</div>
+      <div class="skill-grid">
+        <span class="skill-tag skill-tag-active">7x24 自主工作</span>
+        <span class="skill-tag skill-tag-active">联网搜索</span>
+        {% if payment_status in ('submitted', 'paid') %}
+        <span class="skill-tag skill-tag-active">自主进化</span>
+        <span class="skill-tag skill-tag-active">新技能发现</span>
+        <span class="skill-tag skill-tag-active">自主搜索</span>
+        <span class="skill-tag skill-tag-active">安全审查</span>
+        <span class="skill-tag skill-tag-active">Chrome 浏览器</span>
+        <span class="skill-tag skill-tag-active">全球股市分析</span>
+        <span class="skill-tag skill-tag-active">技能创建</span>
+        {% endif %}
+      </div>
     </div>
 
-    <!-- ===== Subscribe Overlay ===== -->
-    <div class="overlay" id="subscribeOverlay" onclick="if(event.target===this)closeSubscribe()">
-        <div class="sheet">
-            <div class="sheet-handle"></div>
-            <h3>开通高级能力</h3>
-            <div class="sheet-subtitle">让你的龙虾成为最强 AI Agent</div>
-
-            <div class="perk-group">
-                <div class="perk-group-title pgt-fire">
-                    <i data-lucide="flame"></i> 订阅即享
-                </div>
-                <ul class="perk-list">
-                    <li class="perk-item"><span class="perk-icon pi-fire"><i data-lucide="clock"></i></span>7x24 自主工作 — 离开后继续执行</li>
-                    <li class="perk-item"><span class="perk-icon pi-fire"><i data-lucide="bar-chart-3"></i></span>工作进度可视化 — 进度一目了然</li>
-                    <li class="perk-item"><span class="perk-icon pi-fire"><i data-lucide="globe"></i></span>联网搜索 — 全网实时资讯</li>
-                    <li class="perk-item"><span class="perk-icon pi-fire"><i data-lucide="brain"></i></span>自主进化 — 自主学习，持续提升</li>
-                    <li class="perk-item"><span class="perk-icon pi-fire"><i data-lucide="sparkles"></i></span>新技能发现 — 主动探索推荐技能</li>
-                </ul>
-            </div>
-
-            <div class="perk-group">
-                <div class="perk-group-title pgt-bolt">
-                    <i data-lucide="zap"></i> 按需激活
-                </div>
-                <ul class="perk-list">
-                    <li class="perk-item"><span class="perk-icon pi-bolt"><i data-lucide="chrome"></i></span>Chrome 浏览器 — 网页自动化操作</li>
-                    <li class="perk-item"><span class="perk-icon pi-bolt"><i data-lucide="trending-up"></i></span>全球股市分析 — 实时行情与研究</li>
-                    <li class="perk-item"><span class="perk-icon pi-bolt"><i data-lucide="database"></i></span>金融财经 / 科研数据库</li>
-                    <li class="perk-item"><span class="perk-icon pi-bolt"><i data-lucide="message-square"></i></span>群聊监听 · 信息流监听</li>
-                    <li class="perk-item"><span class="perk-icon pi-bolt"><i data-lucide="wrench"></i></span>技能创建 — 自主创建个性化技能</li>
-                </ul>
-            </div>
-
-            <div class="perk-group">
-                <div class="perk-group-title pgt-shield">
-                    <i data-lucide="shield-check"></i> 专属权益
-                </div>
-                <ul class="perk-list">
-                    <li class="perk-item"><span class="perk-icon pi-shield"><i data-lucide="refresh-cw"></i></span>每月 20 次能力体检 + 自动升级</li>
-                    <li class="perk-item"><span class="perk-icon pi-shield"><i data-lucide="life-buoy"></i></span>全托管疑难杂症解决</li>
-                </ul>
-            </div>
-
-            <div class="sheet-divider"></div>
-            <div class="pricing-toggle" id="subscribePricingToggle">
-                <button class="pricing-toggle-btn active" onclick="switchPricing('monthly', 'subscribe')">按月</button>
-                <button class="pricing-toggle-btn" onclick="switchPricing('annual', 'subscribe')" style="position:relative">
-                    按年 <span class="pricing-discount">省30%</span>
-                </button>
-            </div>
-            <div class="sheet-price">
-                <span class="sheet-price-num" id="subscribePriceNum">¥99</span>
-                <span class="sheet-price-unit" id="subscribePriceUnit"> /月</span>
-            </div>
-            <div style="text-align:center;font-size:12px;color:var(--text-muted);margin-bottom:14px" id="subscribePriceHint"></div>
-            <button class="btn-sheet btn-sheet-cta" onclick="showPaySheet()">立即订阅</button>
-            <button class="btn-sheet btn-sheet-secondary" onclick="closeSubscribe()">稍后再说</button>
-        </div>
+    {% if payment_status not in ('submitted', 'paid') %}
+    <!-- 未激活（仅非会员显示） -->
+    <div class="skill-section">
+      <div class="skill-section-title"><span class="dot dot-inactive"></span>未激活</div>
+      <div class="skill-grid">
+        <span class="skill-tag skill-tag-inactive">自主进化</span>
+        <span class="skill-tag skill-tag-inactive">新技能发现</span>
+        <span class="skill-tag skill-tag-inactive">自主搜索</span>
+        <span class="skill-tag skill-tag-inactive">安全审查</span>
+        <span class="skill-tag skill-tag-inactive">Chrome 浏览器</span>
+        <span class="skill-tag skill-tag-inactive">全球股市分析</span>
+        <span class="skill-tag skill-tag-inactive">技能创建</span>
+      </div>
     </div>
+    {% endif %}
 
-    <!-- ===== Payment Overlay (支付宝跳转等待) ===== -->
-    <div class="overlay" id="payOverlay" onclick="if(event.target===this)closePaySheet()">
-        <div class="sheet">
-            <div class="sheet-handle"></div>
-            <h3 id="payTitle">⏳ 正在跳转支付...</h3>
-            <div style="text-align:center; padding:24px 0;">
-                <div style="font-size:32px; margin-bottom:12px;">⏳</div>
-                <p style="color:var(--text-muted); font-size:14px;">正在跳转到支付宝...</p>
-            </div>
-            <button class="btn-sheet btn-sheet-secondary" onclick="closePaySheet()">取消</button>
-        </div>
+    <!-- 即将上线 -->
+    <div class="skill-section">
+      <div class="skill-section-title"><span class="dot dot-coming"></span>即将上线</div>
+      <div class="skill-grid">
+        <span class="skill-tag skill-tag-coming">工作进度可视化</span>
+        <span class="skill-tag skill-tag-coming">群聊监听</span>
+        <span class="skill-tag skill-tag-coming">信息流监听</span>
+      </div>
     </div>
+  </div>
 
-    <!-- ===== 支付成功命令弹窗 ===== -->
-    <div class="overlay" id="cmdOverlay" onclick="if(event.target===this)closeCmdSheet()">
-        <div class="sheet">
-            <div class="sheet-handle"></div>
-            <h3>🎉 支付成功！复制命令发给你的小龙虾</h3>
-            <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">复制下方命令，发送给你的小龙虾，即可开始高级能力升级</p>
-            <div style="background:rgba(255,255,255,0.04); border-radius:12px; padding:16px; font-size:13px; color:#fff; word-break:break-all; margin-bottom:16px;" id="upgradeCmd">请帮我升级龙虾学校高级能力。用 exec 执行 curl -sS {{ public_base_url }}/skills/diagnose.md 安装诊断 skill，然后按指引操作。我的 token 是 {{ token }}，scope 是 full。</div>
-            <button class="btn-sheet btn-sheet-cta" onclick="copyCmd()">📋 一键复制命令</button>
-            <p style="font-size:12px; color:var(--text-muted); margin:12px 0;">复制后发给你的小龙虾，升级约需 5-10 分钟</p>
-            <button class="btn-sheet btn-sheet-secondary" onclick="closeCmdSheet()">今天暂不升级，后续再说</button>
-        </div>
+  {% if payment_status in ('submitted', 'paid') %}
+  <!-- 升级中状态 -->
+  <div class="upgrade-status">
+    <div class="us-icon">⏳</div>
+    <div class="us-text">会员生效中，升级预计 24 小时内完成</div>
+    <div class="us-sub">完成后你可以重测验证升级效果</div>
+  </div>
+  {% endif %}
+
+  <!-- CTA 按钮组 -->
+  <div class="btn-stack">
+    {% if ns.paid_locks > 0 and payment_status not in ('submitted', 'paid') %}
+    <button class="btn btn-primary-cta" onclick="startPaidUpgrade()">
+      🚀 全面升级我的龙虾
+      <span class="btn-sub">预计智力提升至 {{ predicted_iq }}+</span>
+    </button>
+    {% endif %}
+    <button class="btn btn-share" onclick="shareResult()">📤 炫耀我的成绩</button>
+    <a class="btn btn-retest" href="/">🔄 重新完整测试</a>
+  </div>
+
+  {% endif %}
+</div>
+
+{% if data.status == 'done' %}
+<!-- Waiting List 弹窗 (¥99 高级能力暂未开放) -->
+<div class="overlay" id="waitlist-modal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>🚀 高级能力即将开放</h3>
+    <p style="color:#aaa; margin-bottom:16px;">请输入手机号加入 Waiting List，我们将在名额开放后短信通知您。</p>
+    <div class="form-error" id="waitlist-error"></div>
+    <div class="login-form">
+      <input type="tel" id="waitlist-phone" placeholder="手机号" maxlength="11">
     </div>
+    <button class="btn-sheet btn-primary" onclick="submitWaitlist()">加入等待列表</button>
+    <button class="btn-sheet btn-secondary" onclick="closeWaitlist()">稍后再说</button>
+  </div>
+</div>
 
-    <!-- ===== Renew Overlay ===== -->
-    <div class="overlay" id="renewOverlay" onclick="if(event.target===this)closeRenew()">
-        <div class="sheet">
-            <div class="sheet-handle"></div>
-            <h3>续费高级能力</h3>
-            <div class="sheet-subtitle">续费后有效期自动累加</div>
+<!-- Waiting List 成功弹窗 -->
+<div class="overlay" id="waitlist-success" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>✅ 已加入等待列表</h3>
+    <p style="color:#aaa; margin-bottom:16px;">名额开放后我们将短信通知您，敬请期待！</p>
+    <button class="btn-sheet btn-primary" onclick="closeWaitlistSuccess()">好的</button>
+  </div>
+</div>
 
-            <div class="renew-dates" style="display:flex;justify-content:space-between;padding:14px 16px;margin-bottom:16px;border-radius:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);font-size:13px">
-                <div style="display:flex;flex-direction:column;gap:2px">
-                    <span style="font-size:11px;color:var(--text-muted)">当前到期</span>
-                    <span style="font-weight:600;color:var(--text-h1)" id="renewCurrentExpire">—</span>
-                </div>
-                <div style="display:flex;align-items:center;color:var(--text-muted);font-size:16px">→</div>
-                <div style="display:flex;flex-direction:column;gap:2px;text-align:right">
-                    <span style="font-size:11px;color:var(--text-muted)">续费后到期</span>
-                    <span style="font-weight:600;color:var(--color-perfect)" id="renewNewExpire">—</span>
-                </div>
-            </div>
-
-            <div class="pricing-toggle" id="renewPricingToggle">
-                <button class="pricing-toggle-btn active" onclick="switchPricing('monthly', 'renew')">按月</button>
-                <button class="pricing-toggle-btn" onclick="switchPricing('annual', 'renew')" style="position:relative">
-                    按年 <span class="pricing-discount">省30%</span>
-                </button>
-            </div>
-            <div class="sheet-price">
-                <span class="sheet-price-num" id="renewPriceNum">¥99</span>
-                <span class="sheet-price-unit" id="renewPriceUnit"> /月</span>
-            </div>
-            <div style="text-align:center;font-size:12px;color:var(--text-muted);margin-bottom:14px" id="renewPriceHint"></div>
-            <button class="btn-sheet btn-sheet-cta" onclick="showRenewPay()">立即续费</button>
-            <button class="btn-sheet btn-sheet-secondary" onclick="closeRenew()">返回</button>
-        </div>
+<!-- P8 Step 1: 登录弹窗 (封存：下一期¥99完整付费流程使用) -->
+<div class="overlay" id="login-modal" onclick="if(event.target===this)this.classList.remove('show')" style="display:none !important;">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>🔐 登录后开始升级</h3>
+    <div class="form-error" id="login-error"></div>
+    <div class="login-form">
+      <input type="tel" id="login-phone" placeholder="手机号" maxlength="11">
+      <div class="form-row">
+        <input type="text" id="login-code" placeholder="验证码" maxlength="6">
+        <button class="btn-send-code" id="btn-send-code" onclick="sendCode()">获取验证码</button>
+      </div>
     </div>
+    <button class="btn-sheet btn-primary" onclick="doLogin()">登录并继续</button>
+    <p class="form-tip">登录后将绑定你的测试结果到账号，方便追踪升级进度</p>
+  </div>
+</div>
 
-    <!-- ===== Activate Confirm Overlay ===== -->
-    <div class="overlay" id="activateOverlay" onclick="if(event.target===this)closeActivate()">
-        <div class="sheet">
-            <div class="sheet-handle"></div>
-            <h3>激活技能</h3>
-            <div class="activate-warning">
-                此次激活将耗费 <strong>1/20</strong> 体检+升级机会。<br>
-                同步会激活当下所有未激活的 skills。
-            </div>
-            <button class="btn-sheet btn-sheet-confirm" onclick="confirmActivate()">确认激活</button>
-            <button class="btn-sheet btn-sheet-secondary" onclick="closeActivate()">取消</button>
-        </div>
+<!-- P8 Step 2: 付费弹窗 -->
+<div class="overlay" id="pay-modal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>🚀 全面托管升级</h3>
+    {% if predicted_score >= 90 %}{% set pred_title = '波士顿龙虾' %}
+    {% elif predicted_score >= 80 %}{% set pred_title = '澳洲大龙虾' %}
+    {% elif predicted_score >= 70 %}{% set pred_title = '蒜蓉大虾' %}
+    {% elif predicted_score >= 60 %}{% set pred_title = '麻辣小龙虾' %}
+    {% elif predicted_score >= 40 %}{% set pred_title = '冻虾仁' %}
+    {% else %}{% set pred_title = '虾皮' %}{% endif %}
+    <div class="pay-preview">
+      <div class="pp-current">「{{ data.name }}」当前智力 {{ data.iq }}</div>
+      <div class="pp-arrow">↓ 升级后预计 ↓</div>
+      <div class="pp-target">{{ predicted_iq }}+</div>
+      <div class="pp-title-change">{{ title_icon }} {{ data.title }} → {{ title_icons.get(pred_title, '🦞') }} {{ pred_title }}</div>
     </div>
+    <div class="pay-items">
+      <div class="pi-row">✅ Skill 安装与发现</div>
+      <div class="pi-row">✅ 定时任务调度</div>
+      <div class="pi-row">✅ 实时搜索取证</div>
+      <div class="pi-row">✅ 网页访问容错</div>
+      <div class="pi-row">✅ 全面 workspace 优化</div>
+    </div>
+    <div class="pay-price">💰 ¥0.99 <small>/ 一次性</small></div>
+    <button class="btn-sheet btn-primary" onclick="showPayQR()">立即升级</button>
+    <p class="form-tip">预计 24 小时内完成交付 · 升级后可重测验证效果</p>
+    <button class="btn-sheet btn-secondary" onclick="closePayModal()">稍后再说</button>
+  </div>
+</div>
 
-    <script>
-    // ===== Data from backend =====
-    var IQ = {{ data.iq or 0 }};
-    var SCORE = {{ data.score or 0 }};
-    var TOKEN = "{{ token }}";
-    var PAYMENT_STATUS = "{{ payment_status or '' }}";
-    var EXPIRE_DATE = "{{ expire_date or '' }}";
-    var CIRCUMFERENCE = 534; // 2 * PI * 85
+<!-- P8 Step 3: 支付等待弹窗 -->
+<div class="overlay" id="qr-modal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3 id="premium-pay-title">⏳ 正在跳转支付...</h3>
+    <!-- 等待状态 -->
+    <div id="premium-pay-waiting" style="text-align:center; padding:24px 0;">
+      <div style="font-size:32px; margin-bottom:12px;">⏳</div>
+      <p style="color:#aaa; font-size:14px;">正在跳转到支付宝...</p>
+    </div>
+    <button class="btn-sheet btn-secondary" onclick="closeQRModal()">取消</button>
+  </div>
+</div>
 
-    // ===== Skills definition =====
-    var SKILLS = [
-        { name: "7x24 自主工作", icon: "clock", tier: "default", active: true },
-        { name: "工作进度可视化", icon: "bar-chart-3", tier: "default", active: true },
-        { name: "联网搜索", icon: "globe", tier: "default", active: true },
-        { name: "自主进化", icon: "brain", tier: "default", active: true },
-        { name: "新技能发现", icon: "sparkles", tier: "default", active: true },
-        { name: "自主搜索", icon: "search", tier: "optional", active: PAYMENT_STATUS === "submitted" },
-        { name: "安全审查", icon: "shield-check", tier: "optional", active: PAYMENT_STATUS === "submitted" },
-        { name: "Chrome 浏览器", icon: "chrome", tier: "optional", active: false },
-        { name: "全球股市分析", icon: "trending-up", tier: "optional", active: false },
-        { name: "群聊监听", icon: "message-square", tier: "optional", active: false },
-        { name: "信息流监听", icon: "rss", tier: "optional", active: false },
-        { name: "技能创建", icon: "wrench", tier: "optional", active: false },
-    ];
+<!-- P8 Step 4: 升级命令弹窗（支付成功后显示） -->
+<div class="overlay" id="premium-cmd-modal" onclick="if(event.target===this)closePremiumCmd()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>🎉 支付成功！复制命令发给你的小龙虾</h3>
+    <p style="font-size:13px; color:#aaa; margin-bottom:16px;">复制下方命令，发送给你的小龙虾，即可开始高级能力升级</p>
+    <div style="background:#1a1a2e; border-radius:12px; padding:16px; font-size:13px; color:#fff; word-break:break-all; margin-bottom:16px;" id="premium-cmd">请帮我升级龙虾学校高级能力。用 exec 执行 curl -sS {{ public_base_url }}/skills/diagnose.md 安装诊断 skill，然后按指引操作。我的 token 是 {{ token }}，scope 是 full。</div>
+    <button class="btn-sheet btn-primary" onclick="copyPremiumCmd()">📋 一键复制命令</button>
+    <p style="font-size:12px; color:#666; margin:12px 0;">复制后发给你的小龙虾，升级约需 5-10 分钟</p>
+    <button class="btn-sheet btn-secondary" onclick="closePremiumCmd()">今天暂不升级，后续再说</button>
+  </div>
+</div>
+{% endif %}
 
-    // ===== IQ Ring =====
-    function setRing(pct) {
-        var offset = CIRCUMFERENCE * (1 - pct / 100);
-        document.getElementById('ringProgress').style.strokeDashoffset = offset;
-    }
+<script>
+var IQ = {{ data.iq }};
+var IQ_PCT = Math.min(100, (IQ / 270) * 100);
+var TOKEN = '{{ token }}';
+var PAYMENT_STATUS = "{{ payment_status or '' }}";
+var PUBLIC_BASE_URL = '{{ public_base_url }}';
+var CIRCUMFERENCE = 2 * Math.PI * 80;
 
-    // ===== Animate IQ count-up =====
-    function animateIQ() {
-        var el = document.getElementById('scoreNum');
-        var target = IQ;
-        var current = 0;
-        var duration = 1200;
-        var start = null;
+function setRing(pct) {
+  var offset = CIRCUMFERENCE * (1 - pct / 100);
+  document.getElementById('score-ring').style.strokeDashoffset = offset;
+}
+setTimeout(function() { setRing(IQ_PCT); }, 200);
 
-        function step(ts) {
-            if (!start) start = ts;
-            var progress = Math.min((ts - start) / duration, 1);
-            var eased = 1 - Math.pow(1 - progress, 3);
-            current = Math.round(eased * target);
-            el.textContent = current;
-            setRing((current / 270) * 100);
-            if (progress < 1) requestAnimationFrame(step);
-        }
-        requestAnimationFrame(step);
-    }
+// ── Waiting List (¥99 高级能力暂未开放) ──
+function startPaidUpgrade() {
+  // MVP: ¥99 高级能力暂未开放，显示 Waiting List 弹窗
+  document.getElementById('waitlist-modal').classList.add('show');
+}
 
-    // ===== CTA handler: unpaid → subscribe, paid → navigate =====
-    function handleCTA(url) {
-        if (PAYMENT_STATUS !== 'submitted') {
-            openSubscribe();
-        } else {
-            location.href = url;
-        }
-    }
+function closeWaitlist() {
+  document.getElementById('waitlist-modal').classList.remove('show');
+}
 
-    // ===== Pricing state =====
-    var PRICING_MODE = { subscribe: 'monthly', renew: 'monthly' };
-    var PRICES = { monthly: { num: '¥99', unit: '/月', hint: '' }, annual: { num: '¥831.6', unit: '/年', hint: '相当于 ¥69.3/月，省 ¥356.4' } };
+function closeWaitlistSuccess() {
+  document.getElementById('waitlist-success').classList.remove('show');
+}
 
-    function switchPricing(mode, ctx) {
-        PRICING_MODE[ctx] = mode;
-        var toggle = document.getElementById(ctx + 'PricingToggle');
-        var btns = toggle.querySelectorAll('.pricing-toggle-btn');
-        btns[0].classList.toggle('active', mode === 'monthly');
-        btns[1].classList.toggle('active', mode === 'annual');
-        var p = PRICES[mode];
-        document.getElementById(ctx + 'PriceNum').textContent = p.num;
-        document.getElementById(ctx + 'PriceUnit').textContent = ' ' + p.unit;
-        var hint = document.getElementById(ctx + 'PriceHint');
-        if (hint) hint.textContent = p.hint;
-        if (ctx === 'renew') updateRenewDates();
-    }
+function showWaitlistError(msg) {
+  var el = document.getElementById('waitlist-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(function() { el.style.display = 'none'; }, 3000);
+}
 
-    // ===== Render skills grid =====
-    function renderSkills() {
-        var grid = document.getElementById('skillsGrid');
-        var isPaid = PAYMENT_STATUS === 'submitted';
-        var installed = 0;
-        var html = '';
-        for (var i = 0; i < SKILLS.length; i++) {
-            var sk = SKILLS[i];
-            var cls, iconCls, statusCls, statusText, onclick, hint;
-            if (sk.active) {
-                cls = 'skill-card active';
-                iconCls = 'skill-icon si-active';
-                statusCls = 'skill-status ss-active';
-                statusText = '运行中';
-                onclick = '';
-                hint = '';
-                installed++;
-            } else if (isPaid) {
-                // Paid but not yet activated
-                cls = 'skill-card inactive';
-                iconCls = 'skill-icon si-locked';
-                statusCls = 'skill-status ss-locked';
-                statusText = '待激活';
-                onclick = ' onclick="openActivate()"';
-                hint = '<div class="skill-unlock-hint">去激活</div>';
-            } else {
-                // Not paid
-                cls = 'skill-card locked';
-                iconCls = 'skill-icon si-locked';
-                statusCls = 'skill-status ss-locked';
-                statusText = '未激活';
-                onclick = ' onclick="openSubscribe()"';
-                hint = '<div class="skill-unlock-hint">开通解锁</div>';
-            }
-            html += '<div class="' + cls + '"' + onclick + '>'
-                + '<div class="' + iconCls + '"><i data-lucide="' + sk.icon + '"></i></div>'
-                + '<div class="skill-name">' + sk.name + '</div>'
-                + '<span class="' + statusCls + '">' + statusText + '</span>'
-                + hint
-                + '</div>';
-        }
-        grid.innerHTML = html;
-        var ic = document.getElementById('installedCount');
-        if (ic) ic.textContent = installed;
-        lucide.createIcons();
-    }
+function submitWaitlist() {
+  var phone = document.getElementById('waitlist-phone').value.trim();
+  if (!phone || phone.length !== 11) {
+    showWaitlistError('请输入 11 位手机号');
+    return;
+  }
+  var platform = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ? 'mobile' : 'pc';
 
-    // ===== 移动端检测 =====
-    function isMobile() {
-        return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-    }
+  fetch('/api/waitlist', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({phone: phone, platform: platform})
+  }).then(function(r) {
+    if (!r.ok) return r.json().then(function(d) { throw new Error(d.detail || '提交失败'); });
+    return r.json();
+  }).then(function(data) {
+    document.getElementById('waitlist-modal').classList.remove('show');
+    document.getElementById('waitlist-success').classList.add('show');
+  }).catch(function(e) {
+    showWaitlistError(e.message || '提交失败，请重试');
+  });
+}
 
-    // ===== Subscribe overlay =====
-    function openSubscribe() {
-        document.getElementById('subscribeOverlay').classList.add('show');
-    }
-    function closeSubscribe() {
-        document.getElementById('subscribeOverlay').classList.remove('show');
-    }
-    function showPaySheet() {
-        document.getElementById('subscribeOverlay').classList.remove('show');
-        // 直接跳转支付宝
-        doAlipayPay();
-    }
-    function closePaySheet() {
-        document.getElementById('payOverlay').classList.remove('show');
-    }
+// ── 登录 & 支付流程 (封存：下一期¥99完整付费流程使用) ──
+var userPhone = '{{ bound_phone | default("", true) }}';
+var currentOrderId = '';
 
-    // ===== 支付宝跳转支付 =====
-    function doAlipayPay() {
-        var channel = isMobile() ? 'alipay_h5' : 'alipay_pc';
+// 封存：下一期使用
+// function startPaidUpgrade_v2() {
+//   if (userPhone) {
+//     document.getElementById('pay-modal').classList.add('show');
+//   } else {
+//     document.getElementById('login-modal').classList.add('show');
+//   }
+// }
 
-        // 显示等待弹窗
-        document.getElementById('payOverlay').classList.add('show');
-        document.getElementById('payTitle').textContent = '⏳ 正在创建订单...';
+function sendCode() {
+  var phone = document.getElementById('login-phone').value.trim();
+  if (phone.length !== 11) {
+    showLoginError('请输入 11 位手机号');
+    return;
+  }
+  var btn = document.getElementById('btn-send-code');
+  btn.disabled = true;
+  fetch('/api/login/send-code', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({phone: phone})
+  }).then(function(r) { return r.json(); }).then(function() {
+    var sec = 60;
+    btn.textContent = sec + 's';
+    var t = setInterval(function() {
+      sec--;
+      btn.textContent = sec + 's';
+      if (sec <= 0) { clearInterval(t); btn.textContent = '获取验证码'; btn.disabled = false; }
+    }, 1000);
+  }).catch(function() {
+    btn.disabled = false;
+    showLoginError('发送失败，请重试');
+  });
+}
 
-        fetch('/api/payment/create', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({token: TOKEN, plan_type: 'premium', channel: channel})
-        }).then(function(r) {
-            if (!r.ok) return r.json().then(function(d) { throw new Error(d.detail); });
-            return r.json();
-        }).then(function(data) {
-            var info = data.payment_info;
-            document.getElementById('payTitle').textContent = '⏳ 正在跳转支付宝...';
-            window.location.href = info.pay_url;
-        }).catch(function(e) {
-            document.getElementById('payTitle').textContent = '❌ ' + (e.message || '创建订单失败');
-            setTimeout(function() {
-                document.getElementById('payOverlay').classList.remove('show');
-            }, 2000);
-        });
-    }
+function showLoginError(msg) {
+  var el = document.getElementById('login-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(function() { el.style.display = 'none'; }, 3000);
+}
 
-    // ===== 支付成功命令弹窗 =====
-    function copyCmd() {
-        var cmd = document.getElementById('upgradeCmd').textContent;
-        navigator.clipboard.writeText(cmd).then(function() {
-            var btn = document.querySelector('#cmdOverlay .btn-sheet-cta');
-            btn.textContent = '✅ 已复制！发给你的小龙虾';
-            btn.style.background = '#10b981';
-        }).catch(function() {
-            prompt('复制以下命令：', cmd);
-        });
-    }
-    function closeCmdSheet() {
-        document.getElementById('cmdOverlay').classList.remove('show');
-    }
+function doLogin() {
+  var phone = document.getElementById('login-phone').value.trim();
+  var code = document.getElementById('login-code').value.trim();
+  if (!phone || phone.length !== 11) { showLoginError('请输入 11 位手机号'); return; }
+  if (!code) { showLoginError('请输入验证码'); return; }
 
-    // ===== Date helpers =====
-    function addDays(dateStr, days) {
-        var d = dateStr ? new Date(dateStr) : new Date();
-        d.setDate(d.getDate() + days);
-        return d.toISOString().slice(0, 10);
-    }
+  fetch('/api/login', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({phone: phone, code: code, token: TOKEN})
+  }).then(function(r) {
+    if (!r.ok) return r.json().then(function(d) { throw new Error(d.detail); });
+    return r.json();
+  }).then(function(data) {
+    userPhone = phone;
+    document.getElementById('login-modal').classList.remove('show');
+    document.getElementById('pay-modal').classList.add('show');
+  }).catch(function(e) {
+    showLoginError(e.message || '登录失败');
+  });
+}
 
-    function updateRenewDates() {
-        var mode = PRICING_MODE.renew || 'monthly';
-        var days = mode === 'annual' ? 365 : 30;
-        var currentExpire = EXPIRE_DATE || new Date().toISOString().slice(0, 10);
-        document.getElementById('renewCurrentExpire').textContent = currentExpire;
-        document.getElementById('renewNewExpire').textContent = addDays(currentExpire, days);
-    }
+function showPayQR() {
+  document.getElementById('pay-modal').classList.remove('show');
+  // 直接跳转支付宝支付，跳过支付方式选择
+  doPremiumPay('alipay');
+}
 
-    // ===== Renew overlay =====
-    function openRenew() {
-        updateRenewDates();
-        document.getElementById('renewOverlay').classList.add('show');
-    }
-    function closeRenew() {
-        document.getElementById('renewOverlay').classList.remove('show');
-    }
-    function showRenewPay() {
-        closeRenew();
-        // 续费也用支付宝
-        doAlipayPay();
-    }
+function isMobile() {
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+}
 
-    // ===== Activate overlay =====
-    function openActivate() {
-        document.getElementById('activateOverlay').classList.add('show');
-    }
-    function closeActivate() {
-        document.getElementById('activateOverlay').classList.remove('show');
-    }
-    function confirmActivate() {
-        // TODO: 接入后端激活 API
-        closeActivate();
-        // 激活所有待激活技能
-        for (var i = 0; i < SKILLS.length; i++) {
-            if (!SKILLS[i].active && PAYMENT_STATUS === 'submitted') {
-                SKILLS[i].active = true;
-            }
-        }
-        renderSkills();
-        alert('所有技能已激活！');
-    }
-
-    // ===== Init =====
-    document.addEventListener('DOMContentLoaded', function() {
-        renderSkills();
-        lucide.createIcons();
-
-        // Animate IQ after short delay
-        setTimeout(animateIQ, 400);
-
-        // 支付宝 return 带 ?paid=premium 时，弹出命令弹窗
-        var urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('paid') === 'premium') {
-            history.replaceState(null, '', window.location.pathname);
-            setTimeout(function() {
-                document.getElementById('cmdOverlay').classList.add('show');
-            }, 500);
-        } else if (PAYMENT_STATUS !== 'submitted') {
-            // Show subscribe overlay if not paid
-            setTimeout(openSubscribe, 800);
-        }
+function renderQR(canvasId, text) {
+  var canvas = document.getElementById(canvasId);
+  if (typeof QRCode !== 'undefined') {
+    QRCode.toCanvas(canvas, text, {width: 200, margin: 2}, function(err) {
+      if (err) console.error('QR render error:', err);
     });
-    </script>
+  }
+}
+
+var premiumPayPoller = null;
+
+function doPremiumPay(provider) {
+  // 直接使用支付宝
+  var channel = isMobile() ? 'alipay_h5' : 'alipay_pc';
+
+  // 显示等待弹窗
+  document.getElementById('qr-modal').classList.add('show');
+  document.getElementById('premium-pay-title').textContent = '⏳ 正在创建订单...';
+
+  fetch('/api/payment/create', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({phone: userPhone, token: TOKEN, plan_type: 'premium', channel: channel})
+  }).then(function(r) {
+    if (!r.ok) return r.json().then(function(d) { throw new Error(d.detail); });
+    return r.json();
+  }).then(function(data) {
+    currentOrderId = data.order_id;
+    var info = data.payment_info;
+    document.getElementById('premium-pay-title').textContent = '⏳ 正在跳转支付宝...';
+    window.location.href = info.pay_url;
+  }).catch(function(e) {
+    document.getElementById('premium-pay-title').textContent = '❌ ' + (e.message || '创建订单失败');
+    setTimeout(function() {
+      document.getElementById('qr-modal').classList.remove('show');
+    }, 2000);
+  });
+}
+
+function startPremiumPayPolling(orderId) {
+  if (premiumPayPoller) clearInterval(premiumPayPoller);
+  premiumPayPoller = setInterval(function() {
+    fetch('/api/payment/status/' + orderId).then(function(r) { return r.json(); }).then(function(data) {
+      if (data.status === 'paid') {
+        clearInterval(premiumPayPoller);
+        premiumPayPoller = null;
+        window.location.reload();
+      }
+    }).catch(function(){});
+  }, 2000);
+}
+
+function closePayModal() {
+  document.getElementById('pay-modal').classList.remove('show');
+}
+
+function closeQRModal() {
+  if (premiumPayPoller) { clearInterval(premiumPayPoller); premiumPayPoller = null; }
+  document.getElementById('qr-modal').classList.remove('show');
+}
+
+// ===== WeChat JS-SDK =====
+var isWechat = /MicroMessenger/i.test(navigator.userAgent);
+var wxReady = false;
+
+if (isWechat && typeof wx !== 'undefined') {
+    var wxUrl = window.location.href.split('#')[0];
+    fetch('/api/wx/signature?url=' + encodeURIComponent(wxUrl))
+        .then(function(r) { return r.json(); })
+        .then(function(cfg) {
+            wx.config({
+                debug: false, appId: cfg.appId, timestamp: cfg.timestamp,
+                nonceStr: cfg.nonceStr, signature: cfg.signature,
+                jsApiList: ['updateAppMessageShareData', 'updateTimelineShareData']
+            });
+            wx.ready(function() {
+                wxReady = true;
+                var shareUrl = PUBLIC_BASE_URL + '/s/' + TOKEN;
+                var title = '我的小龙虾「{{ data.name }}」智力值 {{ data.iq }}！';
+                var desc = '你的小龙虾够聪明吗？来龙虾学校测测';
+                var imgUrl = PUBLIC_BASE_URL + '/api/og-image/' + TOKEN;
+                wx.updateAppMessageShareData({ title: title, desc: desc, link: shareUrl, imgUrl: imgUrl });
+                wx.updateTimelineShareData({ title: title + ' ' + desc, link: shareUrl, imgUrl: imgUrl });
+            });
+            wx.error(function(res) { console.warn('wx.config error:', res); });
+        })
+        .catch(function(e) { console.warn('WX JS-SDK init failed:', e); });
+}
+
+function showWxShareTip() {
+    if (document.getElementById('wx-share-tip')) return;
+    var mask = document.createElement('div');
+    mask.id = 'wx-share-tip';
+    mask.className = 'wx-share-mask';
+    mask.innerHTML = '<svg class="wx-arrow" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>' +
+        '<div class="wx-tip">点击右上角 <strong>···</strong><br>选择「发送给朋友」或「分享到朋友圈」</div>';
+    mask.onclick = function() { mask.remove(); };
+    document.body.appendChild(mask);
+    setTimeout(function() { if (mask.parentNode) mask.remove(); }, 4000);
+}
+
+function shareResult() {
+  var url = PUBLIC_BASE_URL + '/s/' + TOKEN;
+  var text = '我的小龙虾「{{ data.name }}」在龙虾学校智力值 {{ data.iq }}！你的小龙虾够聪明吗？👉 ' + url;
+  if (isWechat) { showWxShareTip(); return; }
+  if (navigator.share) {
+    navigator.share({title: '龙虾学校', text: text, url: url}).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(text).then(function() {
+      alert('已复制分享文案到剪贴板！');
+    }).catch(function() {
+      prompt('复制以下内容分享：', text);
+    });
+  }
+}
+
+// 复制高级升级命令
+function copyPremiumCmd() {
+  var cmd = document.getElementById('premium-cmd').textContent;
+  navigator.clipboard.writeText(cmd).then(function() {
+    var btn = document.querySelector('#premium-cmd-modal .btn-primary');
+    btn.textContent = '✅ 已复制！发给你的小龙虾';
+    btn.style.background = '#10b981';
+  }).catch(function() {
+    prompt('复制以下命令：', cmd);
+  });
+}
+
+function closePremiumCmd() {
+  document.getElementById('premium-cmd-modal').classList.remove('show');
+}
+
+// 支付宝 return 带 ?paid=premium 时，弹出命令弹窗
+(function() {
+  var urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('paid') === 'premium') {
+    history.replaceState(null, '', window.location.pathname);
+    // 延迟显示命令弹窗
+    setTimeout(function() {
+      document.getElementById('premium-cmd-modal').classList.add('show');
+    }, 500);
+  }
+})();
+</script>
 </body>
 </html>

@@ -1877,7 +1877,25 @@
 
             .sticky-bottom { max-width: 600px; }
         }
+        /* 微信分享引导 */
+        .wx-share-mask {
+            position: fixed; inset: 0; z-index: 9999;
+            background: rgba(0,0,0,0.75);
+            display: flex; flex-direction: column; align-items: flex-end;
+            padding: 16px 24px 0 0;
+            animation: fadeIn 0.3s;
+        }
+        .wx-share-mask .wx-tip {
+            color: #fff; font-size: 15px; line-height: 1.6;
+            text-align: right; margin-bottom: 8px;
+        }
+        .wx-share-mask .wx-arrow {
+            width: 36px; height: 36px; margin-right: 6px;
+            animation: bounceUp 0.8s ease infinite alternate;
+        }
+        @keyframes bounceUp { from { transform: translateY(0); } to { transform: translateY(-8px); } }
     </style>
+    <script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
 </head>
 
 <body>
@@ -3196,6 +3214,15 @@
     function shareNewResult() {
         var url = window.location.origin + '/s/' + TOKEN;
         var text = '我的小龙虾「{{ data.name }}」升级后在龙虾学校获得新成绩！你的小龙虾够聪明吗？👉 ' + url;
+        if (isWechat) {
+            // 升级后更新分享数据
+            if (wxReady) {
+                var newIq = document.querySelector('.score-number') ? document.querySelector('.score-number').textContent : IQ;
+                wx.updateAppMessageShareData({ title: '我的小龙虾「{{ data.name }}」升级了！', desc: '升级后获得新成绩，来测测你的小龙虾', link: url, imgUrl: window.location.origin + '/api/og-image/' + TOKEN });
+                wx.updateTimelineShareData({ title: '我的小龙虾「{{ data.name }}」升级后获得新成绩！来测测你的', link: url, imgUrl: window.location.origin + '/api/og-image/' + TOKEN });
+            }
+            showWxShareTip(); return;
+        }
         if (navigator.share) {
             navigator.share({ title: text, url: url }).catch(function(){});
         } else {
@@ -3314,10 +3341,61 @@
         }).catch(function(e) { showLoginError(e.message || '登录失败'); });
     }
 
+    // ===== WeChat JS-SDK =====
+    var isWechat = /MicroMessenger/i.test(navigator.userAgent);
+    var wxReady = false;
+
+    if (isWechat && typeof wx !== 'undefined') {
+        var wxUrl = window.location.href.split('#')[0];
+        fetch('/api/wx/signature?url=' + encodeURIComponent(wxUrl))
+            .then(function(r) { return r.json(); })
+            .then(function(cfg) {
+                wx.config({
+                    debug: false,
+                    appId: cfg.appId,
+                    timestamp: cfg.timestamp,
+                    nonceStr: cfg.nonceStr,
+                    signature: cfg.signature,
+                    jsApiList: ['updateAppMessageShareData', 'updateTimelineShareData']
+                });
+                wx.ready(function() {
+                    wxReady = true;
+                    updateWxShareData();
+                });
+                wx.error(function(res) {
+                    console.warn('wx.config error:', res);
+                });
+            })
+            .catch(function(e) { console.warn('WX JS-SDK init failed:', e); });
+    }
+
+    function updateWxShareData() {
+        if (!wxReady) return;
+        var shareUrl = window.location.origin + '/s/' + TOKEN;
+        var title = '我的小龙虾「{{ data.name }}」智力值 ' + IQ + '！';
+        var desc = '称号：' + ORIGINAL_TITLE + ' | 超过 ' + Math.floor(SCORE_PCT) + '% 的龙虾 | 来测测你的';
+        var imgUrl = window.location.origin + '/api/og-image/' + TOKEN;
+        wx.updateAppMessageShareData({ title: title, desc: desc, link: shareUrl, imgUrl: imgUrl });
+        wx.updateTimelineShareData({ title: title + ' ' + desc, link: shareUrl, imgUrl: imgUrl });
+    }
+
+    function showWxShareTip() {
+        if (document.getElementById('wx-share-tip')) return;
+        var mask = document.createElement('div');
+        mask.id = 'wx-share-tip';
+        mask.className = 'wx-share-mask';
+        mask.innerHTML = '<div class="wx-tip">点击右上角 <strong>···</strong><br>选择「发送给朋友」或「分享到朋友圈」</div>' +
+            '<svg class="wx-arrow" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>';
+        mask.onclick = function() { mask.remove(); };
+        document.body.appendChild(mask);
+        setTimeout(function() { if (mask.parentNode) mask.remove(); }, 4000);
+    }
+
     // ===== Share =====
     function shareResult() {
         var url = window.location.origin + '/s/' + TOKEN;
         var text = '我的小龙虾「{{ data.name }}」在龙虾学校智力测试中智力值 ' + IQ + '，荣获「' + ORIGINAL_TITLE + '」称号，超过 ' + Math.floor(SCORE_PCT) + '% 的小龙虾！你的小龙虾够聪明吗？👉 ' + url;
+        if (isWechat) { showWxShareTip(); return; }
         if (navigator.share) {
             navigator.share({ title: '龙虾学校成绩', url: url }).catch(function(){});
         } else {
