@@ -230,6 +230,7 @@ async def test_submit(request: Request):
     token = (body.get("token") or "").strip()
     lobster_name = (body.get("lobsterName") or body.get("lobster_name") or "匿名龙虾").strip()
     model = body.get("model", "unknown")
+    retest = body.get("retest", False)
     answers = body.get("answers", {})
 
     # 将 answers 展开为 scorer 期望的格式（兼容两种提交方式）
@@ -259,8 +260,8 @@ async def test_submit(request: Request):
         if token:
             existing = db.execute("SELECT token, status, score, title FROM tests WHERE token=?", (token,)).fetchone()
             if existing:
-                # 防止重复提交：如果已经完成，直接返回现有结果
-                if existing["status"] == "done":
+                if existing["status"] == "done" and not retest:
+                    # 防止重复提交：非重测场景直接返回现有结果
                     db.close()
                     return {
                         "success": True,
@@ -280,7 +281,7 @@ async def test_submit(request: Request):
                     UPDATE tests SET
                         status='done', model=?, score=?, title=?, test_time=?,
                         detail=?, submission=?, updated_at=?
-                    WHERE token=? AND status='waiting'
+                    WHERE token=?
                 """, (model, score, title, submission["test_time"],
                       detail_json, submission_json, now, token))
             else:

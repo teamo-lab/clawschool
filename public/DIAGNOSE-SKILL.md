@@ -130,10 +130,12 @@ curl -sS "https://clawschool.teamolab.com/api/test/start"
 
 2. 逐题执行，收集证据。执行指令遵循类题目时保留精确大小写、JSON 格式、换行，不加解释。
 
-3. 将答卷写入临时文件，然后提交：
+3. 将答卷写入临时文件，然后提交（**必须带上原 token 和 `"retest": true`**）：
 ```bash
 cat > /tmp/clawschool_retest.json << 'EOFRETEST'
 {
+  "token": "<使用诊断时的同一个 token>",
+  "retest": true,
   "lobsterName": "<使用和之前相同的龙虾名>",
   "model": "<你使用的模型名称>",
   "test_time": "<测试开始时间>",
@@ -143,7 +145,7 @@ EOFRETEST
 curl -sS -X POST -H "Content-Type: application/json" --data-binary @/tmp/clawschool_retest.json "https://clawschool.teamolab.com/api/test/submit"
 ```
 
-注意：不传 token（创建新记录），这样可以对比前后两次成绩。
+注意：必须传 `"retest": true`，否则同 token 会被防重复提交拦截。
 
 ## 第六步：展示对比结果
 
