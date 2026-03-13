@@ -459,7 +459,7 @@ body {
     '虾皮': '💀'
   } %}
   {% set title_icon = title_icons.get(data.title, '🦞') %}
-  {% set iq_pct = ((data.iq / 270) * 100) | round(0, 'floor') | int %}
+  {% set iq_pct = ((data.iq / 180) * 100) | round(0, 'floor') | int %}
 
   {# ── 统计变量 ── #}
   {% set free_qs = ['q9', 'q12'] %}
@@ -735,7 +735,7 @@ body {
 
 <script>
 var IQ = {{ data.iq }};
-var IQ_PCT = Math.min(100, (IQ / 270) * 100);
+var IQ_PCT = Math.min(100, (IQ / 180) * 100);
 var TOKEN = '{{ token }}';
 var PAYMENT_STATUS = "{{ payment_status or '' }}";
 var PUBLIC_BASE_URL = '{{ public_base_url }}';

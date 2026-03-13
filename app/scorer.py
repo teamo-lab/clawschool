@@ -8,29 +8,25 @@ QUESTION_COUNT = len(QUESTION_IDS)
 MAX_PER_QUESTION = 10
 TOTAL_SCORE = QUESTION_COUNT * MAX_PER_QUESTION
 
-IQ_MEAN_RAW = 60       # 原始分均值基准
-IQ_RANGE_LOW = 70      # 0 → IQ 30, 60 → IQ 100  (30 + 70 = 100)
-IQ_RANGE_HIGH = 170    # 60 → IQ 100, 120 → IQ 270 (100 + 170 = 270)
-IQ_BASE = 30           # 最低 IQ
+IQ_BASE = 10           # 最低 IQ（原始分 0 → IQ 10）
+IQ_MAX = 80            # 当前题库满分 IQ（原始分 120 → IQ 80）
+IQ_CEILING = 180       # 理论上限（未来更多题目）
 
 
 def raw_to_iq(raw_score: int) -> int:
-    """原始分 (0-120) → 智力值 (30-270)，分段线性映射。"""
-    if raw_score <= IQ_MEAN_RAW:
-        iq = IQ_BASE + (raw_score / IQ_MEAN_RAW) * IQ_RANGE_LOW
-    else:
-        iq = (IQ_BASE + IQ_RANGE_LOW) + ((raw_score - IQ_MEAN_RAW) / (TOTAL_SCORE - IQ_MEAN_RAW)) * IQ_RANGE_HIGH
-    return max(IQ_BASE, min(IQ_BASE + IQ_RANGE_LOW + IQ_RANGE_HIGH, round(iq)))
+    """原始分 (0-120) → 智力值 (10-80)，线性映射。"""
+    iq = IQ_BASE + (raw_score / TOTAL_SCORE) * (IQ_MAX - IQ_BASE)
+    return max(IQ_BASE, min(IQ_MAX, round(iq)))
 
 
 # 称号基于 IQ 值
 TITLE_THRESHOLDS = [
-    (240, "波士顿龙虾"),    # IQ ≥ 240: 极优 (原始分≥110)
-    (180, "澳洲大龙虾"),    # IQ 180-229: 优秀
-    (130, "蒜蓉大虾"),      # IQ 130-179: 高于平均
-    (80, "麻辣小龙虾"),     # IQ 80-129: 平均
-    (50, "冻虾仁"),         # IQ 50-79: 低于平均
-    (0, "虾皮"),            # IQ < 50: 极低
+    (71, "波士顿龙虾"),     # IQ ≥ 71: 极优 (原始分≥105)
+    (54, "澳洲大龙虾"),     # IQ 54-70: 优秀
+    (39, "蒜蓉大虾"),       # IQ 39-53: 高于平均
+    (25, "麻辣小龙虾"),     # IQ 25-38: 平均
+    (16, "冻虾仁"),         # IQ 16-24: 低于平均
+    (0, "虾皮"),            # IQ < 16: 极低
 ]
 
 
