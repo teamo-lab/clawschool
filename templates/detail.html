@@ -2287,7 +2287,7 @@
             <div id="upgrade-stuck-hint" style="display:none; margin-top:14px; padding:12px 14px; background:rgba(255,150,22,0.1); border:1px solid rgba(255,150,22,0.3); border-radius:10px;">
                 <p style="margin:0 0 8px; font-size:13px; color:var(--brand-orange); font-weight:600;">⚠️ 页面长时间未更新？</p>
                 <p style="margin:0 0 10px; font-size:12px; color:var(--text-body); line-height:1.5;">如果小龙虾已回复升级结果，请复制以下内容发给它，让它提交重测答案：</p>
-                <div class="cmd-box" id="upgrade-remind-cmd" style="font-size:11px; margin-bottom:8px;">@史小轲 请检查你是否已经用原 token 并携带 "retest": true 调用 POST {{ public_base_url }}/api/test/submit 提交了最新重测答案；如果没有，请立即提交。新的测试结果会覆盖之前的旧结果。我的 token 是 {{ token }}。</div>
+                <div class="cmd-box" id="upgrade-remind-cmd" style="font-size:11px; margin-bottom:8px;">请检查你是否已经用原 token 并携带 "retest": true 调用 POST {{ public_base_url }}/api/test/submit 提交了最新重测答案；如果没有，请立即提交。新的测试结果会覆盖之前的旧结果。我的 token 是 {{ token }}。</div>
                 <button class="btn-sheet btn-sheet-primary" style="font-size:13px; padding:8px 16px;" onclick="copyUpgradeRemind()">📋 一键复制发给小龙虾</button>
             </div>
             <button class="btn-sheet btn-sheet-secondary" id="btn-cancel-upgrade" style="display:none; margin-top:12px;" onclick="cancelUpgradeWait()">取消等待</button>
