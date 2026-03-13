@@ -1053,7 +1053,7 @@
             background: var(--brand-orange);
             border-radius: 0 0 6px 6px;
         }
-        /* PRO 卡片突出样式 */
+        /* 推荐卡片突出样式 */
         .upgrade-card--pro {
             background: linear-gradient(135deg, rgba(255, 150, 22, 0.15) 0%, rgba(204, 15, 20, 0.1) 100%);
             border: 1.5px solid rgba(255, 150, 22, 0.5);
@@ -2058,7 +2058,7 @@
 
                 <div class="upgrade-cards" id="btnGroup">
                     {% if ns.basic_fixable > 0 %}
-                    <button class="upgrade-card" onclick="previewUpgrade()">
+                    <button class="upgrade-card upgrade-card--pro" onclick="previewUpgrade()">
                         <div class="upgrade-card-badge">推荐</div>
                         <div class="upgrade-card-icon">⚡</div>
                         <div class="upgrade-card-body">
@@ -2071,7 +2071,7 @@
                         <svg class="upgrade-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                     </button>
                     {% endif %}
-                    <button class="upgrade-card upgrade-card--pro" onclick="startPremiumSubscribe()">
+                    <button class="upgrade-card" onclick="startPremiumSubscribe()">
                         <div class="upgrade-card-badge">PRO</div>
                         <div class="upgrade-card-icon">🧠</div>
                         <div class="upgrade-card-body">
@@ -2753,7 +2753,7 @@
             var btnGroupEl = document.getElementById('btnGroup');
             var btnHtml = '';
             if (freeCount > 0) {
-                btnHtml += '<button class="upgrade-card" onclick="previewUpgrade()">' +
+                btnHtml += '<button class="upgrade-card upgrade-card--pro" onclick="previewUpgrade()">' +
                     '<div class="upgrade-card-badge">推荐</div>' +
                     '<div class="upgrade-card-icon">⚡</div>' +
                     '<div class="upgrade-card-body">' +
@@ -2763,7 +2763,7 @@
                     '<svg class="upgrade-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>' +
                 '</button>';
             }
-            btnHtml += '<button class="upgrade-card upgrade-card--pro" onclick="startPremiumSubscribe()">' +
+            btnHtml += '<button class="upgrade-card" onclick="startPremiumSubscribe()">' +
                 '<div class="upgrade-card-badge">PRO</div>' +
                 '<div class="upgrade-card-icon">🧠</div>' +
                 '<div class="upgrade-card-body">' +
