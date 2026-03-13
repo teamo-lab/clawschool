@@ -2,8 +2,8 @@
 
 import pytest
 from app.scorer import (
-    raw_to_iq, get_title, score_submission, merge_retest,
-    SCORERS, TOTAL_SCORE, _truthy, _bool_or_none,
+    raw_to_iq, get_title, score_submission, merge_retest, calc_speed_bonus,
+    SCORERS, TOTAL_SCORE, MAX_TOTAL, MAX_SPEED_BONUS, _truthy, _bool_or_none,
 )
 from tests.conftest import submit_test, integration_submit, SAMPLE_ANSWERS, PERFECT_ANSWERS
 
@@ -29,7 +29,13 @@ class TestRawToIQ:
         assert raw_to_iq(-10) == 0
 
     def test_clamp_over_max(self):
-        assert raw_to_iq(200) == 120
+        assert raw_to_iq(200) == MAX_TOTAL  # 130
+
+    def test_max_with_speed_bonus(self):
+        assert raw_to_iq(130) == 130
+
+    def test_clamp_over_max_total(self):
+        assert raw_to_iq(200) == MAX_TOTAL  # 130
 
 
 # ━━━ 称号判定 ━━━
@@ -333,17 +339,26 @@ class TestScoreSubmission:
         result = score_submission(SAMPLE_ANSWERS)
         assert 0 < result["score"] <= TOTAL_SCORE
         assert result["title"] in ["虾皮", "冻虾仁", "麻辣小龙虾", "蒜蓉大虾", "澳洲大龙虾", "波士顿龙虾"]
-        assert len(result["detail"]) == 12
+        assert len(result["detail"]) == 13  # 12 questions + speed_bonus
 
     def test_perfect_score(self):
         result = score_submission(PERFECT_ANSWERS)
-        assert result["score"] == TOTAL_SCORE
+        assert result["score"] == TOTAL_SCORE  # 120, no speed bonus
         assert result["title"] == "波士顿龙虾"
+        assert result["detail"]["speed_bonus"]["score"] == 0
+
+    def test_perfect_score_with_speed_bonus(self):
+        result = score_submission(PERFECT_ANSWERS, speed_bonus=10)
+        assert result["score"] == TOTAL_SCORE + 10  # 130
+        assert result["title"] == "波士顿龙虾"
+        assert result["detail"]["speed_bonus"]["score"] == 10
+        assert result["detail"]["speed_bonus"]["max"] == MAX_SPEED_BONUS
 
     def test_empty_answers(self):
         result = score_submission({})
         assert result["score"] == 0
         assert result["title"] == "虾皮"
+        assert result["detail"]["speed_bonus"]["score"] == 0
 
     def test_non_dict_answer_treated_as_empty(self):
         answers = {**SAMPLE_ANSWERS, "q1": "invalid_string"}
@@ -374,6 +389,75 @@ class TestMergeRetest:
         retest = {"q1": {"score": 10, "max": 10, "reason": ""}}
         merged = merge_retest(original, retest, ["q1"])
         assert merged["detail"]["q2"]["score"] == 6
+
+    def test_preserves_speed_bonus(self):
+        """升级重测沿用原始速度加分。"""
+        original = {
+            "q1": {"score": 10, "max": 10, "reason": ""},
+            "speed_bonus": {"score": 4, "max": 5},
+        }
+        retest = {"q1": {"score": 10, "max": 10, "reason": ""}}
+        merged = merge_retest(original, retest, ["q1"])
+        assert merged["detail"]["speed_bonus"]["score"] == 4
+        assert merged["score"] == 10 + 4  # q1 score + speed_bonus
+
+    def test_no_speed_bonus_in_original(self):
+        """兼容旧数据：原始 detail 无 speed_bonus 字段时默认 0。"""
+        original = {"q1": {"score": 6, "max": 10, "reason": ""}}
+        retest = {"q1": {"score": 10, "max": 10, "reason": ""}}
+        merged = merge_retest(original, retest, ["q1"])
+        assert merged["detail"]["speed_bonus"]["score"] == 0
+
+
+# ━━━ 速度加分 ━━━
+
+class TestCalcSpeedBonus:
+    """≤4min +10, 每 0.5min -1, ≥9min +0"""
+
+    def test_under_4_minutes(self):
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:03:00+00:00") == 10
+
+    def test_exactly_4_minutes(self):
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:04:00+00:00") == 10
+
+    def test_4min_15s(self):
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:04:15+00:00") == 9
+
+    def test_4min_30s(self):
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:04:30+00:00") == 9
+
+    def test_5_minutes(self):
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:05:00+00:00") == 8
+
+    def test_5min_30s(self):
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:05:30+00:00") == 7
+
+    def test_6_minutes(self):
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:06:00+00:00") == 6
+
+    def test_7_minutes(self):
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:07:00+00:00") == 4
+
+    def test_8_minutes(self):
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:08:00+00:00") == 2
+
+    def test_8min_30s(self):
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:08:30+00:00") == 1
+
+    def test_exactly_9_minutes(self):
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:09:00+00:00") == 0
+
+    def test_over_9_minutes(self):
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:15:00+00:00") == 0
+
+    def test_no_started_at(self):
+        assert calc_speed_bonus(None, "2026-03-12T10:05:00+00:00") == 0
+
+    def test_no_submitted_at(self):
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", None) == 0
+
+    def test_invalid_format(self):
+        assert calc_speed_bonus("bad", "2026-03-12T10:05:00+00:00") == 0
 
 
 # ━━━ API 提交 ━━━

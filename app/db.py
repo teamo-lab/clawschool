@@ -41,6 +41,7 @@ def init_db():
         ("generated_skills_error", "TEXT"),
         ("generated_skills_scope", "TEXT"),
         ("generated_skills_updated_at", "TEXT"),
+        ("started_at", "TEXT"),
     ]:
         try:
             conn.execute(f"ALTER TABLE tests ADD COLUMN {col} {typedef}")

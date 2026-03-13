@@ -19,7 +19,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from .db import get_db, init_db
-from .scorer import score_submission, merge_retest, get_title, raw_to_iq, SCORERS, TOTAL_SCORE
+from .scorer import score_submission, merge_retest, get_title, raw_to_iq, calc_speed_bonus, SCORERS, TOTAL_SCORE
 from .og_image import generate_og_image
 from .questions import QUESTIONS
 from .repair import generate_repair_skill, ADVANCED_QIDS, BASIC_QIDS
@@ -368,6 +368,14 @@ async def get_diagnose_skill():
 @app.get("/api/test/start")
 async def test_start(token: str = ""):
     """下发全部题目给 bot。可选传入 token 绑定到已有记录。"""
+    now = _now_iso()
+    if token:
+        db = get_db()
+        try:
+            db.execute("UPDATE tests SET started_at=? WHERE token=? AND started_at IS NULL", (now, token))
+            db.commit()
+        finally:
+            db.close()
     questions_out = []
     for q in QUESTIONS:
         questions_out.append({
@@ -410,8 +418,20 @@ async def test_submit(request: Request):
     submission["model"] = model
     submission["test_time"] = body.get("test_time", _now_iso())
 
+    # 查询 started_at 计算速度加分
+    started_at = None
+    if token:
+        db_tmp = get_db()
+        try:
+            row_tmp = db_tmp.execute("SELECT started_at FROM tests WHERE token=?", (token,)).fetchone()
+            if row_tmp:
+                started_at = row_tmp["started_at"]
+        finally:
+            db_tmp.close()
+    speed_bonus = calc_speed_bonus(started_at, _now_iso())
+
     # 评分
-    result = score_submission(submission)
+    result = score_submission(submission, speed_bonus=speed_bonus)
     score = result["score"]
     title = result["title"]
     detail_json = json.dumps(result["detail"], ensure_ascii=False)

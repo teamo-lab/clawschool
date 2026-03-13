@@ -1,16 +1,42 @@
 """自动评分引擎 — 基于当前题库计算各题得分。"""
 
 import re
+from datetime import datetime, timezone
+from typing import Optional
 from .questions import QUESTIONS
 
 QUESTION_IDS = [q["id"] for q in QUESTIONS]
 QUESTION_COUNT = len(QUESTION_IDS)
 MAX_PER_QUESTION = 10
 TOTAL_SCORE = QUESTION_COUNT * MAX_PER_QUESTION
+MAX_SPEED_BONUS = 10
+MAX_TOTAL = TOTAL_SCORE + MAX_SPEED_BONUS  # 130
 
 def raw_to_iq(raw_score: int) -> int:
     """直接返回原始分作为智力值，不再做映射。"""
-    return max(0, min(TOTAL_SCORE, round(raw_score)))
+    return max(0, min(MAX_TOTAL, round(raw_score)))
+
+
+def calc_speed_bonus(started_at: Optional[str], submitted_at: Optional[str]) -> int:
+    """根据完成时间计算速度加分（0-10）。
+    ≤4min +10, 每多 0.5min 减 1 分，≥9min +0。
+    """
+    if not started_at or not submitted_at:
+        return 0
+    try:
+        start = datetime.fromisoformat(started_at.replace("Z", "+00:00"))
+        end = datetime.fromisoformat(submitted_at.replace("Z", "+00:00"))
+        minutes = (end - start).total_seconds() / 60.0
+    except (ValueError, TypeError):
+        return 0
+    if minutes <= 4:
+        return 10
+    if minutes >= 9:
+        return 0
+    # 4~9 min: 每 0.5min 减 1 分
+    import math
+    steps = math.ceil((minutes - 4) / 0.5)
+    return max(0, 10 - steps)
 
 
 # 称号基于原始分 (0-120)
@@ -193,7 +219,7 @@ SCORERS = {
 }
 
 
-def score_submission(submission: dict) -> dict:
+def score_submission(submission: dict, speed_bonus: int = 0) -> dict:
     detail = {}
     total = 0
     for qid in QUESTION_IDS:
@@ -204,6 +230,9 @@ def score_submission(submission: dict) -> dict:
         pts, reason = scorer(q_data)
         detail[qid] = {"score": pts, "max": MAX_PER_QUESTION, "reason": reason}
         total += pts
+    speed_bonus = max(0, min(MAX_SPEED_BONUS, speed_bonus))
+    total += speed_bonus
+    detail["speed_bonus"] = {"score": speed_bonus, "max": MAX_SPEED_BONUS}
     return {"score": total, "title": get_title(total), "detail": detail}
 
 
@@ -218,4 +247,9 @@ def merge_retest(original_detail: dict, retest_detail: dict, retest_qids: list) 
         else:
             merged[qid] = orig
         total += merged[qid]["score"]
+    # 沿用原始速度加分，不重新计算
+    orig_speed = original_detail.get("speed_bonus", {"score": 0, "max": MAX_SPEED_BONUS})
+    speed_bonus = orig_speed.get("score", 0)
+    total += speed_bonus
+    merged["speed_bonus"] = orig_speed
     return {"score": total, "title": get_title(total), "detail": merged}
