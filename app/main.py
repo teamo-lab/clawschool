@@ -335,13 +335,22 @@ async def test_submit(request: Request):
                         "repairSkillUrl": f"https://{DOMAIN}/api/repair-skill/{token}",
                         "duplicate": True,  # 标记为重复提交
                     }
-                db.execute("""
-                    UPDATE tests SET
-                        status='done', model=?, score=?, title=?, test_time=?,
-                        detail=?, submission=?, updated_at=?
-                    WHERE token=?
-                """, (model, score, title, submission["test_time"],
-                      detail_json, submission_json, now, token))
+                if retest:
+                    db.execute("""
+                        UPDATE tests SET
+                            status='done', model=?, score=?, title=?, test_time=?,
+                            detail=?, submission=?, retest_submission=?, updated_at=?
+                        WHERE token=?
+                    """, (model, score, title, submission["test_time"],
+                          detail_json, submission_json, submission_json, now, token))
+                else:
+                    db.execute("""
+                        UPDATE tests SET
+                            status='done', model=?, score=?, title=?, test_time=?,
+                            detail=?, submission=?, updated_at=?
+                        WHERE token=?
+                    """, (model, score, title, submission["test_time"],
+                          detail_json, submission_json, now, token))
             else:
                 db.execute("""
                     INSERT INTO tests (token, name, status, model, score, title, test_time,
