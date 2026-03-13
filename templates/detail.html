@@ -3473,19 +3473,7 @@
                 navigator.clipboard.writeText(copyText).catch(function() { fallbackCopy(copyText); });
             } else { fallbackCopy(copyText); }
         }
-        // 尝试通过 WeixinJSBridge 直接唤起原生分享面板
-        if (typeof WeixinJSBridge !== 'undefined') {
-            WeixinJSBridge.invoke('sendAppMessage', {
-                title: '「{{ data.name }}」龙虾智力 ' + IQ + '，' + ORIGINAL_TITLE + '！',
-                desc: '超过 ' + Math.floor(SCORE_PCT) + '% 的小龙虾 | 你的小龙虾够聪明吗？来测测',
-                link: window.location.origin + '/s/' + TOKEN + '?ref=' + TOKEN,
-                img_url: getBadgeUrl()
-            }, function(res) {
-                // 分享完成或取消，不做额外处理
-            });
-            return;
-        }
-        // WeixinJSBridge 不可用时回退到蒙层提示
+        // 微信内：蒙层引导用户点右上角「···」分享（wx.updateAppMessageShareData 已配置好分享内容）
         if (document.getElementById('wx-share-tip')) return;
         var mask = document.createElement('div');
         mask.id = 'wx-share-tip';

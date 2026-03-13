@@ -964,13 +964,7 @@ function showWxShareTip(copyText, shareTitle, shareDesc, shareLink, shareImg) {
             navigator.clipboard.writeText(copyText).catch(function() { fallbackCopy(copyText); });
         } else { fallbackCopy(copyText); }
     }
-    if (typeof WeixinJSBridge !== 'undefined' && shareTitle) {
-        WeixinJSBridge.invoke('sendAppMessage', {
-            title: shareTitle, desc: shareDesc || '', link: shareLink || window.location.href,
-            img_url: shareImg || ''
-        }, function() {});
-        return;
-    }
+    // 微信内：蒙层引导用户点右上角「···」分享
     if (document.getElementById('wx-share-tip')) return;
     var mask = document.createElement('div');
     mask.id = 'wx-share-tip';
