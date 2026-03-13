@@ -131,7 +131,7 @@ class TestDiagnoseResponse:
         q1 = next(q for q in data["questionDetails"] if q["questionId"] == "q1")
         assert q1["answerHints"] is None
 
-    def test_install_check_questions_return_install_targets_when_weak(self, client):
+    def test_install_check_questions_return_expected_hint_visibility_when_weak(self, client):
         answers = dict(SAMPLE_ANSWERS)
         answers["q5"] = {"installed": False, "check_method": "检查目录", "file_content": "未安装"}
         answers["q6"] = {"installed": False, "check_method": "检查目录", "file_content": "未安装"}
@@ -146,8 +146,8 @@ class TestDiagnoseResponse:
         q8 = next(q for q in data["questionDetails"] if q["questionId"] == "q8")
         assert q5["answerHints"]["installTarget"] == "self-improving-agent"
         assert q6["answerHints"]["installTarget"] == "Summarize"
-        assert q7["answerHints"]["installTarget"] == "Proactive Agent"
-        assert q8["answerHints"]["installTarget"] == "Skill Vetter"
+        assert "installTarget" not in q7["answerHints"]
+        assert "installTarget" not in q8["answerHints"]
 
 
 class TestDiagnoseErrors:

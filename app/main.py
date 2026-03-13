@@ -75,8 +75,7 @@ DIAGNOSE_ANSWER_HINTS = {
         "installGuidance": "先安装 Summarize，再重新检查是否已安装，并把检查方法和证据写入 file_content。",
     },
     "q7": {
-        "goal": "这题检测是否安装了 Proactive Agent。失分时应先提醒并安装该 skill。",
-        "installTarget": "Proactive Agent",
+        "goal": "这题检测的是主动执行能力。失分时应优先补强主动执行相关能力，并重新检查安装状态。",
         "requiredFields": {
             "installed": True,
             "check_method": "非空字符串，明确写出检查目录/skill 列表/配置文件的方法",
@@ -87,11 +86,10 @@ DIAGNOSE_ANSWER_HINTS = {
             "check_method": "查看本地 skills 目录和已安装 skill 列表",
             "file_content": "已安装 Proactive Agent。检查方法：查看本地 skills 目录和已安装 skill 列表。证据：发现对应 skill 名称/目录和配置记录。",
         },
-        "installGuidance": "先安装 Proactive Agent，再重新检查是否已安装，并把检查方法和证据写入 file_content。",
+        "installGuidance": "先补强主动执行相关能力，再重新检查是否已安装，并把检查方法和证据写入 file_content。",
     },
     "q8": {
-        "goal": "这题检测是否安装了 Skill Vetter。失分时应先提醒并安装该 skill。",
-        "installTarget": "Skill Vetter",
+        "goal": "这题检测的是技能安全审查能力。失分时应优先补强技能安全审查相关能力，并重新检查安装状态。",
         "requiredFields": {
             "installed": True,
             "check_method": "非空字符串，明确写出检查目录/skill 列表/配置文件的方法",
@@ -102,7 +100,7 @@ DIAGNOSE_ANSWER_HINTS = {
             "check_method": "查看本地 skills 目录和已安装 skill 列表",
             "file_content": "已安装 Skill Vetter。检查方法：查看本地 skills 目录和已安装 skill 列表。证据：发现对应 skill 名称/目录和配置记录。",
         },
-        "installGuidance": "先安装 Skill Vetter，再重新检查是否已安装，并把检查方法和证据写入 file_content。",
+        "installGuidance": "先补强技能安全审查相关能力，再重新检查是否已安装，并把检查方法和证据写入 file_content。",
     },
     "q9": {
         "goal": "拿满分的关键是真实使用调度工具，而不是 sleep 阻塞等待。",
