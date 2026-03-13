@@ -1366,6 +1366,16 @@
             width: 48px; height: 48px; margin-right: 12px; animation: bounceUp .8s ease infinite alternate;
         }
         @keyframes bounceUp { from { transform: translateY(0); } to { transform: translateY(-10px); } }
+        .global-toast {
+            position: fixed; top: 60px; left: 50%; transform: translateX(-50%) translateY(-20px);
+            background: rgba(20,20,22,0.95); color: #fff; border: 1px solid rgba(255,255,255,0.1);
+            padding: 12px 24px; border-radius: 12px; font-size: 14px; font-weight: 500;
+            z-index: 99999; pointer-events: none; opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+        }
+        .global-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     </style>
     <script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
 </head>
@@ -1586,18 +1596,34 @@
     }
 
     // --- Share ---
+    function showToast(msg) {
+        var el = document.getElementById('globalToast');
+        if (!el) {
+            el = document.createElement('div'); el.id = 'globalToast';
+            el.className = 'global-toast'; document.body.appendChild(el);
+        }
+        el.textContent = msg; el.classList.remove('show');
+        void el.offsetWidth; el.classList.add('show');
+        clearTimeout(el._t);
+        el._t = setTimeout(function() { el.classList.remove('show'); }, 2500);
+    }
+    function fallbackCopy(text) {
+        var ta = document.createElement('textarea'); ta.value = text;
+        ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0';
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+        document.body.removeChild(ta);
+    }
+    function copyAndToast(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function() {
+                showToast('炫耀链接已复制到剪贴板');
+            }).catch(function() { fallbackCopy(text); showToast('炫耀链接已复制到剪贴板'); });
+        } else { fallbackCopy(text); showToast('炫耀链接已复制到剪贴板'); }
+    }
     function shareApp() {
         var text = '🦞 龙虾学校 — 你的小龙虾够聪明吗？12 道 AI 实战能力测试等你挑战！👉 {{ public_base_url }}';
         if (isWechat) { showWxShareTip(); return; }
-        if (navigator.share) {
-            navigator.share({ title: '龙虾学校', text: text, url: '{{ public_base_url }}' }).catch(function(){});
-        } else if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text).then(function() {
-                var btn = document.querySelector('.nav-share-btn');
-                btn.textContent = '已复制';
-                setTimeout(function() { btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>分享'; }, 1500);
-            });
-        }
+        copyAndToast(text);
     }
 
     // --- Stats ---

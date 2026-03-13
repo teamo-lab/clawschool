@@ -1421,6 +1421,17 @@
             color: #4caf50;
             font-weight: 600;
         }
+        /* 全局 toast */
+        .global-toast {
+            position: fixed; top: 60px; left: 50%; transform: translateX(-50%) translateY(-20px);
+            background: rgba(20,20,22,0.95); color: #fff; border: 1px solid rgba(255,255,255,0.1);
+            padding: 12px 24px; border-radius: 12px; font-size: 14px; font-weight: 500;
+            z-index: 99999; pointer-events: none; opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+        }
+        .global-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
         /* Step3 progress */
         .ug-progress-wrap { margin: 20px 0; }
@@ -3266,7 +3277,6 @@
         var url = window.location.origin + '/s/' + TOKEN;
         var text = '我的小龙虾「{{ data.name }}」升级后在龙虾学校获得新成绩！你的小龙虾够聪明吗？👉 ' + url;
         if (isWechat) {
-            // 升级后更新分享数据
             if (wxReady) {
                 var newIq = document.querySelector('.score-number') ? document.querySelector('.score-number').textContent : IQ;
                 wx.updateAppMessageShareData({ title: '我的小龙虾「{{ data.name }}」升级了！', desc: '升级后获得新成绩，来测测你的小龙虾', link: url, imgUrl: window.location.origin + '/api/og-image/' + TOKEN });
@@ -3274,15 +3284,7 @@
             }
             showWxShareTip(); return;
         }
-        if (navigator.share) {
-            navigator.share({ title: text, url: url }).catch(function(){});
-        } else {
-            navigator.clipboard.writeText(text).then(function() {
-                alert('已复制分享文案到剪贴板！');
-            }).catch(function() {
-                prompt('复制以下内容分享：', text);
-            });
-        }
+        copyAndToast(text);
     }
 
     function closeStep4() {
@@ -3444,21 +3446,43 @@
         setTimeout(function() { if (mask.parentNode) mask.remove(); }, 4000);
     }
 
+    // ===== Toast =====
+    function showToast(msg) {
+        var el = document.getElementById('globalToast');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'globalToast';
+            el.className = 'global-toast';
+            document.body.appendChild(el);
+        }
+        el.textContent = msg;
+        el.classList.remove('show');
+        void el.offsetWidth;
+        el.classList.add('show');
+        clearTimeout(el._t);
+        el._t = setTimeout(function() { el.classList.remove('show'); }, 2500);
+    }
+
+    function copyAndToast(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function() {
+                showToast('炫耀链接已复制到剪贴板');
+            }).catch(function() {
+                fallbackCopy(text);
+                showToast('炫耀链接已复制到剪贴板');
+            });
+        } else {
+            fallbackCopy(text);
+            showToast('炫耀链接已复制到剪贴板');
+        }
+    }
+
     // ===== Share =====
     function shareResult() {
         var url = window.location.origin + '/s/' + TOKEN;
         var text = '我的小龙虾「{{ data.name }}」在龙虾学校智力测试中智力值 ' + IQ + '，荣获「' + ORIGINAL_TITLE + '」称号，超过 ' + Math.floor(SCORE_PCT) + '% 的小龙虾！你的小龙虾够聪明吗？👉 ' + url;
         if (isWechat) { showWxShareTip(); return; }
-        if (navigator.share) {
-            navigator.share({ title: '龙虾学校成绩', url: url }).catch(function(){});
-        } else {
-            navigator.clipboard.writeText(text).then(function() {
-                alert('已复制分享文案到剪贴板！');
-            }).catch(function() {
-                fallbackCopy(text);
-                alert('已复制分享文案到剪贴板！');
-            });
-        }
+        copyAndToast(text);
     }
 
     function fallbackCopy(text) {
