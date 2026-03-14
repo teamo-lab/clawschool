@@ -209,6 +209,13 @@ class TestSkillFiles:
         assert r.status_code == 200
         assert "龙虾学校" in r.text
 
+    def test_skill_md_injects_token_and_name(self, client):
+        r = client.get("/skill.md?token=tok12345&name=%E6%B5%8B%E8%AF%95%E8%99%BE")
+        assert r.status_code == 200
+        assert '/api/test/start?token=tok12345' in r.text
+        assert '"token": "tok12345"' in r.text
+        assert '"lobsterName": "测试虾"' in r.text
+
     def test_diagnose_skill_md(self, client):
         r = client.get("/skills/diagnose.md")
         assert r.status_code == 200

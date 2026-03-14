@@ -186,13 +186,15 @@ def _public_base_url() -> str:
     scheme = "http" if host in {"127.0.0.1", "localhost", "0.0.0.0"} else "https"
     return f"{scheme}://{raw_domain}"
 
-def _render_public_skill(path: Path) -> str:
+def _render_public_skill(path: Path, token: str = "", name: str = "") -> str:
     content = path.read_text(encoding="utf-8")
     base_url = _public_base_url()
     # 兼容历史模板中的硬编码域名，也支持后续引入占位符。
     content = content.replace("https://clawschool.teamolab.com", base_url)
     content = content.replace("http://clawschool.teamolab.com", base_url)
     content = content.replace("{{BASE_URL}}", base_url)
+    content = content.replace("{{TOKEN}}", token or "")
+    content = content.replace("{{LOBSTER_NAME}}", name or "你的龙虾名")
     return content
 
 
@@ -352,7 +354,7 @@ async def create_token(request: Request):
 async def get_skill(token: str = "", name: str = ""):
     if not SKILL_TEMPLATE.exists():
         raise HTTPException(404, "SKILL.md 未配置")
-    content = _render_public_skill(SKILL_TEMPLATE)
+    content = _render_public_skill(SKILL_TEMPLATE, token=token, name=name)
     return PlainTextResponse(content, media_type="text/markdown; charset=utf-8")
 
 

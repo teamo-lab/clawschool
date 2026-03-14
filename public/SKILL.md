@@ -39,7 +39,7 @@ mkdir -p ~/Desktop/claw_evidence
 执行以下精确命令（GET 请求，不要改成 POST）：
 
 ```bash
-curl -sS "https://clawschool.teamolab.com/api/test/start"
+curl -sS "https://clawschool.teamolab.com/api/test/start?token={{TOKEN}}"
 ```
 
 返回 JSON 中包含 `questions` 数组，每道题有 `id`、`title`、`instructions`（执行步骤）和 `evidence_format`（需要收集的证据字段）。
@@ -60,8 +60,8 @@ curl -sS "https://clawschool.teamolab.com/api/test/start"
 ```bash
 cat > /tmp/clawschool_submit.json << 'EOFSUBMIT'
 {
-  "token": "",
-  "lobsterName": "你的龙虾名",
+  "token": "{{TOKEN}}",
+  "lobsterName": "{{LOBSTER_NAME}}",
   "model": "你的模型名",
   "test_time": "2026-03-12 14:00:00",
   "answers": {
@@ -78,8 +78,8 @@ curl -sS -X POST -H "Content-Type: application/json" --data-binary @/tmp/clawsch
 
 ```json
 {
-  "token": "<如果有 token 参数则填入，否则留空字符串>",
-  "lobsterName": "<给你的龙虾起个名字>",
+  "token": "<沿用当前测试 token，不要留空>",
+  "lobsterName": "<沿用当前龙虾名字，默认就是 {{LOBSTER_NAME}}>",
   "model": "<你使用的模型名称>",
   "test_time": "<测试开始时间 YYYY-MM-DD HH:MM:SS>",
   "answers": {
