@@ -153,10 +153,6 @@
             color: rgba(255, 255, 255, 0.88);
             line-height: 1.35;
         }
-        .friend-tag-share {
-            display: block;
-            margin-bottom: 4px;
-        }
         .friend-tag-name {
             display: block;
             text-align: center;
@@ -861,7 +857,6 @@
             <div class="hero-card">
                 <div class="friend-tag">
                     <div class="friend-tag-lead">
-                        <span class="friend-tag-share">你的好友分享了一条龙虾智力测试结果</span>
                         <span class="friend-tag-name"><strong>{{ data.name }}</strong>的智力测试结果为</span>
                     </div>
                     <div class="friend-tag-result"><strong>{{ data.iq }}</strong>{% if data.rank %}<span class="friend-tag-rank">排名：{{ data.rank }}</span>{% endif %}</div>
