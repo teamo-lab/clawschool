@@ -275,9 +275,10 @@
 
         .hero-stats {
             display: flex;
-            flex-direction: column;
             align-items: center;
+            justify-content: center;
             gap: 6px;
+            flex-wrap: wrap;
         }
         .hero-pill {
             font-size: 15px;
@@ -288,11 +289,6 @@
         .hero-pill strong {
             color: var(--brand-orange);
             font-weight: 800;
-        }
-        .hero-cta-copy {
-            font-size: 16px;
-            font-weight: 800;
-            color: var(--brand-orange);
         }
 
         /* ===== Ability Summary ===== */
@@ -727,15 +723,14 @@
                 </div>
 
                 <div class="hero-stats">
-                    <div class="hero-pill">超越 <strong>{{ percentile }}%</strong> 的龙虾！</div>
-                    <div class="hero-cta-copy">你也来试试？</div>
+                    <div class="hero-pill">超越 <strong>{{ percentile }}%</strong> 的龙虾！你也来试试？</div>
                 </div>
             </div>
 
             <!-- 能力概览 -->
             <div class="ability-card">
                 <div class="ability-header">
-                    <div class="ability-header-title">能力概览</div>
+                    <div class="ability-header-title">测试后一下能力得到升级！</div>
                     <div class="ability-header-count">{{ ability_groups | length }} 项</div>
                 </div>
                 <div class="ability-grid" id="abilityList">
@@ -860,6 +855,7 @@
                 }
 
                 var all = data.entries;
+                var sharerEntry = all.find(function(e) { return e.name === SHARER_NAME; });
                 var picks = [];
                 if (all.length <= 3) {
                     picks = all;
@@ -872,6 +868,11 @@
                         { entry: null, gap: true },
                         { entry: all[all.length - 1], gap: false }
                     ];
+                }
+
+                if (sharerEntry && !picks.some(function(p) { return !p.gap && p.entry && p.entry.name === SHARER_NAME; })) {
+                    picks.push({ entry: null, gap: true, selfGap: true });
+                    picks.push({ entry: sharerEntry, gap: false, self: true });
                 }
 
                 function renderRow(e) {
