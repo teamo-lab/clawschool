@@ -2007,7 +2007,7 @@
         '虾皮': '💀'
     } %}
     {% set title_icon = title_icons.get(data.title, '🦞') %}
-    {% set score_pct = ((data.iq / 120) * 100) | round(0, 'floor') | int %}
+    {% set score_pct = ((data.iq / 130) * 100) | round(0, 'floor') | int %}
 
     {# ── Compute diagnosis counts ── #}
     {% set ns = namespace(ok_count=0, basic_fixable=0, basic_boost=0, advanced_count=0) %}
@@ -2023,7 +2023,7 @@
             {% set ns.basic_boost = ns.basic_boost + (10 - sc) %}
         {% endif %}
     {% endfor %}
-    {% set basic_target_score = [(data.score or 0) + ns.basic_boost, 120] | min %}
+    {% set basic_target_score = [(data.score or 0) + ns.basic_boost, 130] | min %}
     {% set basic_target_iq = raw_to_iq(basic_target_score) %}
     {% set basic_iq_boost = basic_target_iq - (data.iq or 0) %}
 
@@ -2490,7 +2490,7 @@
     var SCORE = {{ data.score or 0 }};
     var IQ = {{ data.iq or 0 }};
     var CIRCUMFERENCE = 653; // 2 * PI * 104
-    var SCORE_PCT = Math.min(100, (IQ / 120) * 100);
+    var SCORE_PCT = Math.min(100, (IQ / 130) * 100);
     var ADVANCED = {{ advanced_qids | list | tojson }};
     var BOOST = {{ ns.basic_boost }};
     var BOOST_IQ = {{ basic_iq_boost }};
@@ -2528,7 +2528,7 @@
 
     // IQ = raw score directly, no conversion
     function rawToIq(raw) {
-        return Math.max(0, Math.min(120, Math.round(raw)));
+        return Math.max(0, Math.min(130, Math.round(raw)));
     }
 
     function renderQR(canvasId, text) {
@@ -2542,7 +2542,7 @@
 
     var tips = [
         '龙虾学校共测试 12 项 AI 实战能力，覆盖安全防护、模型能力、技能诊断等核心维度。',
-        '全球已有超过 2,000 只龙虾完成测评，满分智力值 120！',
+        '全球已有超过 2,000 只龙虾完成测评，满分智力值 130！',
         '你知道吗？超过 60% 的小龙虾在技能诊断上失分最多。',
         '¥19.9 一次性补齐基础短板，平均提升智力值 +50。',
         '称号体系共 6 级：虾皮 → 冻虾仁 → 麻辣小龙虾 → 蒜蓉大虾 → 澳洲大龙虾 → 波士顿龙虾。',
@@ -2858,7 +2858,7 @@
         if (resultData) {
             SCORE = resultData.score;
             IQ = resultData.iq || 0;
-            SCORE_PCT = Math.min(100, (IQ / 120) * 100);
+            SCORE_PCT = Math.min(100, (IQ / 130) * 100);
             ORIGINAL_SCORE = SCORE;
             ORIGINAL_IQ = IQ;
             ORIGINAL_TITLE = resultData.title || '';
@@ -2883,7 +2883,7 @@
             document.getElementById('diagFree').textContent = freeCount;
             document.getElementById('diagPaid').textContent = paidCount;
             BOOST = basicBoost;
-            BOOST_IQ = rawToIq(Math.min(resultData.score + basicBoost, 120)) - IQ;
+            BOOST_IQ = rawToIq(Math.min(resultData.score + basicBoost, 130)) - IQ;
             renderUpgradeDetail(detail, BOOST_IQ);
 
             // Build upgrade cards dynamically
@@ -3077,9 +3077,9 @@
     // ===== Upgrade Flow =====
     function previewUpgrade() {
         // 预览阶段按原始分补齐后的目标 IQ 展示
-        var targetRaw = Math.min(SCORE + BOOST, 120);
+        var targetRaw = Math.min(SCORE + BOOST, 130);
         var targetIQ = rawToIq(targetRaw);
-        var targetPct = Math.min(100, (targetIQ / 120) * 100);
+        var targetPct = Math.min(100, (targetIQ / 130) * 100);
         var numEl = document.getElementById('scoreNum');
         window.scrollTo({ top: 0, behavior: 'smooth' });
         setTimeout(function() {

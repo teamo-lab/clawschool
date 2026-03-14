@@ -20,7 +20,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from .db import get_db, init_db
-from .scorer import score_submission, merge_retest, get_title, raw_to_iq, calc_speed_bonus, SCORERS, TOTAL_SCORE
+from .scorer import score_submission, merge_retest, get_title, raw_to_iq, calc_speed_bonus, SCORERS, TOTAL_SCORE, MAX_TOTAL
 from .og_image import generate_og_image
 from .questions import QUESTIONS
 from .repair import generate_repair_skill, ADVANCED_QIDS, BASIC_QIDS
@@ -484,20 +484,37 @@ async def test_submit(request: Request):
     submission["model"] = model
     submission["test_time"] = body.get("test_time", _now_iso())
 
-    # 查询 started_at 计算速度加分
+    # 查询 started_at 计算速度加分；重测时沿用原始速度分，不重新计算
     started_at = None
+    original_speed_bonus = None
+    original_duration_seconds = None
     if token:
         db_tmp = get_db()
         try:
-            row_tmp = db_tmp.execute("SELECT started_at FROM tests WHERE token=?", (token,)).fetchone()
+            row_tmp = db_tmp.execute("SELECT started_at, detail FROM tests WHERE token=?", (token,)).fetchone()
             if row_tmp:
                 started_at = row_tmp["started_at"]
+                if retest and row_tmp["detail"]:
+                    try:
+                        original_detail = json.loads(row_tmp["detail"])
+                        orig_speed = original_detail.get("speed_bonus", {})
+                        if isinstance(orig_speed, dict):
+                            original_speed_bonus = int(orig_speed.get("score", 0))
+                            if "duration_seconds" in orig_speed:
+                                original_duration_seconds = int(orig_speed.get("duration_seconds", 0))
+                    except Exception:
+                        original_speed_bonus = 0
+                        original_duration_seconds = None
         finally:
             db_tmp.close()
-    speed_bonus = calc_speed_bonus(started_at, _now_iso())
 
     # 评分
-    duration_seconds = _duration_seconds(started_at, _now_iso())
+    if retest:
+        speed_bonus = original_speed_bonus if original_speed_bonus is not None else 0
+        duration_seconds = original_duration_seconds
+    else:
+        speed_bonus = calc_speed_bonus(started_at, _now_iso())
+        duration_seconds = _duration_seconds(started_at, _now_iso())
     result = score_submission(submission, speed_bonus=speed_bonus, duration_seconds=duration_seconds)
     score = result["score"]
     title = result["title"]
@@ -743,7 +760,7 @@ async def repair_skill(token: str):
     )
     if all_perfect:
         return PlainTextResponse(
-            "# 恭喜！你的 bot 已经全部满分，无需修复。\n\n当前得分：{}/{}".format(row["score"], TOTAL_SCORE),
+            "# 恭喜！你的 bot 已经全部满分，无需修复。\n\n当前得分：{}/{}".format(row["score"], MAX_TOTAL),
             media_type="text/markdown; charset=utf-8",
         )
 

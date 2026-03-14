@@ -538,6 +538,39 @@ class TestSubmitAPI:
         assert d["rank"] is not None
         assert d["rank"] >= 1
 
+    def test_retest_submit_preserves_original_speed_bonus(self, client):
+        token_resp = client.post("/api/token", json={"name": "重测保留速度分"})
+        token = token_resp.json()["token"]
+        start_resp = client.get(f"/api/test/start?token={token}")
+        assert start_resp.status_code == 200
+        first = submit_test(client, token=token, name="重测保留速度分")
+        db = get_db()
+        try:
+            row = db.execute("SELECT detail FROM tests WHERE token=?", (token,)).fetchone()
+            detail = json.loads(row["detail"])
+            detail.setdefault("speed_bonus", {})["score"] = 5
+            detail["speed_bonus"]["max"] = 10
+            detail["speed_bonus"]["duration_seconds"] = 240
+            db.execute("UPDATE tests SET detail=?, score=? WHERE token=?", (json.dumps(detail, ensure_ascii=False), 91, token))
+            db.commit()
+        finally:
+            db.close()
+        body = {
+            "token": token,
+            "retest": True,
+            "lobsterName": "重测保留速度分",
+            "model": "test-model",
+            "test_time": "2026-03-12 18:05:00",
+            "answers": PERFECT_ANSWERS,
+        }
+        resp = client.post("/api/test/submit", json=body)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["score"] == 125
+        result = client.get(f"/api/result/{token}").json()
+        assert result["detail"]["speed_bonus"]["score"] == 5
+        assert result["detail"]["speed_bonus"]["duration_seconds"] == 240
+
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 集成测试 — 命中 HK 真实服务器
