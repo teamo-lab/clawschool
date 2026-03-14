@@ -259,9 +259,9 @@
             margin-bottom: 8px;
         }
         .hero-score-label {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--text-muted);
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--brand-orange);
             margin-right: 4px;
         }
         .hero-score-num {
@@ -281,14 +281,18 @@
             flex-wrap: wrap;
         }
         .hero-pill {
-            font-size: 15px;
+            font-size: 16px;
             font-weight: 800;
             color: var(--text-h1);
             white-space: nowrap;
+            text-align: center;
         }
         .hero-pill strong {
             color: var(--brand-orange);
             font-weight: 800;
+        }
+        .hero-pill .hero-pill-cta {
+            color: var(--brand-orange);
         }
 
         /* ===== Ability Summary ===== */
@@ -300,6 +304,7 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 20px;
             padding: 16px;
+            margin-top: 18px;
             margin-bottom: 16px;
             animation: slideUp 0.8s var(--ease-fluid) 0.15s both;
         }
@@ -723,14 +728,14 @@
                 </div>
 
                 <div class="hero-stats">
-                    <div class="hero-pill">超越 <strong>{{ percentile }}%</strong> 的龙虾！你也来试试？</div>
+                    <div class="hero-pill">超越 <strong>{{ percentile }}%</strong> 的龙虾！<span class="hero-pill-cta">你也来试试？</span></div>
                 </div>
             </div>
 
             <!-- 能力概览 -->
             <div class="ability-card">
                 <div class="ability-header">
-                    <div class="ability-header-title">测试后一下能力得到升级！</div>
+                    <div class="ability-header-title">测试后以下能力得到升级！</div>
                     <div class="ability-header-count">{{ ability_groups | length }} 项</div>
                 </div>
                 <div class="ability-grid" id="abilityList">
@@ -856,24 +861,6 @@
 
                 var all = data.entries;
                 var sharerEntry = all.find(function(e) { return e.name === SHARER_NAME; });
-                var picks = [];
-                if (all.length <= 3) {
-                    picks = all;
-                } else {
-                    var midIdx = Math.floor(all.length / 2);
-                    picks = [
-                        { entry: all[0], gap: false },
-                        { entry: null, gap: true },
-                        { entry: all[midIdx], gap: false },
-                        { entry: null, gap: true },
-                        { entry: all[all.length - 1], gap: false }
-                    ];
-                }
-
-                if (sharerEntry && !picks.some(function(p) { return !p.gap && p.entry && p.entry.name === SHARER_NAME; })) {
-                    picks.push({ entry: null, gap: true, selfGap: true });
-                    picks.push({ entry: sharerEntry, gap: false, self: true });
-                }
 
                 function renderRow(e) {
                     var isSelf = e.name === SHARER_NAME;
@@ -894,9 +881,27 @@
                 if (all.length <= 3) {
                     table.innerHTML = all.map(renderRow).join('');
                 } else {
-                    table.innerHTML = picks.map(function(p) {
-                        return p.gap ? ellipsisRow : renderRow(p.entry);
-                    }).join('');
+                    var midIdx = Math.floor(all.length / 2);
+                    var selected = [all[0], all[midIdx], all[all.length - 1]];
+                    if (sharerEntry) selected.push(sharerEntry);
+
+                    var uniqByRank = [];
+                    var seenRanks = {};
+                    selected.forEach(function(entry) {
+                        if (!entry || seenRanks[entry.rank]) return;
+                        seenRanks[entry.rank] = true;
+                        uniqByRank.push(entry);
+                    });
+                    uniqByRank.sort(function(a, b) { return a.rank - b.rank; });
+
+                    var html = [];
+                    uniqByRank.forEach(function(entry, idx) {
+                        if (idx > 0 && entry.rank - uniqByRank[idx - 1].rank > 1) {
+                            html.push(ellipsisRow);
+                        }
+                        html.push(renderRow(entry));
+                    });
+                    table.innerHTML = html.join('');
                 }
             })
             .catch(function() {
