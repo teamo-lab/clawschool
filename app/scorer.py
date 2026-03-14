@@ -19,7 +19,7 @@ def raw_to_iq(raw_score: int) -> int:
 
 def calc_speed_bonus(started_at: Optional[str], submitted_at: Optional[str]) -> int:
     """根据完成时间计算速度加分（0-10）。
-    ≤1min +10，之后每过 0.5min 减 1 分，≥6min +0。
+    每过 0.5min 减 1 分，≥5min +0。
     """
     if not started_at or not submitted_at:
         return 0
@@ -29,12 +29,12 @@ def calc_speed_bonus(started_at: Optional[str], submitted_at: Optional[str]) -> 
         minutes = (end - start).total_seconds() / 60.0
     except (ValueError, TypeError):
         return 0
-    if minutes <= 1:
+    if minutes <= 0:
         return 10
-    if minutes >= 6:
+    if minutes >= 5:
         return 0
     import math
-    steps = math.ceil((minutes - 1) / 0.5)
+    steps = math.ceil(minutes / 0.5)
     return max(0, 10 - steps)
 
 
