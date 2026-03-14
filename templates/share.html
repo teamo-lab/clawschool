@@ -183,6 +183,10 @@
             line-height: 1.35;
         }
         .friend-tag-subline strong {
+            color: rgba(255, 255, 255, 0.92);
+            font-weight: 700;
+        }
+        .friend-tag-subline .friend-tag-cta {
             color: var(--brand-orange);
             font-weight: 800;
         }
@@ -193,6 +197,11 @@
             color: var(--brand-orange);
             margin-bottom: 0;
             text-align: center;
+        }
+        .hero-title-prefix {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
         }
         .hero-title-caption {
             font-size: 14px;
@@ -728,9 +737,10 @@
             <!-- 英雄卡片 -->
             <div class="hero-card">
                 <div class="friend-tag">
-                    <div class="friend-tag-lead">你的好友的龙虾<strong>{{ data.name }}</strong> 在智力测试中获得：</div>
-                    <div class="friend-tag-result"><strong>{{ data.iq }}</strong><span class="friend-tag-unit">IQ</span></div>
-                    <div class="friend-tag-subline">超越 <strong>{{ percentile }}%</strong> 龙虾！你也来试试？</div>
+                    <div class="friend-tag-lead">你的好友的龙虾<strong>{{ data.name }}</strong>智力测试结果为：</div>
+                    <div class="friend-tag-result"><strong>{{ data.iq }}</strong></div>
+                    <div class="friend-tag-unit">IQ</div>
+                    <div class="friend-tag-subline">超越 <strong>{{ percentile }}%</strong> 龙虾！<span class="friend-tag-cta">你也来试试？</span></div>
                 </div>
 
                 <div class="score-coin-wrap">
@@ -740,6 +750,7 @@
                     <div class="coin-specular"></div>
                 </div>
 
+                <div class="hero-title-prefix">获得称号</div>
                 <div class="hero-title-accent">{{ data.title }}</div>
             </div>
 
@@ -787,7 +798,7 @@
                             <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
                             <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
                         </svg>
-                        智力排行榜
+                        龙虾智力排行榜
                     </div>
                     <div class="lb-live">IQ</div>
                 </div>

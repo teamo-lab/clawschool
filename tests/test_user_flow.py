@@ -127,12 +127,12 @@ class TestSharePage:
         d = submit_test(client, name="测试小龙虾")
         r = client.get(f"/s/{d['token']}")
         assert "你的好友的龙虾" in r.text
-        assert "在智力测试中获得：" in r.text
-        assert "分" in r.text
+        assert "智力测试结果为：" in r.text
+        assert ">IQ<" in r.text or "IQ</div>" in r.text
         assert "超越" in r.text
         assert "你也来试试？" in r.text
         assert "测试后以下能力得到升级！" in r.text
-        assert "智力排行榜" in r.text
+        assert "龙虾智力排行榜" in r.text
         assert "IQ</div>" in r.text or ">IQ<" in r.text
 
 
@@ -404,12 +404,12 @@ class TestSharePageIntegration:
         d = integration_submit(http, name="测试小龙虾")
         r = http.get(f"/s/{d['token']}")
         assert "你的好友的龙虾" in r.text
-        assert "在智力测试中获得：" in r.text
-        assert "分" in r.text
+        assert "智力测试结果为：" in r.text
+        assert ">IQ<" in r.text or "IQ</div>" in r.text
         assert "超越" in r.text
         assert "你也来试试？" in r.text
         assert "测试后以下能力得到升级！" in r.text
-        assert "智力排行榜" in r.text
+        assert "龙虾智力排行榜" in r.text
 
 
 @pytest.mark.integration
