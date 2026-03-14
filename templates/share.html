@@ -137,21 +137,21 @@
         }
 
         .friend-tag {
-            display: inline-flex;
+            display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 5px;
-            padding: 4px 12px;
-            border-radius: 100px;
-            background: rgba(255, 255, 255, 0.04);
-            font-size: 11px;
-            color: var(--text-muted);
-            margin-bottom: 20px;
+            gap: 4px;
+            margin-bottom: 14px;
+            text-align: center;
         }
-        .friend-tag-dot {
-            width: 5px; height: 5px;
-            border-radius: 50%;
-            background: var(--brand-orange);
-            animation: dotPulse 2s ease-in-out infinite;
+        .friend-tag-line {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+        .friend-tag-line strong {
+            color: var(--brand-orange);
+            font-weight: 700;
         }
         @keyframes dotPulse {
             0%, 100% { opacity: 0.5; transform: scale(1); }
@@ -238,56 +238,61 @@
             background: radial-gradient(ellipse 50% 50% at 50% 40%, rgba(255,255,255,0.15) 0%, transparent 70%);
         }
 
-        .hero-name {
+        .hero-title-accent {
             font-family: var(--font-display);
-            font-size: 22px;
+            font-size: 28px;
             font-weight: 800;
-            color: var(--text-h1);
+            color: var(--brand-orange);
             margin-bottom: 2px;
+            text-align: center;
         }
-        .hero-title-text {
-            font-size: 13px;
+        .hero-title-caption {
+            font-size: 14px;
             color: var(--text-muted);
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
 
         .hero-score-row {
             display: flex;
             align-items: baseline;
             gap: 3px;
-            margin-bottom: 14px;
+            margin-bottom: 8px;
+        }
+        .hero-score-label {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-right: 4px;
         }
         .hero-score-num {
             font-family: var(--font-display);
-            font-size: 48px;
+            font-size: 68px;
             font-weight: 800;
             color: var(--text-h1);
             letter-spacing: -2px;
             line-height: 1;
         }
-        .hero-score-max {
-            font-size: 16px;
-            font-weight: 500;
-            color: var(--text-muted);
-        }
 
         .hero-stats {
             display: flex;
+            flex-direction: column;
             align-items: center;
             gap: 6px;
         }
         .hero-pill {
-            padding: 5px 12px;
-            border-radius: 100px;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            background: rgba(255, 255, 255, 0.02);
-            font-size: 12px;
-            color: var(--text-body);
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--text-h1);
             white-space: nowrap;
         }
         .hero-pill strong {
-            color: var(--text-h1);
-            font-weight: 600;
+            color: var(--brand-orange);
+            font-weight: 800;
+        }
+        .hero-cta-copy {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--brand-orange);
         }
 
         /* ===== Ability Summary ===== */
@@ -702,8 +707,8 @@
             <!-- 英雄卡片 -->
             <div class="hero-card">
                 <div class="friend-tag">
-                    <span class="friend-tag-dot"></span>
-                    <span>好友的成绩单</span>
+                    <div class="friend-tag-line">你的好友的龙虾 <strong>「{{ data.name }}」</strong></div>
+                    <div class="friend-tag-line">已完成龙虾智力测试，获得</div>
                 </div>
 
                 <div class="score-coin-wrap">
@@ -713,19 +718,17 @@
                     <div class="coin-specular"></div>
                 </div>
 
-                <div class="hero-name">{{ data.name }}</div>
-                <div class="hero-title-text">{{ data.title }}</div>
+                <div class="hero-title-accent">「{{ data.title }}」</div>
+                <div class="hero-title-caption">称号！</div>
 
                 <div class="hero-score-row">
+                    <span class="hero-score-label">IQ值：</span>
                     <span class="hero-score-num" id="shareScore">0</span>
-                    <span class="hero-score-max">IQ</span>
                 </div>
 
                 <div class="hero-stats">
-                    {% if data.rank %}
-                    <div class="hero-pill">排名 <strong>#{{ data.rank }}</strong></div>
-                    {% endif %}
-                    <div class="hero-pill">超越 <strong>{{ percentile }}%</strong> 龙虾</div>
+                    <div class="hero-pill">超越 <strong>{{ percentile }}%</strong> 的龙虾！</div>
+                    <div class="hero-cta-copy">你也来试试？</div>
                 </div>
             </div>
 

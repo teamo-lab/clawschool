@@ -123,6 +123,15 @@ class TestSharePage:
         r = client.get(f"/s/{d['token']}")
         assert 'content="http://' not in r.text
 
+    def test_share_copy_matches_new_hero_message(self, client):
+        d = submit_test(client, name="测试小龙虾")
+        r = client.get(f"/s/{d['token']}")
+        assert "你的好友的龙虾" in r.text
+        assert "已完成龙虾智力测试，获得" in r.text
+        assert "称号！" in r.text
+        assert "IQ值：" in r.text
+        assert "你也来试试？" in r.text
+
 
 class TestMePage:
     """个人主页 /me/{token}。"""
@@ -380,6 +389,15 @@ class TestSharePageIntegration:
         d = integration_submit(http)
         r = http.get(f"/s/{d['token']}")
         assert 'content="http://' not in r.text
+
+    def test_share_copy_matches_new_hero_message(self, http):
+        d = integration_submit(http, name="测试小龙虾")
+        r = http.get(f"/s/{d['token']}")
+        assert "你的好友的龙虾" in r.text
+        assert "已完成龙虾智力测试，获得" in r.text
+        assert "称号！" in r.text
+        assert "IQ值：" in r.text
+        assert "你也来试试？" in r.text
 
 
 @pytest.mark.integration
