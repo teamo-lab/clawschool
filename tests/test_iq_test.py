@@ -415,39 +415,39 @@ class TestMergeRetest:
 # ━━━ 速度加分 ━━━
 
 class TestCalcSpeedBonus:
-    """≤2min +10, 之后每0.5min -1, ≥7min +0"""
+    """≤1min +10, 之后每0.5min -1, ≥6min +0"""
 
-    def test_under_2_minutes(self):
+    def test_under_1_minute(self):
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:00:30+00:00") == 10
+
+    def test_exactly_1_minute(self):
         assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:01:00+00:00") == 10
 
-    def test_exactly_2_minutes(self):
-        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:02:00+00:00") == 10
+    def test_1min_15s(self):
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:01:15+00:00") == 9
 
-    def test_2min_15s(self):
-        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:02:15+00:00") == 9
+    def test_1min_30s(self):
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:01:30+00:00") == 9
 
-    def test_2min_30s(self):
-        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:02:30+00:00") == 9
+    def test_2_minutes(self):
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:02:00+00:00") == 8
 
     def test_3_minutes(self):
-        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:03:00+00:00") == 8
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:03:00+00:00") == 6
 
     def test_4_minutes(self):
-        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:04:00+00:00") == 6
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:04:00+00:00") == 4
 
     def test_5_minutes(self):
-        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:05:00+00:00") == 4
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:05:00+00:00") == 2
 
-    def test_6_minutes(self):
-        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:06:00+00:00") == 2
+    def test_5min_30s(self):
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:05:30+00:00") == 1
 
-    def test_6min_30s(self):
-        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:06:30+00:00") == 1
+    def test_exactly_6_minutes(self):
+        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:06:00+00:00") == 0
 
-    def test_exactly_7_minutes(self):
-        assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:07:00+00:00") == 0
-
-    def test_over_7_minutes(self):
+    def test_over_6_minutes(self):
         assert calc_speed_bonus("2026-03-12T10:00:00+00:00", "2026-03-12T10:15:00+00:00") == 0
 
     def test_no_started_at(self):
