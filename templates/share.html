@@ -141,17 +141,18 @@
             flex-direction: column;
             align-items: center;
             gap: 4px;
-            margin-bottom: 14px;
+            margin-bottom: 10px;
             text-align: center;
+            opacity: 0.8;
         }
         .friend-tag-line {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-muted);
             line-height: 1.5;
         }
         .friend-tag-line strong {
-            color: var(--brand-orange);
-            font-weight: 700;
+            color: rgba(255, 255, 255, 0.82);
+            font-weight: 600;
         }
         @keyframes dotPulse {
             0%, 100% { opacity: 0.5; transform: scale(1); }
@@ -240,23 +241,23 @@
 
         .hero-title-accent {
             font-family: var(--font-display);
-            font-size: 28px;
+            font-size: 34px;
             font-weight: 800;
             color: var(--brand-orange);
-            margin-bottom: 2px;
+            margin-bottom: 4px;
             text-align: center;
         }
         .hero-title-caption {
             font-size: 14px;
             color: var(--text-muted);
-            margin-bottom: 14px;
+            margin-bottom: 18px;
         }
 
         .hero-score-row {
             display: flex;
             align-items: baseline;
             gap: 3px;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
         .hero-score-label {
             font-size: 20px;
@@ -275,10 +276,10 @@
 
         .hero-stats {
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            flex-wrap: wrap;
+            gap: 4px;
         }
         .hero-pill {
             font-size: 16px;
@@ -286,13 +287,17 @@
             color: var(--text-h1);
             white-space: nowrap;
             text-align: center;
+            line-height: 1.5;
         }
         .hero-pill strong {
             color: var(--brand-orange);
             font-weight: 800;
         }
-        .hero-pill .hero-pill-cta {
+        .hero-cta-copy {
+            font-size: 18px;
+            font-weight: 800;
             color: var(--brand-orange);
+            line-height: 1.4;
         }
 
         /* ===== Ability Summary ===== */
@@ -301,10 +306,10 @@
             z-index: 2;
             width: 100%;
             background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.04);
             border-radius: 20px;
             padding: 16px;
-            margin-top: 18px;
+            margin-top: 34px;
             margin-bottom: 16px;
             animation: slideUp 0.8s var(--ease-fluid) 0.15s both;
         }
@@ -315,9 +320,9 @@
             margin-bottom: 12px;
         }
         .ability-header-title {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
-            color: rgba(255, 255, 255, 0.6);
+            color: rgba(255, 255, 255, 0.56);
         }
         .ability-header-count {
             font-size: 10px;
@@ -728,7 +733,8 @@
                 </div>
 
                 <div class="hero-stats">
-                    <div class="hero-pill">超越 <strong>{{ percentile }}%</strong> 的龙虾！<span class="hero-pill-cta">你也来试试？</span></div>
+                    <div class="hero-pill">超越 <strong>{{ percentile }}%</strong> 的龙虾！</div>
+                    <div class="hero-cta-copy">你也来试试？</div>
                 </div>
             </div>
 
