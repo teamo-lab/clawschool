@@ -229,9 +229,10 @@
             gap: 8px;
         }
         .hero-title-main {
+            position: relative;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
         }
         .info-dot {
             display: inline-flex;
@@ -246,6 +247,10 @@
             font-size: 10px;
             font-weight: 800;
             cursor: pointer;
+            position: absolute;
+            left: calc(100% + 8px);
+            top: 50%;
+            transform: translateY(-50%);
         }
         .info-dot-subtle {
             display: inline-flex;
@@ -857,9 +862,9 @@
                 <div class="friend-tag">
                     <div class="friend-tag-lead">
                         <span class="friend-tag-share">你的好友分享了一条龙虾智力测试结果</span>
-                        <span class="friend-tag-name"><strong>{{ data.name }}</strong></span>
+                        <span class="friend-tag-name"><strong>{{ data.name }}</strong>的智力测试结果为</span>
                     </div>
-                    <div class="friend-tag-result"><span class="friend-tag-eq">IQ=</span><strong>{{ data.iq }}</strong>{% if data.rank %}<span class="friend-tag-rank">排名：{{ data.rank }}</span>{% endif %}</div>
+                    <div class="friend-tag-result"><strong>{{ data.iq }}</strong>{% if data.rank %}<span class="friend-tag-rank">排名：{{ data.rank }}</span>{% endif %}</div>
                     <div class="friend-tag-subline">超越 <strong>{{ percentile }}%</strong> 的龙虾！<span class="friend-tag-cta">你也来试试？</span></div>
                 </div>
 
