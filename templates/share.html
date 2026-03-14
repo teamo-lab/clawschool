@@ -152,9 +152,17 @@
             font-weight: 700;
             color: rgba(255, 255, 255, 0.88);
             line-height: 1.35;
-            white-space: nowrap;
         }
-        .friend-tag-lead strong {
+        .friend-tag-share {
+            display: block;
+            margin-bottom: 4px;
+        }
+        .friend-tag-name {
+            display: block;
+            text-align: left;
+            font-size: 18px;
+        }
+        .friend-tag-name strong {
             color: var(--brand-orange);
             font-weight: 800;
         }
@@ -847,7 +855,10 @@
             <!-- 英雄卡片 -->
             <div class="hero-card">
                 <div class="friend-tag">
-                    <div class="friend-tag-lead">你的好友的龙虾<strong>{{ data.name }}</strong>智力测试结果为：</div>
+                    <div class="friend-tag-lead">
+                        <span class="friend-tag-share">你的好友分享了一条龙虾智力测试结果</span>
+                        <span class="friend-tag-name"><strong>{{ data.name }}</strong>：</span>
+                    </div>
                     <div class="friend-tag-result"><span class="friend-tag-eq">IQ=</span><strong>{{ data.iq }}</strong>{% if data.rank %}<span class="friend-tag-rank">排名：{{ data.rank }}</span>{% endif %}</div>
                     <div class="friend-tag-subline">超越 <strong>{{ percentile }}%</strong> 的龙虾！<span class="friend-tag-cta">你也来试试？</span></div>
                 </div>
