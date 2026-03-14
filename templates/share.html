@@ -157,17 +157,17 @@
             font-weight: 800;
         }
         .friend-tag-result {
-            font-size: 32px;
+            font-size: 40px;
             font-weight: 800;
             color: var(--text-h1);
-            line-height: 1.35;
+            line-height: 1.2;
         }
         .friend-tag-result strong {
             color: var(--brand-orange);
             font-weight: 800;
         }
         .friend-tag-subline {
-            font-size: 19px;
+            font-size: 18px;
             font-weight: 700;
             color: rgba(255, 255, 255, 0.92);
             line-height: 1.55;
@@ -199,7 +199,7 @@
             position: relative;
             width: 220px;
             height: 220px;
-            margin-bottom: 14px;
+            margin-bottom: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -412,6 +412,9 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 16px;
             overflow: hidden;
+            max-height: 360px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
         }
         .lb-row {
             display: grid;
@@ -713,9 +716,9 @@
             <!-- 英雄卡片 -->
             <div class="hero-card">
                 <div class="friend-tag">
-                    <div class="friend-tag-lead">你的好友 <strong>「{{ data.name }}」</strong> 在龙虾智力测试结果为：</div>
-                    <div class="friend-tag-result"><strong>{{ data.iq }}</strong> IQ</div>
-                    <div class="friend-tag-subline">超越 <strong>{{ percentile }}%</strong> 龙虾！获得<strong>{{ data.title }}</strong>称号</div>
+                    <div class="friend-tag-lead">你的好友的龙虾<strong>「{{ data.name }}」</strong> 在智力测试中获得：</div>
+                    <div class="friend-tag-result"><strong>{{ data.iq }}</strong>分</div>
+                    <div class="friend-tag-subline">超越 <strong>{{ percentile }}%</strong> 龙虾！你也来试试？</div>
                     <div class="hero-cta-copy">你也来试试？</div>
                 </div>
 
@@ -727,7 +730,7 @@
                 </div>
 
                 <div class="hero-title-accent">「{{ data.title }}」</div>
-                <div class="hero-title-caption">获得的称号</div>
+                <div class="hero-title-caption">称号</div>
             </div>
 
             <!-- 能力概览 -->
@@ -876,27 +879,14 @@
 
                 var ellipsisRow = '<div class="lb-row" style="justify-content: center; padding: 4px 14px; min-height: 0; border-bottom: 1px solid rgba(255,255,255,0.03);"><span style="color: var(--text-muted); font-size: 14px; letter-spacing: 2px;">···</span></div>';
 
-                if (all.length <= 3) {
-                    table.innerHTML = all.map(renderRow).join('');
-                } else {
-                    var selected = [all[0]];
-                    if (sharerEntry && sharerEntry.rank !== all[0].rank && sharerEntry.rank !== all[all.length - 1].rank) {
-                        selected.push(sharerEntry);
-                    }
-                    if (all[all.length - 1].rank !== all[0].rank) {
-                        selected.push(all[all.length - 1]);
-                    }
-
-                    selected.sort(function(a, b) { return a.rank - b.rank; });
-
-                    var html = [];
-                    selected.forEach(function(entry, idx) {
-                        if (idx > 0 && entry.rank - selected[idx - 1].rank > 1) {
-                            html.push(ellipsisRow);
-                        }
-                        html.push(renderRow(entry));
+                table.innerHTML = all.map(renderRow).join('');
+                if (sharerEntry) {
+                    requestAnimationFrame(function() {
+                        var row = table.querySelector('.lb-row.lb-self');
+                        if (!row) return;
+                        var top = row.offsetTop - table.clientHeight / 2 + row.clientHeight / 2;
+                        table.scrollTop = Math.max(0, top);
                     });
-                    table.innerHTML = html.join('');
                 }
             })
             .catch(function() {
