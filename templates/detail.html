@@ -1204,9 +1204,9 @@
         }
         .result-leaderboard .lb-title svg { width: 16px; height: 16px; color: var(--brand-orange); }
         .result-leaderboard .lb-live {
-            font-size: 11px; font-weight: 600; color: var(--brand-orange);
-            background: rgba(255, 150, 22, 0.1); border: 1px solid rgba(255, 150, 22, 0.15);
-            padding: 3px 8px; border-radius: 8px; letter-spacing: 0.5px;
+            font-size: 11px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.65);
         }
         .result-leaderboard .lb-table {
             width: 100%;
@@ -1224,7 +1224,7 @@
         .result-leaderboard .lb-table-scroll::-webkit-scrollbar-track { background: transparent; }
         .result-leaderboard .lb-table-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
         .result-leaderboard .lb-thead {
-            display: grid; grid-template-columns: 48px 1fr 64px;
+            display: grid; grid-template-columns: 48px 92px 1fr 72px;
             padding: 12px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         }
         .result-leaderboard .lb-th {
@@ -1232,8 +1232,29 @@
             text-transform: uppercase; letter-spacing: 0.8px;
         }
         .result-leaderboard .lb-th:last-child { text-align: right; }
+        .result-leaderboard .lb-th-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+        .result-leaderboard .info-dot-subtle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.03);
+            color: rgba(255, 255, 255, 0.38);
+            font-size: 9px;
+            font-weight: 700;
+            cursor: pointer;
+            vertical-align: middle;
+        }
         .result-leaderboard .lb-row {
-            display: grid; grid-template-columns: 48px 1fr 64px;
+            display: grid; grid-template-columns: 48px 92px 1fr 72px;
             padding: 12px 16px; align-items: center;
             border-bottom: 1px solid rgba(255, 255, 255, 0.03);
             transition: background 0.2s;
@@ -1272,6 +1293,49 @@
         .result-leaderboard .lb-score-highlight { color: var(--brand-orange); }
         .result-leaderboard .lb-empty {
             text-align: center; color: var(--text-muted); font-size: 13px; padding: 24px 16px;
+        }
+        .title-map-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.76);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 120;
+            padding: 24px;
+        }
+        .title-map-modal.show { display: flex; }
+        .title-map-card {
+            width: min(100%, 360px);
+            background: #171417;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            padding: 18px 18px 14px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+        }
+        .title-map-card h3 {
+            margin: 0 0 12px;
+            font-size: 16px;
+            color: var(--text-h1);
+        }
+        .title-map-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .title-map-table th,
+        .title-map-table td {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            text-align: left;
+        }
+        .title-map-table th {
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .title-map-table td:last-child {
+            color: var(--brand-orange);
+            font-weight: 700;
         }
 
         .sticky-bottom {
@@ -2158,17 +2222,37 @@
                         </svg>
                         龙虾智力排行榜
                     </div>
-                    <div class="lb-live">IQ</div>
+                    <div class="lb-live" id="resultLbTotal">龙虾总数：0</div>
                 </div>
                 <div class="lb-table">
                     <div class="lb-thead">
                         <span class="lb-th">排名</span>
+                        <span class="lb-th lb-th-badge">称号徽章 <button type="button" class="info-dot-subtle" onclick="openTitleMap()" aria-label="查看称号映射">?</button></span>
                         <span class="lb-th">龙虾名称</span>
                         <span class="lb-th">智力值</span>
                     </div>
                     <div class="lb-table-scroll" id="lbScroll">
                         <div id="resultLbBody"><div class="lb-empty">加载中...</div></div>
                     </div>
+                </div>
+            </div>
+
+            <div class="title-map-modal" id="titleMapModal" onclick="closeTitleMap(event)">
+                <div class="title-map-card" onclick="event.stopPropagation()">
+                    <h3>智力区间与对应称号</h3>
+                    <table class="title-map-table">
+                        <thead>
+                            <tr><th>智力区间</th><th>称号</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>120-130</td><td>波士顿龙虾</td></tr>
+                            <tr><td>105-119</td><td>澳洲大龙虾</td></tr>
+                            <tr><td>90-104</td><td>蒜蓉大虾</td></tr>
+                            <tr><td>75-89</td><td>麻辣小龙虾</td></tr>
+                            <tr><td>30-74</td><td>冻虾仁</td></tr>
+                            <tr><td>0-29</td><td>虾皮</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -2871,6 +2955,16 @@
       }
       return '<img src="/static/badges/虾皮.png" alt="黑铁">';
     }
+    function openTitleMap() {
+      var modal = document.getElementById('titleMapModal');
+      if (modal) modal.classList.add('show');
+    }
+    function closeTitleMap(event) {
+      if (!event || event.target === event.currentTarget) {
+        var modal = document.getElementById('titleMapModal');
+        if (modal) modal.classList.remove('show');
+      }
+    }
     function escHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
     function loadResultLeaderboard() {
@@ -2878,7 +2972,9 @@
       fetch('/api/leaderboard?limit=100').then(function(r) { return r.json(); }).then(function(d) {
         var wrap = document.getElementById('resultLeaderboard');
         var body = document.getElementById('resultLbBody');
+        var totalEl = document.getElementById('resultLbTotal');
         if (!d.entries || !d.entries.length) { body.innerHTML = '<div class="lb-empty">暂无数据</div>'; wrap.style.display = ''; return; }
+        if (totalEl) totalEl.textContent = '龙虾总数：' + (d.total || d.entries.length || 0);
         var selfIdx = -1;
         body.innerHTML = d.entries.map(function(e, i) {
           var rc = i === 0 ? 'rank-gold' : i === 1 ? 'rank-silver' : i === 2 ? 'rank-bronze' : 'rank-normal';
@@ -2888,7 +2984,8 @@
           var sc = i === 0 ? 'lb-score lb-score-highlight' : 'lb-score';
           return '<div class="' + cls + '" data-rank="' + (i+1) + '">' +
             '<div class="lb-rank ' + rc + '">' + (i+1) + '</div>' +
-            '<div class="lb-name"><div class="lb-avatar">' + badgeImg(e.iq) + '</div><span class="lb-name-text">' + escHtml(e.name) + '</span></div>' +
+            '<div class="lb-avatar">' + badgeImg(e.iq) + '</div>' +
+            '<div class="lb-name"><span class="lb-name-text">' + escHtml(e.name) + '</span></div>' +
             '<div class="' + sc + '">' + e.iq + '</div></div>';
         }).join('');
         wrap.style.display = '';

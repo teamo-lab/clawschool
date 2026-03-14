@@ -174,7 +174,7 @@
         .friend-tag-eq {
             font-size: 20px;
             font-weight: 700;
-            color: rgba(255, 255, 255, 0.78);
+            color: var(--brand-orange);
         }
         .friend-tag-unit {
             font-size: 18px;
@@ -238,6 +238,21 @@
             font-size: 13px;
             font-weight: 800;
             cursor: pointer;
+        }
+        .info-dot-subtle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.03);
+            color: rgba(255, 255, 255, 0.38);
+            font-size: 9px;
+            font-weight: 700;
+            cursor: pointer;
+            vertical-align: middle;
         }
         .hero-title-caption {
             font-size: 14px;
@@ -904,7 +919,7 @@
                 <div class="lb-table" id="lbTable">
                     <div class="lb-head">
                         <div>排名</div>
-                        <div class="lb-head-badge">称号徽章 <button type="button" class="info-dot" onclick="openTitleMap()" aria-label="查看称号映射">?</button></div>
+                        <div class="lb-head-badge">称号徽章 <button type="button" class="info-dot-subtle" onclick="openTitleMap()" aria-label="查看称号映射">?</button></div>
                         <div>龙虾名称</div>
                         <div style="text-align:right;">智力值</div>
                     </div>

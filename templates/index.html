@@ -508,14 +508,8 @@
 
         .leaderboard-badge {
             font-size: 11px;
-            font-weight: 600;
-            color: var(--brand-orange);
-            background: rgba(255, 150, 22, 0.1);
-            border: 1px solid rgba(255, 150, 22, 0.15);
-            padding: 4px 10px;
-            border-radius: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.65);
         }
 
         .leaderboard-table {
@@ -530,7 +524,7 @@
 
         .lb-thead {
             display: grid;
-            grid-template-columns: 56px 1fr 80px;
+            grid-template-columns: 44px 92px 1fr 72px;
             padding: 14px 20px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         }
@@ -546,10 +540,31 @@
         .lb-th:last-child {
             text-align: right;
         }
+        .lb-th-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+        .info-dot-subtle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.03);
+            color: rgba(255, 255, 255, 0.38);
+            font-size: 9px;
+            font-weight: 700;
+            cursor: pointer;
+            vertical-align: middle;
+        }
 
         .lb-row {
             display: grid;
-            grid-template-columns: 56px 1fr 80px;
+            grid-template-columns: 44px 92px 1fr 72px;
             padding: 16px 20px;
             align-items: center;
             border-bottom: 1px solid rgba(255, 255, 255, 0.03);
@@ -659,6 +674,49 @@
             color: var(--text-muted);
             font-size: 14px;
             padding: 32px 20px;
+        }
+        .title-map-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.76);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 120;
+            padding: 24px;
+        }
+        .title-map-modal.show { display: flex; }
+        .title-map-card {
+            width: min(100%, 360px);
+            background: #171417;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            padding: 18px 18px 14px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+        }
+        .title-map-card h3 {
+            margin: 0 0 12px;
+            font-size: 16px;
+            color: var(--text-h1);
+        }
+        .title-map-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .title-map-table th,
+        .title-map-table td {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            text-align: left;
+        }
+        .title-map-table th {
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .title-map-table td:last-child {
+            color: var(--brand-orange);
+            font-weight: 700;
         }
 
         /* ===== Bottom Sheet — Name Input ===== */
@@ -1024,8 +1082,8 @@
             .btn-group-hero { gap: 10px; }
 
             .leaderboard-title { font-size: 16px; }
-            .lb-thead { padding: 12px 14px; grid-template-columns: 48px 1fr 64px; }
-            .lb-row { padding: 14px 14px; grid-template-columns: 48px 1fr 64px; }
+            .lb-thead { padding: 12px 14px; grid-template-columns: 40px 80px 1fr 60px; }
+            .lb-row { padding: 14px 14px; grid-template-columns: 40px 80px 1fr 60px; }
             .lb-rank { width: 26px; height: 26px; font-size: 13px; border-radius: 8px; }
             .lb-avatar { width: 28px; height: 28px; border-radius: 8px; font-size: 14px; }
             .lb-name-text { font-size: 13px; }
@@ -1213,9 +1271,9 @@
                 background: rgba(255, 255, 255, 0.02);
                 border: 1px solid rgba(255, 255, 255, 0.04);
             }
-            .lb-thead { padding: 10px 16px; }
+            .lb-thead { padding: 10px 16px; grid-template-columns: 44px 92px 1fr 72px; }
             .lb-th { font-size: 10px; }
-            .lb-row { padding: 10px 16px; }
+            .lb-row { padding: 10px 16px; grid-template-columns: 44px 92px 1fr 72px; }
             .lb-rank { width: 26px; height: 26px; font-size: 12px; border-radius: 8px; }
             .lb-avatar { width: 28px; height: 28px; border-radius: 8px; font-size: 13px; }
             .lb-name-text { font-size: 13px; }
@@ -1308,8 +1366,8 @@
             }
             .leaderboard-title { font-size: 16px; }
             .leaderboard-table { border-radius: 14px; }
-            .lb-thead { padding: 12px 20px; }
-            .lb-row { padding: 12px 20px; }
+            .lb-thead { padding: 12px 20px; grid-template-columns: 44px 92px 1fr 72px; }
+            .lb-row { padding: 12px 20px; grid-template-columns: 44px 92px 1fr 72px; }
             .lb-name-text { font-size: 14px; }
             .lb-score { font-size: 15px; }
             .lb-rank { width: 28px; height: 28px; font-size: 13px; }
@@ -1343,8 +1401,8 @@
                 padding: 28px 32px;
             }
             .leaderboard-title { font-size: 17px; }
-            .lb-thead { padding: 14px 24px; }
-            .lb-row { padding: 14px 24px; }
+            .lb-thead { padding: 14px 24px; grid-template-columns: 44px 92px 1fr 72px; }
+            .lb-row { padding: 14px 24px; grid-template-columns: 44px 92px 1fr 72px; }
             .lb-name-text { font-size: 15px; }
             .lb-score { font-size: 16px; }
             .lb-rank { width: 30px; height: 30px; font-size: 14px; }
@@ -1454,11 +1512,12 @@
                         </svg>
                         龙虾智力排行榜
                     </div>
-                    <div class="leaderboard-badge">IQ</div>
+                    <div class="leaderboard-badge" id="leaderboardTotal">龙虾总数：{{ total_done }}</div>
                 </div>
                 <div class="leaderboard-table" id="leaderboardTable">
                     <div class="lb-thead">
                         <span class="lb-th">排名</span>
+                        <span class="lb-th lb-th-badge">称号徽章 <button type="button" class="info-dot-subtle" onclick="openTitleMap()" aria-label="查看称号映射">?</button></span>
                         <span class="lb-th">龙虾名称</span>
                         <span class="lb-th">智力值</span>
                     </div>
@@ -1527,6 +1586,25 @@
         已复制到剪贴板
     </div>
 
+    <div class="title-map-modal" id="titleMapModal" onclick="closeTitleMap(event)">
+        <div class="title-map-card" onclick="event.stopPropagation()">
+            <h3>智力区间与对应称号</h3>
+            <table class="title-map-table">
+                <thead>
+                    <tr><th>智力区间</th><th>称号</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>120-130</td><td>波士顿龙虾</td></tr>
+                    <tr><td>105-119</td><td>澳洲大龙虾</td></tr>
+                    <tr><td>90-104</td><td>蒜蓉大虾</td></tr>
+                    <tr><td>75-89</td><td>麻辣小龙虾</td></tr>
+                    <tr><td>30-74</td><td>冻虾仁</td></tr>
+                    <tr><td>0-29</td><td>虾皮</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <script>
     // --- Badge image by IQ ---
     var BADGE_MAP = [
@@ -1551,6 +1629,16 @@
       var d = document.createElement('div');
       d.textContent = s;
       return d.innerHTML;
+    }
+    function openTitleMap() {
+      var modal = document.getElementById('titleMapModal');
+      if (modal) modal.classList.add('show');
+    }
+    function closeTitleMap(event) {
+      if (!event || event.target === event.currentTarget) {
+        var modal = document.getElementById('titleMapModal');
+        if (modal) modal.classList.remove('show');
+      }
     }
 
     // --- WeChat JS-SDK ---
@@ -1645,40 +1733,27 @@
         var r = await fetch('/api/leaderboard?limit=100');
         var d = await r.json();
         var body = document.getElementById('lbBody');
+        var totalEl = document.getElementById('leaderboardTotal');
+        if (totalEl) totalEl.textContent = '龙虾总数：' + (d.total || 0);
         if (!d.entries || d.entries.length === 0) {
           body.innerHTML = '<div class="lb-empty">暂无数据，快来成为第一名！</div>';
           return;
         }
-        var selfIdx = -1;
         body.innerHTML = d.entries.map(function(e, i) {
           var rankClass = 'rank-normal';
           if (i === 0) rankClass = 'rank-gold';
           else if (i === 1) rankClass = 'rank-silver';
           else if (i === 2) rankClass = 'rank-bronze';
           var isSelf = myLobsterName && e.name === myLobsterName;
-          if (isSelf) selfIdx = i;
           var rowClass = 'lb-row' + (isSelf ? ' lb-row-self' : '');
           var scoreClass = (i === 0) ? 'lb-score lb-score-highlight' : 'lb-score';
           return '<div class="' + rowClass + '" data-rank="' + (i + 1) + '">' +
             '<div class="lb-rank ' + rankClass + '">' + (i + 1) + '</div>' +
-            '<div class="lb-name">' +
-              '<div class="lb-avatar">' + badgeImg(e.iq) + '</div>' +
-              '<span class="lb-name-text">' + esc(e.name) + '</span>' +
-            '</div>' +
+            '<div class="lb-avatar">' + badgeImg(e.iq) + '</div>' +
+            '<div class="lb-name"><span class="lb-name-text">' + esc(e.name) + '</span></div>' +
             '<div class="' + scoreClass + '">' + e.iq + '</div>' +
           '</div>';
         }).join('');
-
-        if (selfIdx >= 0) {
-          requestAnimationFrame(function() {
-            var selfRow = body.querySelector('.lb-row-self');
-            if (selfRow && selfRow.closest('.leaderboard-table')) {
-              // 只在排行榜容器内滚动，不滚动整个页面
-              selfRow.closest('.leaderboard-table').scrollTop =
-                selfRow.offsetTop - selfRow.closest('.leaderboard-table').offsetHeight / 2;
-            }
-          });
-        }
       } catch(e) {
         document.getElementById('lbBody').innerHTML = '<div class="lb-empty">加载失败</div>';
       }
