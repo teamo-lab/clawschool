@@ -208,8 +208,8 @@
         .score-coin-wrap {
             position: relative;
             width: 220px;
-            height: 220px;
-            margin-bottom: 4px;
+            height: 170px;
+            margin-bottom: 0;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -728,7 +728,7 @@
             <!-- 英雄卡片 -->
             <div class="hero-card">
                 <div class="friend-tag">
-                    <div class="friend-tag-lead">你的好友的龙虾<strong>「{{ data.name }}」</strong> 在智力测试中获得：</div>
+                    <div class="friend-tag-lead">你的好友的龙虾<strong>{{ data.name }}</strong> 在智力测试中获得：</div>
                     <div class="friend-tag-result"><strong>{{ data.iq }}</strong><span class="friend-tag-unit">IQ</span></div>
                     <div class="friend-tag-subline">超越 <strong>{{ percentile }}%</strong> 龙虾！你也来试试？</div>
                 </div>
@@ -740,7 +740,7 @@
                     <div class="coin-specular"></div>
                 </div>
 
-                <div class="hero-title-accent">「{{ data.title }}」</div>
+                <div class="hero-title-accent">{{ data.title }}</div>
             </div>
 
             <!-- 能力概览 -->
