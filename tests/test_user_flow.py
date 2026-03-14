@@ -130,10 +130,12 @@ class TestSharePage:
         assert "智力测试结果为：" in r.text
         assert ">IQ<" in r.text or "IQ</div>" in r.text
         assert "超越" in r.text
+        assert "的龙虾" in r.text
         assert "你也来试试？" in r.text
-        assert "测试后以下能力得到升级！" in r.text
+        assert "好友的龙虾擅长这些能力" in r.text
         assert "龙虾智力排行榜" in r.text
         assert "IQ</div>" in r.text or ">IQ<" in r.text
+        assert "开始龙虾智力测试" in r.text
 
 
 class TestMePage:
@@ -407,9 +409,11 @@ class TestSharePageIntegration:
         assert "智力测试结果为：" in r.text
         assert ">IQ<" in r.text or "IQ</div>" in r.text
         assert "超越" in r.text
+        assert "的龙虾" in r.text
         assert "你也来试试？" in r.text
-        assert "测试后以下能力得到升级！" in r.text
+        assert "好友的龙虾擅长这些能力" in r.text
         assert "龙虾智力排行榜" in r.text
+        assert "开始龙虾智力测试" in r.text
 
 
 @pytest.mark.integration
