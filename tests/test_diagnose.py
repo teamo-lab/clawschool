@@ -197,22 +197,28 @@ class TestClaudeCodeAPICall:
     def test_api_timeout_degrades_gracefully(self, client):
         d = submit_test(client)
         with patch("app.main._spawn_skill_generation", side_effect=lambda token, diag: main_module._generate_skills_job(token, diag)):
-            with patch("urllib.request.urlopen", side_effect=TimeoutError("超时")):
-                r = client.get(f"/api/test/diagnose?token={d['token']}")
-                assert r.status_code == 200
-                data = client.get(f"/api/test/diagnose/skills?token={d['token']}").json()
-                assert data["generatedSkillsStatus"] == "failed"
-                assert data["generatedSkills"] == []
+            with patch("urllib.request.urlopen", side_effect=TimeoutError("超时")) as mock_urlopen:
+                with patch("app.main.time.sleep", return_value=None) as mock_sleep:
+                    r = client.get(f"/api/test/diagnose?token={d['token']}")
+                    assert r.status_code == 200
+                    data = client.get(f"/api/test/diagnose/skills?token={d['token']}").json()
+                    assert data["generatedSkillsStatus"] == "failed"
+                    assert data["generatedSkills"] == []
+                    assert mock_urlopen.call_count == 3
+                    assert mock_sleep.call_count == 2
 
     def test_api_connection_error_degrades(self, client):
         d = submit_test(client)
         with patch("app.main._spawn_skill_generation", side_effect=lambda token, diag: main_module._generate_skills_job(token, diag)):
-            with patch("urllib.request.urlopen", side_effect=ConnectionError("连接失败")):
-                r = client.get(f"/api/test/diagnose?token={d['token']}")
-                assert r.status_code == 200
-                data = client.get(f"/api/test/diagnose/skills?token={d['token']}").json()
-                assert data["generatedSkillsStatus"] == "failed"
-                assert data["generatedSkills"] == []
+            with patch("urllib.request.urlopen", side_effect=ConnectionError("连接失败")) as mock_urlopen:
+                with patch("app.main.time.sleep", return_value=None) as mock_sleep:
+                    r = client.get(f"/api/test/diagnose?token={d['token']}")
+                    assert r.status_code == 200
+                    data = client.get(f"/api/test/diagnose/skills?token={d['token']}").json()
+                    assert data["generatedSkillsStatus"] == "failed"
+                    assert data["generatedSkills"] == []
+                    assert mock_urlopen.call_count == 3
+                    assert mock_sleep.call_count == 2
 
     def test_api_invalid_json_degrades(self, client):
         d = submit_test(client)

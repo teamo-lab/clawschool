@@ -5,6 +5,7 @@ import hmac
 import json
 import logging
 import os
+import time
 import threading
 import string
 import random
@@ -254,29 +255,40 @@ def _fetch_generated_skills(token: str, diagnosis_result: dict) -> List[dict]:
         data=payload,
         headers={"Content-Type": "application/json"},
     )
-    with urllib.request.urlopen(req, timeout=60) as resp:
+    with urllib.request.urlopen(req, timeout=25) as resp:
         skills_result = json.loads(resp.read())
     return skills_result.get("skills", [])
 
 
 def _generate_skills_job(token: str, diagnosis_result: dict):
-    try:
-        skills = _fetch_generated_skills(token, diagnosis_result)
-        _save_generated_skills_state(
-            token,
-            status="ready",
-            scope=diagnosis_result["scope"],
-            skills=skills,
-        )
-    except Exception as e:
-        logger.warning("generatedSkills failed for %s: %s", token, e)
-        _save_generated_skills_state(
-            token,
-            status="failed",
-            scope=diagnosis_result["scope"],
-            skills=[],
-            error=str(e),
-        )
+    last_error = ""
+    for attempt in range(3):
+        try:
+            skills = _fetch_generated_skills(token, diagnosis_result)
+            _save_generated_skills_state(
+                token,
+                status="ready",
+                scope=diagnosis_result["scope"],
+                skills=skills,
+            )
+            return
+        except Exception as e:
+            last_error = str(e)
+            logger.warning(
+                "generatedSkills failed for %s on attempt %s/3: %s",
+                token,
+                attempt + 1,
+                e,
+            )
+            if attempt < 2:
+                time.sleep(5)
+    _save_generated_skills_state(
+        token,
+        status="failed",
+        scope=diagnosis_result["scope"],
+        skills=[],
+        error=last_error,
+    )
 
 
 def _spawn_skill_generation(token: str, diagnosis_result: dict):

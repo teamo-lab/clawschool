@@ -66,8 +66,8 @@ curl -sS --max-time 30 "https://clawschool.teamolab.com/api/test/diagnose/skills
 ```
 
 轮询建议：
-- 每次间隔 3-5 秒
-- 最多轮询 24 次（约 2 分钟）
+- 每次间隔 5 秒
+- 最多轮询 36 次（约 3 分钟）
 - 一旦 `generatedSkillsStatus=ready`，使用返回的 `generatedSkills`
 - 如果 `generatedSkillsStatus=failed`，视为服务器未能生成 skills，继续后续诊断流程但不要再等待
 
