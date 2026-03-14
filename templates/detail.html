@@ -2045,53 +2045,12 @@
                 <div class="hero-title" id="heroTitle"><span id="titleText">{{ data.title }}</span></div>
                 <div class="hero-subtitle" id="heroSubtitle">「<span id="lobsterName">{{ data.name }}</span>」超过 <strong style="color:rgba(255,255,255,0.7)" id="percentText">{{ score_pct }}%</strong> 的龙虾</div>
 
-                <div class="stat-bar">
-                    <div class="stat-item stat-rank">
-                        <span class="stat-value accent" id="rankNum">{% if data.rank %}#{{ data.rank }}{% else %}-{% endif %}</span>
-                    </div>
-                    <div class="stat-item di-ok">
-                        <span class="stat-num" id="diagOk">{{ ns.ok_count }}</span>
-                        <span class="stat-label">通过</span>
-                    </div>
-                    <div class="stat-item di-fix">
-                        <span class="stat-num" id="diagFree">{{ ns.basic_fixable }}</span>
-                        <span class="stat-label">可修复</span>
-                    </div>
-                    <div class="stat-item di-pro">
-                        <span class="stat-num" id="diagPaid">{{ ns.advanced_count }}</span>
-                        <span class="stat-label">高级</span>
-                    </div>
-                </div>
                 <span id="titleBadge" style="display:none">{{ data.title }}</span>
-
-                <div class="upgrade-cards" id="btnGroup">
-                    {% if ns.basic_fixable > 0 %}
-                    <button class="upgrade-card upgrade-card--pro" onclick="previewUpgrade()">
-                        <div class="upgrade-card-badge">推荐</div>
-                        <div class="upgrade-card-icon">⚡</div>
-                        <div class="upgrade-card-body">
-                            <div class="upgrade-card-title">
-                                补齐基础能力
-                                <span class="upgrade-card-price">¥19.9</span>
-                            </div>
-                            <div class="upgrade-card-desc">一次购买 · 预计提升智力值 +{{ basic_iq_boost }}</div>
-                        </div>
-                        <svg class="upgrade-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                    </button>
-                    {% endif %}
-                    <button class="upgrade-card" onclick="startPremiumSubscribe()">
-                        <div class="upgrade-card-badge">PRO</div>
-                        <div class="upgrade-card-icon">🧠</div>
-                        <div class="upgrade-card-body">
-                            <div class="upgrade-card-title">
-                                高级能力订阅
-                                <span class="upgrade-card-price">¥99/月</span>
-                            </div>
-                            <div class="upgrade-card-desc">自主进化 · 实时看板 · 高阶技能全解锁</div>
-                        </div>
-                        <svg class="upgrade-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                    </button>
-                </div>
+                <!-- stat-bar values kept as hidden spans for JS compatibility -->
+                <span id="rankNum" style="display:none">{% if data.rank %}#{{ data.rank }}{% else %}-{% endif %}</span>
+                <span id="diagOk" style="display:none">{{ ns.ok_count }}</span>
+                <span id="diagFree" style="display:none">{{ ns.basic_fixable }}</span>
+                <span id="diagPaid" style="display:none">{{ ns.advanced_count }}</span>
 
                 <div class="report-section">
                     <div class="section-header">
@@ -2152,6 +2111,35 @@
                         {% endfor %}
                         {% endif %}
                     </div>
+                </div>
+
+                <div class="upgrade-cards" id="btnGroup">
+                    {% if ns.basic_fixable > 0 %}
+                    <button class="upgrade-card upgrade-card--pro" onclick="previewUpgrade()">
+                        <div class="upgrade-card-badge">推荐</div>
+                        <div class="upgrade-card-icon">⚡</div>
+                        <div class="upgrade-card-body">
+                            <div class="upgrade-card-title">
+                                补齐基础能力
+                                <span class="upgrade-card-price">¥19.9</span>
+                            </div>
+                            <div class="upgrade-card-desc">一次购买 · 预计提升智力值 +{{ basic_iq_boost }}</div>
+                        </div>
+                        <svg class="upgrade-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+                    {% endif %}
+                    <button class="upgrade-card" onclick="startPremiumSubscribe()">
+                        <div class="upgrade-card-badge">PRO</div>
+                        <div class="upgrade-card-icon">🧠</div>
+                        <div class="upgrade-card-body">
+                            <div class="upgrade-card-title">
+                                高级能力订阅
+                                <span class="upgrade-card-price">¥99/月</span>
+                            </div>
+                            <div class="upgrade-card-desc">自主进化 · 实时看板 · 高阶技能全解锁</div>
+                        </div>
+                        <svg class="upgrade-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
                 </div>
             </div>
 
