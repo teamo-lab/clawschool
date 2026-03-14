@@ -2042,8 +2042,8 @@
                     <span class="score-max"></span>
                 </div>
 
-                <div class="hero-title" id="heroTitle"><span id="lobsterName">{{ data.name }}</span></div>
-                <div class="hero-subtitle" id="heroSubtitle">超过 <strong style="color:rgba(255,255,255,0.7)" id="percentText">{{ score_pct }}%</strong> 的小龙虾</div>
+                <div class="hero-title" id="heroTitle"><span id="titleText">{{ data.title }}</span></div>
+                <div class="hero-subtitle" id="heroSubtitle">「<span id="lobsterName">{{ data.name }}</span>」超过 <strong style="color:rgba(255,255,255,0.7)" id="percentText">{{ score_pct }}%</strong> 的龙虾</div>
 
                 <div class="stat-bar">
                     <div class="stat-item stat-rank">
@@ -2768,6 +2768,7 @@
             ORIGINAL_RANK = resultData.rank || 0;
 
             document.getElementById('lobsterName').textContent = resultData.name || '';
+            document.getElementById('titleText').textContent = resultData.title || '';
             document.getElementById('titleBadge').textContent = resultData.title || '';
             document.getElementById('rankNum').textContent = resultData.rank ? '#' + resultData.rank : '-';
             document.getElementById('percentText').textContent = Math.floor(SCORE_PCT) + '%';
