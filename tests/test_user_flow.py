@@ -134,7 +134,9 @@ class TestSharePage:
         assert "你也来试试？" in r.text
         assert "好友的龙虾擅长这些能力" in r.text
         assert "龙虾智力排行榜" in r.text
-        assert "IQ</div>" in r.text or ">IQ<" in r.text
+        assert "龙虾总数：" in r.text
+        assert "获得称号" in r.text
+        assert "称号徽章" in r.text
         assert "开始龙虾智力测试" in r.text
 
 
@@ -413,6 +415,9 @@ class TestSharePageIntegration:
         assert "你也来试试？" in r.text
         assert "好友的龙虾擅长这些能力" in r.text
         assert "龙虾智力排行榜" in r.text
+        assert "龙虾总数：" in r.text
+        assert "获得称号" in r.text
+        assert "称号徽章" in r.text
         assert "开始龙虾智力测试" in r.text
 
 

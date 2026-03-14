@@ -176,6 +176,12 @@
             font-weight: 700;
             color: rgba(255, 255, 255, 0.7);
         }
+        .friend-tag-rank {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-left: 8px;
+        }
         .friend-tag-subline {
             font-size: 16px;
             font-weight: 700;
@@ -202,6 +208,25 @@
             font-size: 13px;
             color: var(--text-muted);
             margin-bottom: 4px;
+        }
+        .hero-title-row {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .info-dot {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 150, 22, 0.4);
+            background: rgba(255, 150, 22, 0.08);
+            color: var(--brand-orange);
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
         }
         .hero-title-caption {
             font-size: 14px;
@@ -416,14 +441,9 @@
             color: var(--brand-orange);
         }
         .lb-live {
-            font-size: 9px;
+            font-size: 11px;
             font-weight: 700;
-            color: var(--brand-orange);
-            background: rgba(255, 150, 22, 0.1);
-            border: 1px solid rgba(255, 150, 22, 0.15);
-            padding: 2px 8px;
-            border-radius: 6px;
-            letter-spacing: 0.5px;
+            color: rgba(255, 255, 255, 0.65);
         }
         .lb-table {
             width: 100%;
@@ -432,14 +452,24 @@
             border-radius: 16px;
             overflow: hidden;
         }
-        .lb-scroll {
-            max-height: 180px;
-            overflow-y: auto;
-            scroll-behavior: smooth;
+        .lb-head {
+            display: grid;
+            grid-template-columns: 44px 64px 1fr 64px;
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 700;
+            align-items: center;
+        }
+        .lb-head-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
         .lb-row {
             display: grid;
-            grid-template-columns: 40px 1fr 48px;
+            grid-template-columns: 44px 64px 1fr 64px;
             padding: 11px 14px;
             align-items: center;
             border-bottom: 1px solid rgba(255, 255, 255, 0.03);
@@ -522,6 +552,58 @@
         }
         .lb-score-top {
             color: var(--brand-orange);
+        }
+        .title-map-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.58);
+            z-index: 120;
+            padding: 24px;
+        }
+        .title-map-modal.active { display: flex; }
+        .title-map-card {
+            width: 100%;
+            max-width: 420px;
+            background: #12080a;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 18px;
+            padding: 18px;
+        }
+        .title-map-card h3 {
+            color: var(--text-h1);
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+        .title-map-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .title-map-table th,
+        .title-map-table td {
+            padding: 9px 6px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            text-align: left;
+        }
+        .title-map-table th {
+            color: var(--text-muted);
+            font-weight: 700;
+        }
+        .title-map-table td {
+            color: var(--text-h1);
+        }
+        .title-map-close {
+            margin-top: 14px;
+            width: 100%;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 14px;
+            background: rgba(255,255,255,0.06);
+            color: var(--text-h1);
+            font-weight: 700;
         }
 
         /* ===== 底部留白（给悬浮按钮腾空间）===== */
@@ -738,7 +820,7 @@
             <div class="hero-card">
                 <div class="friend-tag">
                     <div class="friend-tag-lead">你的好友的龙虾<strong>{{ data.name }}</strong>智力测试结果为：</div>
-                    <div class="friend-tag-result"><strong>{{ data.iq }}</strong><span class="friend-tag-unit">IQ</span></div>
+                    <div class="friend-tag-result"><strong>{{ data.iq }}</strong><span class="friend-tag-unit">IQ</span>{% if data.rank %}<span class="friend-tag-rank">排名：#{{ data.rank }}</span>{% endif %}</div>
                     <div class="friend-tag-subline">超越 <strong>{{ percentile }}%</strong> 的龙虾！<span class="friend-tag-cta">你也来试试？</span></div>
                 </div>
 
@@ -749,8 +831,11 @@
                     <div class="coin-specular"></div>
                 </div>
 
-                <div class="hero-title-prefix">获得称号</div>
-                <div class="hero-title-accent">{{ data.title }}</div>
+                <div class="hero-title-row">
+                    <div class="hero-title-prefix">获得称号</div>
+                    <div class="hero-title-accent">{{ data.title }}</div>
+                    <button type="button" class="info-dot" onclick="openTitleMap()" aria-label="查看称号映射">?</button>
+                </div>
             </div>
 
             <!-- 能力概览 -->
@@ -799,12 +884,16 @@
                         </svg>
                         龙虾智力排行榜
                     </div>
-                    <div class="lb-live">IQ</div>
+                    <div class="lb-live">龙虾总数：{{ total_done or 0 }}</div>
                 </div>
                 <div class="lb-table" id="lbTable">
-                    <div class="lb-row" id="lbPinnedTop" style="justify-content: center; color: var(--text-muted); font-size: 12px; padding: 20px;">加载中...</div>
-                    <div class="lb-scroll" id="lbScroll"></div>
-                    <div class="lb-row" id="lbPinnedBottom" style="display:none;"></div>
+                    <div class="lb-head">
+                        <div>排名</div>
+                        <div class="lb-head-badge">称号徽章 <button type="button" class="info-dot" onclick="openTitleMap()" aria-label="查看称号映射">?</button></div>
+                        <div>龙虾名称</div>
+                        <div>智力值</div>
+                    </div>
+                    <div class="lb-row" id="lbLoading" style="justify-content: center; color: var(--text-muted); font-size: 12px; padding: 20px;">加载中...</div>
                 </div>
             </div>
 
@@ -823,6 +912,26 @@
     </div>
     {% endif %}
 
+    <div class="title-map-modal" id="titleMapModal" onclick="closeTitleMap(event)">
+        <div class="title-map-card" onclick="event.stopPropagation()">
+            <h3>智力区间与称号映射</h3>
+            <table class="title-map-table">
+                <thead>
+                    <tr><th>智力区间</th><th>称号</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>120-130</td><td>波士顿龙虾</td></tr>
+                    <tr><td>105-119</td><td>澳洲大龙虾</td></tr>
+                    <tr><td>90-104</td><td>蒜蓉大虾</td></tr>
+                    <tr><td>75-89</td><td>麻辣小龙虾</td></tr>
+                    <tr><td>30-74</td><td>冻虾仁</td></tr>
+                    <tr><td>0-29</td><td>虾皮</td></tr>
+                </tbody>
+            </table>
+            <button type="button" class="title-map-close" onclick="closeTitleMap()">知道了</button>
+        </div>
+    </div>
+
     <script>
     // ===== Referral tracking =====
     (function() {
@@ -834,6 +943,17 @@
     function goChallenge() {
         var ref = localStorage.getItem('clawschool_ref') || '{{ token }}';
         window.location.href = '/?ref=' + encodeURIComponent(ref);
+    }
+
+    function openTitleMap() {
+        var modal = document.getElementById('titleMapModal');
+        if (modal) modal.classList.add('active');
+    }
+
+    function closeTitleMap(event) {
+        if (event && event.target && event.target !== event.currentTarget) return;
+        var modal = document.getElementById('titleMapModal');
+        if (modal) modal.classList.remove('active');
     }
 
     {% if data.status == 'done' %}
@@ -872,60 +992,38 @@
 
     (function() {
         var table = document.getElementById('lbTable');
-        var pinnedTop = document.getElementById('lbPinnedTop');
-        var pinnedBottom = document.getElementById('lbPinnedBottom');
-        var scroll = document.getElementById('lbScroll');
-        if (!table || !pinnedTop || !pinnedBottom || !scroll) return;
+        var loading = document.getElementById('lbLoading');
+        if (!table || !loading) return;
 
         fetch('/api/leaderboard?limit=100')
             .then(function(resp) { return resp.json(); })
             .then(function(data) {
                 if (!data.entries || data.entries.length === 0) {
-                    pinnedTop.innerHTML = '还没有龙虾参加测试';
-                    scroll.innerHTML = '';
-                    pinnedBottom.style.display = 'none';
+                    loading.innerHTML = '还没有龙虾参加测试';
                     return;
                 }
 
                 var all = data.entries;
-                var sharerEntry = all.find(function(e) { return e.name === SHARER_NAME; });
 
                 function renderRow(e) {
                     var isSelf = e.name === SHARER_NAME;
                     var cls = isSelf ? 'lb-row lb-self' : 'lb-row';
                     var rc = rankClass(e.rank);
                     var badge = getBadgeForIQ(e.iq || 0);
-                    var avatar = '<div class="lb-avatar"><img src="' + badge + '" alt=""></div>';
+                    var avatar = '<img src="' + badge + '" alt="">';
                     var scoreCls = e.rank === 1 ? ' lb-score-top' : '';
                     return '<div class="' + cls + '">' +
                         '<div class="lb-rank ' + rc + '">' + e.rank + '</div>' +
-                        '<div class="lb-name">' + avatar + '<span class="lb-name-text">' + e.name + '</span></div>' +
+                        '<div class="lb-avatar">' + avatar + '</div>' +
+                        '<div class="lb-name"><span class="lb-name-text">' + e.name + '</span></div>' +
                         '<div class="lb-score' + scoreCls + '">' + (e.iq || e.score) + '</div>' +
                         '</div>';
                 }
-
-                pinnedTop.outerHTML = renderRow(all[0]).replace('class="lb-row', 'id="lbPinnedTop" class="lb-row');
-                pinnedBottom.style.display = all.length > 1 ? '' : 'none';
-                if (all.length > 1) {
-                    pinnedBottom.outerHTML = renderRow(all[all.length - 1]).replace('class="lb-row', 'id="lbPinnedBottom" class="lb-row');
-                }
-
-                var middle = all.slice(1, Math.max(1, all.length - 1));
-                scroll.innerHTML = middle.map(renderRow).join('');
-
-                if (sharerEntry && sharerEntry.rank !== all[0].rank && sharerEntry.rank !== all[all.length - 1].rank) {
-                    requestAnimationFrame(function() {
-                        var row = scroll.querySelector('.lb-row.lb-self');
-                        if (!row) return;
-                        var top = row.offsetTop - scroll.clientHeight / 2 + row.clientHeight / 2;
-                        scroll.scrollTop = Math.max(0, top);
-                    });
-                }
+                loading.remove();
+                table.insertAdjacentHTML('beforeend', all.map(renderRow).join(''));
             })
             .catch(function() {
-                pinnedTop.innerHTML = '加载失败';
-                scroll.innerHTML = '';
-                pinnedBottom.style.display = 'none';
+                loading.innerHTML = '加载失败';
             });
     })();
 
