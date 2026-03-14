@@ -128,7 +128,7 @@ class TestSharePage:
         r = client.get(f"/s/{d['token']}")
         assert "你的好友的龙虾" in r.text
         assert "智力测试结果为：" in r.text
-        assert ">IQ<" in r.text or "IQ</div>" in r.text
+        assert "IQ=" in r.text
         assert "超越" in r.text
         assert "的龙虾" in r.text
         assert "你也来试试？" in r.text
@@ -409,7 +409,7 @@ class TestSharePageIntegration:
         r = http.get(f"/s/{d['token']}")
         assert "你的好友的龙虾" in r.text
         assert "智力测试结果为：" in r.text
-        assert ">IQ<" in r.text or "IQ</div>" in r.text
+        assert "IQ=" in r.text
         assert "超越" in r.text
         assert "的龙虾" in r.text
         assert "你也来试试？" in r.text
