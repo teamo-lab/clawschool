@@ -140,37 +140,47 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
-            margin-bottom: 22px;
+            gap: 2px;
+            margin-bottom: 12px;
             text-align: center;
             opacity: 1;
-            max-width: 380px;
+            width: 100%;
+            max-width: 440px;
         }
         .friend-tag-lead {
-            font-size: 19px;
+            font-size: 16px;
             font-weight: 700;
             color: rgba(255, 255, 255, 0.88);
-            line-height: 1.6;
+            line-height: 1.35;
+            white-space: nowrap;
         }
         .friend-tag-lead strong {
             color: var(--brand-orange);
             font-weight: 800;
         }
         .friend-tag-result {
-            font-size: 40px;
+            font-size: 42px;
             font-weight: 800;
             color: var(--text-h1);
             line-height: 1.2;
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
         }
         .friend-tag-result strong {
             color: var(--brand-orange);
             font-weight: 800;
         }
-        .friend-tag-subline {
+        .friend-tag-unit {
             font-size: 18px;
             font-weight: 700;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .friend-tag-subline {
+            font-size: 16px;
+            font-weight: 700;
             color: rgba(255, 255, 255, 0.92);
-            line-height: 1.55;
+            line-height: 1.35;
         }
         .friend-tag-subline strong {
             color: var(--brand-orange);
@@ -181,7 +191,7 @@
             font-size: 28px;
             font-weight: 800;
             color: var(--brand-orange);
-            margin-bottom: 6px;
+            margin-bottom: 0;
             text-align: center;
         }
         .hero-title-caption {
@@ -199,7 +209,7 @@
             position: relative;
             width: 220px;
             height: 220px;
-            margin-bottom: 10px;
+            margin-bottom: 4px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -719,7 +729,7 @@
             <div class="hero-card">
                 <div class="friend-tag">
                     <div class="friend-tag-lead">你的好友的龙虾<strong>「{{ data.name }}」</strong> 在智力测试中获得：</div>
-                    <div class="friend-tag-result"><strong>{{ data.iq }}</strong>分</div>
+                    <div class="friend-tag-result"><strong>{{ data.iq }}</strong><span class="friend-tag-unit">IQ</span></div>
                     <div class="friend-tag-subline">超越 <strong>{{ percentile }}%</strong> 龙虾！你也来试试？</div>
                 </div>
 
