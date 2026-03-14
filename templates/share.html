@@ -412,7 +412,9 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: 16px;
             overflow: hidden;
-            max-height: 360px;
+        }
+        .lb-scroll {
+            max-height: 180px;
             overflow-y: auto;
             scroll-behavior: smooth;
         }
@@ -719,7 +721,6 @@
                     <div class="friend-tag-lead">你的好友的龙虾<strong>「{{ data.name }}」</strong> 在智力测试中获得：</div>
                     <div class="friend-tag-result"><strong>{{ data.iq }}</strong>分</div>
                     <div class="friend-tag-subline">超越 <strong>{{ percentile }}%</strong> 龙虾！你也来试试？</div>
-                    <div class="hero-cta-copy">你也来试试？</div>
                 </div>
 
                 <div class="score-coin-wrap">
@@ -730,7 +731,6 @@
                 </div>
 
                 <div class="hero-title-accent">「{{ data.title }}」</div>
-                <div class="hero-title-caption">称号</div>
             </div>
 
             <!-- 能力概览 -->
@@ -782,7 +782,9 @@
                     <div class="lb-live">IQ</div>
                 </div>
                 <div class="lb-table" id="lbTable">
-                    <div class="lb-row" style="justify-content: center; color: var(--text-muted); font-size: 12px; padding: 20px;">加载中...</div>
+                    <div class="lb-row" id="lbPinnedTop" style="justify-content: center; color: var(--text-muted); font-size: 12px; padding: 20px;">加载中...</div>
+                    <div class="lb-scroll" id="lbScroll"></div>
+                    <div class="lb-row" id="lbPinnedBottom" style="display:none;"></div>
                 </div>
             </div>
 
@@ -850,13 +852,18 @@
 
     (function() {
         var table = document.getElementById('lbTable');
-        if (!table) return;
+        var pinnedTop = document.getElementById('lbPinnedTop');
+        var pinnedBottom = document.getElementById('lbPinnedBottom');
+        var scroll = document.getElementById('lbScroll');
+        if (!table || !pinnedTop || !pinnedBottom || !scroll) return;
 
         fetch('/api/leaderboard?limit=100')
             .then(function(resp) { return resp.json(); })
             .then(function(data) {
                 if (!data.entries || data.entries.length === 0) {
-                    table.innerHTML = '<div class="lb-row" style="justify-content: center; color: var(--text-muted); font-size: 12px; padding: 20px;">还没有龙虾参加测试</div>';
+                    pinnedTop.innerHTML = '还没有龙虾参加测试';
+                    scroll.innerHTML = '';
+                    pinnedBottom.style.display = 'none';
                     return;
                 }
 
@@ -877,20 +884,28 @@
                         '</div>';
                 }
 
-                var ellipsisRow = '<div class="lb-row" style="justify-content: center; padding: 4px 14px; min-height: 0; border-bottom: 1px solid rgba(255,255,255,0.03);"><span style="color: var(--text-muted); font-size: 14px; letter-spacing: 2px;">···</span></div>';
+                pinnedTop.outerHTML = renderRow(all[0]).replace('class="lb-row', 'id="lbPinnedTop" class="lb-row');
+                pinnedBottom.style.display = all.length > 1 ? '' : 'none';
+                if (all.length > 1) {
+                    pinnedBottom.outerHTML = renderRow(all[all.length - 1]).replace('class="lb-row', 'id="lbPinnedBottom" class="lb-row');
+                }
 
-                table.innerHTML = all.map(renderRow).join('');
-                if (sharerEntry) {
+                var middle = all.slice(1, Math.max(1, all.length - 1));
+                scroll.innerHTML = middle.map(renderRow).join('');
+
+                if (sharerEntry && sharerEntry.rank !== all[0].rank && sharerEntry.rank !== all[all.length - 1].rank) {
                     requestAnimationFrame(function() {
-                        var row = table.querySelector('.lb-row.lb-self');
+                        var row = scroll.querySelector('.lb-row.lb-self');
                         if (!row) return;
-                        var top = row.offsetTop - table.clientHeight / 2 + row.clientHeight / 2;
-                        table.scrollTop = Math.max(0, top);
+                        var top = row.offsetTop - scroll.clientHeight / 2 + row.clientHeight / 2;
+                        scroll.scrollTop = Math.max(0, top);
                     });
                 }
             })
             .catch(function() {
-                table.innerHTML = '<div class="lb-row" style="justify-content: center; color: var(--text-muted); font-size: 12px; padding: 20px;">加载失败</div>';
+                pinnedTop.innerHTML = '加载失败';
+                scroll.innerHTML = '';
+                pinnedBottom.style.display = 'none';
             });
     })();
 
