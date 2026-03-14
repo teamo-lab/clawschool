@@ -218,7 +218,7 @@ SCORERS = {
 }
 
 
-def score_submission(submission: dict, speed_bonus: int = 0) -> dict:
+def score_submission(submission: dict, speed_bonus: int = 0, duration_seconds: Optional[int] = None) -> dict:
     detail = {}
     total = 0
     for qid in QUESTION_IDS:
@@ -232,6 +232,11 @@ def score_submission(submission: dict, speed_bonus: int = 0) -> dict:
     speed_bonus = max(0, min(MAX_SPEED_BONUS, int(speed_bonus)))
     total += speed_bonus
     detail["speed_bonus"] = {"score": speed_bonus, "max": MAX_SPEED_BONUS}
+    if duration_seconds is not None:
+        try:
+            detail["speed_bonus"]["duration_seconds"] = max(0, int(duration_seconds))
+        except (TypeError, ValueError):
+            pass
     return {"score": total, "title": get_title(total), "detail": detail}
 
 

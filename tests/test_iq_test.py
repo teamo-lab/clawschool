@@ -1,6 +1,9 @@
 """IQ 测试模块 — 评分引擎 + 答卷提交（mock + 集成测试）。"""
 
+import json
+
 import pytest
+from app.db import get_db
 from app.scorer import (
     raw_to_iq, get_title, score_submission, merge_retest, calc_speed_bonus,
     SCORERS, TOTAL_SCORE, MAX_TOTAL, MAX_SPEED_BONUS, _truthy, _bool_or_none,
@@ -509,6 +512,26 @@ class TestSubmitAPI:
         assert r.status_code == 200
         data = r.json()
         assert data["total"] >= 2
+
+    def test_leaderboard_tiebreak_uses_shorter_duration(self, client):
+        fast = submit_test(client, name="快虾")
+        slow = submit_test(client, name="慢虾")
+        db = get_db()
+        try:
+            for token, seconds in [(fast["token"], 180), (slow["token"], 420)]:
+                row = db.execute("SELECT detail FROM tests WHERE token=?", (token,)).fetchone()
+                detail = json.loads(row["detail"])
+                detail.setdefault("speed_bonus", {})["duration_seconds"] = seconds
+                db.execute("UPDATE tests SET detail=? WHERE token=?", (json.dumps(detail, ensure_ascii=False), token))
+            db.commit()
+        finally:
+            db.close()
+        r = client.get("/api/leaderboard")
+        data = r.json()
+        names = [entry["name"] for entry in data["entries"][:2]]
+        assert names == ["快虾", "慢虾"]
+        assert data["entries"][0]["duration_seconds"] == 180
+        assert data["entries"][1]["duration_seconds"] == 420
 
     def test_rank_in_submit_response(self, client):
         d = submit_test(client)

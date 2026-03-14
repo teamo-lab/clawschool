@@ -300,6 +300,42 @@ def _spawn_skill_generation(token: str, diagnosis_result: dict):
     ).start()
 
 
+def _duration_seconds(started_at: str, ended_at: str) -> Optional[int]:
+    if not started_at or not ended_at:
+        return None
+    try:
+        start = datetime.fromisoformat(started_at.replace("Z", "+00:00"))
+        end = datetime.fromisoformat(ended_at.replace("Z", "+00:00"))
+    except (ValueError, TypeError):
+        return None
+    seconds = int((end - start).total_seconds())
+    return max(0, seconds)
+
+
+BEST_BY_NAME_CTE = """
+WITH ranked AS (
+    SELECT
+        token,
+        name,
+        model,
+        score,
+        title,
+        test_time,
+        detail,
+        COALESCE(json_extract(detail, '$.speed_bonus.duration_seconds'), 999999999) AS duration_seconds,
+        ROW_NUMBER() OVER (
+            PARTITION BY name
+            ORDER BY score DESC,
+                     COALESCE(json_extract(detail, '$.speed_bonus.duration_seconds'), 999999999) ASC,
+                     updated_at ASC,
+                     token ASC
+        ) AS rn
+    FROM tests
+    WHERE status='done'
+)
+"""
+
+
 def _ensure_generated_skills(token: str, diagnosis_result: dict, current_status: str, current_scope: str):
     if current_status == "pending" and current_scope == diagnosis_result["scope"]:
         return
@@ -318,17 +354,33 @@ def _get_rank(score: int, token: str):
     """获取指定 token 在排行榜中的排名（同名取最高分去重后排名）"""
     db = get_db()
     try:
-        # 先查当前 token 对应的 name
-        name_row = db.execute("SELECT name FROM tests WHERE token=?", (token,)).fetchone()
-        if not name_row:
+        current = db.execute(
+            """
+            SELECT
+                name,
+                COALESCE(json_extract(detail, '$.speed_bonus.duration_seconds'), 999999999) AS duration_seconds
+            FROM tests
+            WHERE token=?
+            """,
+            (token,),
+        ).fetchone()
+        if not current:
             return None
-        name = name_row["name"]
-        # 同名取最高分去重，计算有多少个不同名字的最高分 > 当前分数
-        row = db.execute("""
-            SELECT COUNT(*) as rank FROM (
-                SELECT name, MAX(score) as best_score FROM tests WHERE status='done' GROUP BY name
-            ) t WHERE t.best_score > ? OR (t.best_score = ? AND t.name < ?)
-        """, (score, score, name)).fetchone()
+        name = current["name"]
+        duration_seconds = current["duration_seconds"]
+        row = db.execute(
+            BEST_BY_NAME_CTE + """
+            SELECT COUNT(*) AS rank
+            FROM ranked
+            WHERE rn = 1
+              AND (
+                score > ?
+                OR (score = ? AND duration_seconds < ?)
+                OR (score = ? AND duration_seconds = ? AND name < ?)
+              )
+            """,
+            (score, score, duration_seconds, score, duration_seconds, name),
+        ).fetchone()
         return (row["rank"] + 1) if row else None
     finally:
         db.close()
@@ -445,7 +497,8 @@ async def test_submit(request: Request):
     speed_bonus = calc_speed_bonus(started_at, _now_iso())
 
     # 评分
-    result = score_submission(submission, speed_bonus=speed_bonus)
+    duration_seconds = _duration_seconds(started_at, _now_iso())
+    result = score_submission(submission, speed_bonus=speed_bonus, duration_seconds=duration_seconds)
     score = result["score"]
     title = result["title"]
     detail_json = json.dumps(result["detail"], ensure_ascii=False)
@@ -708,14 +761,16 @@ async def repair_skill(token: str):
 async def leaderboard(limit: int = 50, offset: int = 0):
     db = get_db()
     try:
-        # 同名取最高分，使用子查询
-        rows = db.execute("""
-            SELECT name, model, MAX(score) as score, title, test_time, token
-            FROM tests WHERE status='done'
-            GROUP BY name
-            ORDER BY score DESC, test_time ASC
+        rows = db.execute(
+            BEST_BY_NAME_CTE + """
+            SELECT name, model, score, title, test_time, token, duration_seconds
+            FROM ranked
+            WHERE rn = 1
+            ORDER BY score DESC, duration_seconds ASC, name ASC
             LIMIT ? OFFSET ?
-        """, (limit, offset)).fetchall()
+            """,
+            (limit, offset),
+        ).fetchall()
         total_row = db.execute(
             "SELECT COUNT(DISTINCT name) as cnt FROM tests WHERE status='done'"
         ).fetchone()
@@ -732,6 +787,7 @@ async def leaderboard(limit: int = 50, offset: int = 0):
             "iq": raw_to_iq(row["score"]),
             "title": row["title"],
             "test_time": row["test_time"],
+            "duration_seconds": None if row["duration_seconds"] == 999999999 else row["duration_seconds"],
         })
 
     return {"total": total_row["cnt"] if total_row else 0, "entries": entries}

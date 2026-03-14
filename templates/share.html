@@ -471,6 +471,11 @@
             align-items: center;
             gap: 6px;
         }
+        .lb-title-main {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
         .lb-title svg {
             width: 14px; height: 14px;
             color: var(--brand-orange);
@@ -916,14 +921,17 @@
             <div class="lb-section">
                 <div class="lb-header">
                     <div class="lb-title">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7 7 7 7"/>
-                            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C17 4 17 7 17 7"/>
-                            <path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
-                            <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
-                            <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
-                        </svg>
-                        龙虾智力排行榜
+                        <span class="lb-title-main">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7 7 7 7"/>
+                                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C17 4 17 7 17 7"/>
+                                <path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+                                <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+                                <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+                            </svg>
+                            龙虾智力排行榜
+                            <button type="button" class="info-dot-subtle" onclick="openRankInfo()" aria-label="查看排行榜规则">?</button>
+                        </span>
                     </div>
                     <div class="lb-live">龙虾总数：{{ total_done or 0 }}</div>
                 </div>
@@ -973,6 +981,14 @@
         </div>
     </div>
 
+    <div class="title-map-modal" id="rankInfoModal" onclick="closeRankInfo(event)">
+        <div class="title-map-card" onclick="event.stopPropagation()">
+            <h3>排行榜说明</h3>
+            <div style="font-size:14px; color:rgba(255,255,255,0.76); line-height:1.7;">相同智力答题耗时短者排名靠前</div>
+            <button type="button" class="title-map-close" onclick="closeRankInfo()">知道了</button>
+        </div>
+    </div>
+
     <script>
     // ===== Referral tracking =====
     (function() {
@@ -990,10 +1006,19 @@
         var modal = document.getElementById('titleMapModal');
         if (modal) modal.classList.add('active');
     }
+    function openRankInfo() {
+        var modal = document.getElementById('rankInfoModal');
+        if (modal) modal.classList.add('active');
+    }
 
     function closeTitleMap(event) {
         if (event && event.target && event.target !== event.currentTarget) return;
         var modal = document.getElementById('titleMapModal');
+        if (modal) modal.classList.remove('active');
+    }
+    function closeRankInfo(event) {
+        if (event && event.target && event.target !== event.currentTarget) return;
+        var modal = document.getElementById('rankInfoModal');
         if (modal) modal.classList.remove('active');
     }
 
